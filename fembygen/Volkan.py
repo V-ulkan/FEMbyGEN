@@ -6,6 +6,45 @@ from femtools import ccxtools
 import datetime
 import webbrowser
 from fembygen import Generate
+from fembygen import Common
+
+
+
+def makeGenerate():
+    def attach(self, vobj):
+        self.ViewObject = vobj
+        self.Object = vobj.Object
+    
+    try:
+        obj = App.ActiveDocument.Beso
+        obj.isValid()
+    except:
+        obj = App.ActiveDocument.addObject(
+            "Part::FeaturePython", "Beso")
+        App.ActiveDocument.Generative_Design.addObject(obj)
+    Generated(obj)
+    if App.GuiUp:
+        ViewProviderGen(obj.ViewObject)
+    return obj
+
+def returnPath():
+    path = os.path.split(self.form.lineEdit_3.text())[0]
+class Generated:
+    """ Finite Element Analysis """
+
+    def __init__(self, obj):
+        obj.Proxy = self
+        self.Type = "Beso"
+        self.initProperties(obj)
+
+    def initProperties(self, obj):
+        try:
+            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+                            "Generated parameter matrix")
+            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
+                            "Generated parameter matrix")
+        except:
+            pass
 
 
 class VolkanCommand():
@@ -18,74 +57,89 @@ class VolkanCommand():
     def Activated(self):
         # panel = GeneratePanel(obj)
         # FreeCADGui.Control.showDialog(panel)
-        panel = MyGui()
-        Gui.Control.showDialog(panel)
+        #panel = MyGui()
+        #Gui.Control.showDialog(panel)
+        #doc = Gui.ActiveDocument
+        def setEdit(self, vobj, mode):
+            taskd = MyGui(vobj)
+            taskd.obj = vobj.Object
+            Gui.Control.showDialog(taskd)
+            return True
+        obj = makeGenerate()
         doc = Gui.ActiveDocument
+        if not doc.getInEdit():
+            doc.setEdit(obj.ViewObject.Object.Name)
+        else:
+            App.Console.PrintError('Existing task dialog already open\n')
         return
-        
-        
 
     def IsActive(self):
         """Here you can define if the command must be active or not (greyed) if certain conditions
         are met or not. This function is optional."""
-        return True
+        return App.ActiveDocument is not None
+        
+        
     
 
 class MyGui(QtGui.QWidget):
-    def __init__(self):
+    def __init__(self,object):
         super(MyGui, self).__init__()
         self.obj = object
         guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso3.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
+        self.workingDir = '/'.join(
+            object.Object.Document.FileName.split('/')[0:-1])
+        self.doc = object.Object.Document
+        (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
+        self.doc.Generate.Parameters_Name = paramNames
+        self.doc.Generate.Generated_Parameters = parameterValues
+
+        numGens = Common.checkGenerations(self.workingDir)
+        self.resetViewControls(numGens)
+
         MyGui.inp_file = ""
         MyGui.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
         
-        #QtCore.QObject.connect(self.form.comboBox_7, QtCore.SIGNAL("pressed()"), self.on_change)
+        self.form.comboBox_14.currentIndexChanged.connect(self.on_click)
+        self.form.pushButton_7.clicked.connect(self.on_click1)
         self.form.comboBox_7.currentIndexChanged.connect(self.on_change)
         self.form.comboBox_8.currentIndexChanged.connect(self.on_change1)
         self.form.comboBox_9.currentIndexChanged.connect(self.on_change2)
-
-        self.form.pushButton_8.clicked.connect(self.on_click21)
-        self.form.pushButton_9.clicked.connect(self.on_click22)
-        self.form.pushButton_10.clicked.connect(self.on_click23)
-        self.form.pushButton_11.clicked.connect(self.on_click40)
-        self.form.pushButton_14.clicked.connect(self.on_click31)
-        self.form.pushButton_15.clicked.connect(self.on_click32)
-        self.form.pushButton_7.clicked.connect(self.on_click1)
-
-
-        self.form.comboBox_4.currentIndexChanged.connect(self.on_change6r)
-        self.form.comboBox_5.currentIndexChanged.connect(self.on_change7r)
-        self.form.comboBox_6.currentIndexChanged.connect(self.on_change8r)
-
-        self.form.comboBox_14.currentIndexChanged.connect(self.on_click)
-
         self.form.comboBox_10.currentIndexChanged.connect(self.on_change6)
         self.form.comboBox_11.currentIndexChanged.connect(self.on_change7)
         self.form.comboBox_12.currentIndexChanged.connect(self.on_change8)
-        self.comboBox_14 = -1
+        self.form.comboBox.currentIndexChanged.connect(self.on_change6r)
+        self.form.comboBox_2.currentIndexChanged.connect(self.on_change7r)
+        self.form.comboBox_3.currentIndexChanged.connect(self.on_change8r)
+        self.form.pushButton_8.clicked.connect(self.on_click21)
+        self.form.pushButton_9.clicked.connect(self.on_click22)
+        self.form.pushButton_10.clicked.connect(self.on_click23)
+        self.form.pushButton_14.clicked.connect(self.on_click31)
+        self.form.pushButton_15.clicked.connect(self.on_click32)
+        self.form.pushButton_11.clicked.connect(self.on_click40)
 
-        self.on_click1()
+        self.on_click1()  # first update
+
+
     def on_click(self):
-        #ex2 = SelectFile()
-        #self.form.lineEdit_3.setText(self.inp_file)
-        self.form.comboBox_14.setEnabled(True)
-        self.selectedGen = self.form.comboBox_14.currentText()
-        self.selectedGen = int(str(self.selectedGen).split()[-1])
+        self.form.lineEdit_3.setText(self.workingDir + f"/Gen{self.form.comboBox_14.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
+        MyGui.inp_file = self.form.lineEdit_3.text()
+    
+    def resetViewControls(self, numGens):
         comboBoxItems = []
+        if numGens > 0:
+            self.form.comboBox_14.setEnabled(True)
+            
+            for i in range(1, numGens+1):
+                comboBoxItems.append("Generation " + str(i))
 
-        self.form.comboBox_14.setEnabled(True)
+            self.form.comboBox_14.clear()
+            self.form.comboBox_14.addItems(comboBoxItems)
+            self.form.lineEdit_3.setText(self.workingDir + f"/Gen{self.form.comboBox_14.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
+        else:
+            self.form.comboBox_14.setEnabled(False)
 
-        for i in range(1, numGens+1):
-            comboBoxItems.append("Generation " + str(i))
-
-        self.form.comboBox_14.clear()
-        self.form.comboBox_14.addItems(comboBoxItems)
-
-        docPath = self.workingDir + \
-            f"/Gen{self.selectedGen}/Gen{self.selectedGen}.FCStd"
-        docName = f"Gen{self.selectedGen}"
     
     def on_click1(self):
         # get material objects
@@ -106,37 +160,13 @@ class MyGui(QtGui.QWidget):
             elif obj.Name[:17] == "ElementGeometry2D":
                 self.thicknesses.append(obj)
 
-        self.form.comboBox_7.clear()
-        self.form.comboBox_7.addItem("None")
-        self.form.comboBox_8.clear()
-        self.form.comboBox_8.addItem("None")
-        self.form.comboBox_9.clear()
-        self.form.comboBox_9.addItem("None")
-        self.form.comboBox_4.clear()
-        self.form.comboBox_4.addItem("None")
-        self.form.comboBox_5.clear()
-        self.form.comboBox_5.addItem("None")
-        self.form.comboBox_6.clear()
-        self.form.comboBox_6.addItem("None")
-        self.form.listWidget_2.clear()
-        self.form.listWidget_2.addItem("All defined")
-        self.form.listWidget_2.addItem("Domain 0")
-        self.form.listWidget_2.addItem("Domain 1")
-        self.form.listWidget_2.addItem("Domain 2")
+        
         self.form.listWidget_2.setCurrentItem(self.form.listWidget_2.item(0))
 
-        self.form.listWidget_3.clear()
-        self.form.listWidget_3.addItem("All defined")
-        self.form.listWidget_3.addItem("Domain 0")
-        self.form.listWidget_3.addItem("Domain 1")
-        self.form.listWidget_3.addItem("Domain 2")
+        
         self.form.listWidget_3.setCurrentItem(self.form.listWidget_3.item(0))
 
-        self.form.listWidget.clear()
-        self.form.listWidget.addItem("All defined")
-        self.form.listWidget.addItem("Domain 0")
-        self.form.listWidget.addItem("Domain 1")
-        self.form.listWidget.addItem("Domain 2")
+        
         self.form.listWidget.setCurrentItem(self.form.listWidget.item(0))
 
         for mat in self.materials:
@@ -377,7 +407,7 @@ class MyGui(QtGui.QWidget):
                         "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus2, poisson2,
                          density2, conductivity2, expansion2, specific_heat2))
                 f.write("\n")
-            f.write("mass_goal_ratio = " + self.form.doubleSpinBox.text())
+            f.write("mass_goal_ratio = " + self.form.lineEdit_2.text())
             f.write("\n")
 
             f.write("filter_list = [")
@@ -386,7 +416,7 @@ class MyGui(QtGui.QWidget):
                 range = '"auto"'
             elif self.form.comboBox.currentText() == "manual":
                 range = self.form.lineEdit_8.text()
-            direction = self.form.lineEdit_13.text()
+            direction = self.form.lineEdit.text()
             selection = [item.text() for item in self.form.listWidget_2.selectedItems()]
             filter_domains = []
             if "All defined" not in selection:
@@ -434,12 +464,12 @@ class MyGui(QtGui.QWidget):
                 f.write("],\n")
 
             filter2 = self.form.comboBox_12.currentText()
-            if self.form.comboBox_1.currentText() == "auto":
+            if self.form.comboBox_3.currentText() == "auto":
                 range2 = '"auto"'
-            elif self.form.comboBox_1.currentText() == "manual":
+            elif self.form.comboBox_3.currentText() == "manual":
                 range2 = self.form.lineEdit_12.text()
             direction2 = self.form.lineEdit_15.text()
-            selection = [item.text() for item in self.form.widget2.selectedItems()]
+            selection = [item.text() for item in self.form.listWidget.selectedItems()]
             filter_domains2 = []
             if "All defined" not in selection:
                 if "Domain 0" in selection:
@@ -479,21 +509,18 @@ class MyGui(QtGui.QWidget):
 
     def on_click22(self):
         """Open beso_conf.py in FreeCAD editor"""
-        Gui.insert(os.path.join(self.beso_dir, "beso_conf.py"))
+        Gui.insert(os.path.join(MyGui.beso_dir, "beso_conf.py"))
 
     def on_click23(self):
-        """"Run optimization"""
-        # run in own thread (not freezing FreeCAD):      needs also to comment "plt.show()" on the end of beso_main.py
-        # self.optimization_thread = RunOptimization("beso_main")
-        # self.optimization_thread.start()
+        #Run optimization
+         #run in own thread (not freezing FreeCAD):      needs also to comment "plt.show()" on the end of beso_main.py
+         #self.optimization_thread = RunOptimization("beso_main")
+         #self.optimization_thread.start()
 
         # run in foreground (freeze FreeCAD)
-        exec(open(os.path.join(MyGui.beso_dir, "beso_main.py")).read())
+        exec(open(os.path.join(self.beso_dir, "beso_main.py")).read())
 
-    def on_click24(self):
-        self.on_click21()  # generate beso_conf.py
-        self.on_click23()  # run optimization
-
+    
     def on_click31(self):
         webbrowser.open_new_tab("https://github.com/fandaL/beso/wiki/Example-4:-GUI-in-FreeCAD")
 
@@ -558,96 +585,107 @@ class MyGui(QtGui.QWidget):
 
     def on_change6(self):
         if self.form.comboBox_10.currentText() == "None":
-            self.form.comboBox_4.setEnabled(False)
+            self.form.comboBox.setEnabled(False)
             self.form.lineEdit_8.setEnabled(False)
-            self.form.lineEdit_13.setEnabled(False)
+            self.form.lineEdit.setEnabled(False)
             self.form.listWidget_2.setEnabled(False)
         elif self.form.comboBox_10.currentText() == "casting":
-            self.form.comboBox_4.setEnabled(True)
-            if self.form.omboBox_10.currentText() == "manual":
+            self.form.comboBox.setEnabled(True)
+            if self.form.comboBox.currentText() == "manual":
                 self.form.lineEdit_8.setEnabled(True)
-            self.form.lineEdit_13.setEnabled(True)
+            self.form.lineEdit.setEnabled(True)
             self.form.listWidget_2.setEnabled(True)
         else:
-            self.form.comboBox_4.setEnabled(True)
-            if self.form.comboBox_4.currentText() == "manual":
+            self.form.comboBox.setEnabled(True)
+            if self.form.comboBox.currentText() == "manual":
                 self.form.lineEdit_8.setEnabled(True)
-            self.form.lineEdit_13.setEnabled(False)
+            self.form.lineEdit.setEnabled(False)
             self.form.listWidget_2.setEnabled(True)
 
     def on_change7(self):
         if self.form.comboBox_11.currentText() == "None":
-            self.form.comboBox_5.setEnabled(False)
+            self.form.comboBox_2.setEnabled(False)
             self.form.lineEdit_9.setEnabled(False)
             self.form.lineEdit_14.setEnabled(False)
             self.form.listWidget_3.setEnabled(False)
         elif self.form.comboBox_11.currentText() == "casting":
-            self.form.comboBox_5.setEnabled(True)
-            if self.form.comboBox_5.currentText() == "manual":
+            self.form.comboBox_2.setEnabled(True)
+            if self.form.comboBox_2.currentText() == "manual":
                 self.form.lineEdit_9.setEnabled(True)
             self.form.lineEdit_14.setEnabled(True)
             self.form.listWidget_3.setEnabled(True)
         else:
-            self.form.comboBox_5.setEnabled(True)
-            if self.form.comboBox_5.currentText() == "manual":
+            self.form.comboBox_2.setEnabled(True)
+            if self.form.comboBox_2.currentText() == "manual":
                 self.form.lineEdit_9.setEnabled(True)
             self.form.lineEdit_14.setEnabled(False)
             self.form.listWidget_3.setEnabled(True)
 
     def on_change8(self):
         if self.form.comboBox_12.currentText() == "None":
-            self.form.comboBox_6.setEnabled(False)
+            self.form.comboBox_3.setEnabled(False)
             self.form.lineEdit_12.setEnabled(False)
             self.form.lineEdit_15.setEnabled(False)
             self.form.listWidget.setEnabled(False)
         elif self.form.comboBox_12.currentText() == "casting":
-            self.form.comboBox_6.setEnabled(True)
-            if self.form.comboBox_6.currentText() == "manual":
+            self.form.comboBox_3.setEnabled(True)
+            if self.form.comboBox_3.currentText() == "manual":
                 self.form.lineEdit_12.setEnabled(True)
             self.form.lineEdit_15.setEnabled(True)
             self.form.listWidget.setEnabled(True)
         else:
-            self.form.comboBox_6.setEnabled(True)
-            if self.form.comboBox_6.currentText() == "manual":
+            self.form.comboBox_3.setEnabled(True)
+            if self.form.comboBox_3.currentText() == "manual":
                 self.form.lineEdit_12.setEnabled(True)
             self.form.lineEdit_15.setEnabled(False)
             self.form.listWidget.setEnabled(True)
 
-class SelectFile(QtGui.QWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.title = 'Select analysis file *.inp'
-        self.left = 10
-        self.top = 10
-        self.width = 640
-        self.height = 480
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-
-        MyGui.inp_file = self.openFileNameDialog()
-        #self.show()
-
-    def openFileNameDialog(self):
-        options = QtGui.QFileDialog.Options()
-        options |= QtGui.QFileDialog.DontUseNativeDialog
-        inp_file, _ = QtGui.QFileDialog.getOpenFileName(self, "Select file", "", "Analysis Files (*.inp);;All Files (*)",
-                                                  options=options)
-        return inp_file
-
-
-    
-
     
     def accept(self):
-        print(App.ActiveDocument.getObject("'CCX_Results001'"))
         Gui.Control.closeDialog()
 
     def reject(self):
         Gui.Control.closeDialog()
-        
+     
+class ViewProviderGen:
+    def __init__(self, vobj):
+        vobj.Proxy = self
 
+    def getIcon(self):
+        icon_path = os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Volkan.svg')
+        return icon_path
+
+    def attach(self, vobj):
+        self.ViewObject = vobj
+        self.Object = vobj.Object
+
+    def updateData(self, obj, prop):
+        return
+
+    def onChanged(self, vobj, prop):
+        return
+
+    def doubleClicked(self, vobj):
+        doc = Gui.getDocument(vobj.Object.Document)
+        if not doc.getInEdit():
+            doc.setEdit(vobj.Object.Name)
+        else:
+            App.Console.PrintError('Existing task dialog already open\n')
+        return True
+
+    def setEdit(self, vobj, mode):
+        taskd = MyGui(vobj)
+        taskd.obj = vobj.Object
+        Gui.Control.showDialog(taskd)
+        return True
+
+    def unsetEdit(self, vobj, mode):
+        Gui.Control.closeDialog()
+        return
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
 Gui.addCommand('Volkan', VolkanCommand())

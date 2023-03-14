@@ -8,12 +8,12 @@ import os
 import subprocess
 import sys
 import time
-import beso_lib
-import beso_filters
-import beso_plots
-import beso_separate
+import fembygen.beso_lib
+import fembygen.beso_filters
+import fembygen.beso_plots
+import fembygen.beso_separate
 # import importlib
-# importlib.reload(beso_plots)  # reloads without FreeCAD restart
+# importlib.reload(fembygen.beso_plots)  # reloads without FreeCAD restart
 plt.close("all")
 start_time = time.time()
 
@@ -55,6 +55,7 @@ save_resulting_format = "inp vtk"
 # read configuration file to fill variables listed above
 beso_dir = os.path.dirname(__file__)
 exec(open(os.path.join(beso_dir, "beso_conf.py")).read())
+
 domains_from_config = domain_optimized.keys()
 criteria = []
 domain_FI_filled = False
@@ -137,10 +138,12 @@ msg += ("save_solver_files       = %s\n" % save_solver_files)
 msg += ("save_resulting_format   = %s\n" % save_resulting_format)
 msg += "\n"
 file_name = os.path.join(path, file_name)
-beso_lib.write_to_log(file_name, msg)
+fembygen.beso_lib.write_to_log(file_name, msg)
+
+
 
 # mesh and domains importing
-[nodes, Elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry] = beso_lib.import_inp(
+[nodes, Elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry] = fembygen.beso_lib.import_inp(
     file_name, domains_from_config, domain_optimized, shells_as_composite)
 domain_shells = {}
 domain_volumes = {}
@@ -158,25 +161,25 @@ if isinstance(continue_from, int):
         if (len(domain_density[dn]) - 1) < continue_from:
             sn = len(domain_density[dn]) - 1
             msg = "\nINFO: elements from the domain " + dn + " were set to the highest state.\n"
-            beso_lib.write_to_log(file_name, msg)
+            fembygen.beso_lib.write_to_log(file_name, msg)
             print(msg)
         else:
             sn = continue_from
         for en in domains[dn]:
             elm_states[en] = sn
 elif continue_from[-4:] == ".frd":
-    elm_states = beso_lib.import_frd_state(continue_from, elm_states, number_of_states, file_name)
+    elm_states = fembygen.beso_lib.import_frd_state(continue_from, elm_states, number_of_states, file_name)
 elif continue_from[-4:] == ".inp":
-    elm_states = beso_lib.import_inp_state(continue_from, elm_states, number_of_states, file_name)
+    elm_states = fembygen.beso_lib.import_inp_state(continue_from, elm_states, number_of_states, file_name)
 elif continue_from[-4:] == ".csv":
-    elm_states = beso_lib.import_csv_state(continue_from, elm_states, file_name)
+    elm_states = fembygen.beso_lib.import_csv_state(continue_from, elm_states, file_name)
 else:
     for dn in domains_from_config:
         for en in domains[dn]:
             elm_states[en] = len(domain_density[dn]) - 1  # set to highest state
 
 # computing volume or area, and centre of gravity of each element
-[cg, cg_min, cg_max, volume_elm, area_elm] = beso_lib.elm_volume_cg(file_name, nodes, Elements)
+[cg, cg_min, cg_max, volume_elm, area_elm] = fembygen.beso_lib.elm_volume_cg(file_name, nodes, Elements)
 mass = [0.0]
 mass_full = 0  # sum from initial states TODO make it independent on starting elm_states?
 
@@ -210,7 +213,7 @@ if iterations_limit == "auto":  # automatic setting
         iterations_limit = it + 25
     print("\niterations_limit set automatically to %s" % iterations_limit)
     msg = ("\niterations_limit        = %s\n" % iterations_limit)
-    beso_lib.write_to_log(file_name, msg)
+    fembygen.beso_lib.write_to_log(file_name, msg)
 
 # preparing parameters for filtering sensitivity numbers
 weight_factor2 = {}
@@ -227,7 +230,7 @@ below_elm = {}
 filter_auto = False
 for ft in filter_list:  # find if automatic filter range is used
     if ft[0] and (ft[1] == "auto") and not filter_auto:
-        size_elm = beso_filters.find_size_elm(Elements, nodes)
+        size_elm = fembygen.beso_filters.find_size_elm(Elements, nodes)
         filter_auto = True
 for ft in filter_list:
     if ft[0] and ft[1]:
@@ -235,64 +238,64 @@ for ft in filter_list:
         if ft[0] == "casting":
             if len(ft) == 3:
                 domains_to_filter = list(opt_domains)
-                beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
+                fembygen.beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
             else:
                 domains_to_filter = []
                 filtered_dn = []
                 for dn in ft[3:]:
                     domains_to_filter += domains[dn]
                     filtered_dn.append(dn)
-                beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
+                fembygen.beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
             casting_vector = ft[2]
             if f_range == "auto":
-                size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
+                size_avg = fembygen.beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                 f_range = size_avg * 2
                 msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg,
                                                                                                          f_range)
                 print(msg)
-                beso_lib.write_to_log(file_name, msg)
-            [above_elm, below_elm] = beso_filters.prepare2s_casting(cg, f_range, domains_to_filter,
+                fembygen.beso_lib.write_to_log(file_name, msg)
+            [above_elm, below_elm] = fembygen.beso_filters.prepare2s_casting(cg, f_range, domains_to_filter,
                                                                     above_elm, below_elm, casting_vector)
             continue  # to evaluate other filters
         if len(ft) == 2:
             domains_to_filter = list(opt_domains)
             filtered_dn = domains_from_config
-            beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
+            fembygen.beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
         else:
             domains_to_filter = []
             filtered_dn = []
             for dn in ft[3:]:
                 domains_to_filter += domains[dn]
                 filtered_dn.append(dn)
-            beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
+            fembygen.beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
         if f_range == "auto":
-            size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
+            size_avg = fembygen.beso_filters.get_filter_range(size_elm, domains, filtered_dn)
             f_range = size_avg * 2
             msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg, f_range)
             print(msg)
-            beso_lib.write_to_log(file_name, msg)
+            fembygen.beso_lib.write_to_log(file_name, msg)
         if ft[0] == "over points":
-            beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
-            [w_f3, n_e3, n_p] = beso_filters.prepare3_tetra_grid(file_name, cg, f_range, domains_to_filter)
+            fembygen.beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
+            [w_f3, n_e3, n_p] = fembygen.beso_filters.prepare3_tetra_grid(file_name, cg, f_range, domains_to_filter)
             weight_factor3.append(w_f3)
             near_elm3.append(n_e3)
             near_points.append(n_p)
         elif ft[0] == "over nodes":
-            beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
-            [w_f_n, M_, w_f_d, n_n] = beso_filters.prepare1s(nodes, Elements, cg, f_range, domains_to_filter)
+            fembygen.beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
+            [w_f_n, M_, w_f_d, n_n] = fembygen.beso_filters.prepare1s(nodes, Elements, cg, f_range, domains_to_filter)
             weight_factor_node.append(w_f_n)
             M.append(M_)
             weight_factor_distance.append(w_f_d)
             near_nodes.append(n_n)
         elif ft[0] == "simple":
-            [weight_factor2, near_elm] = beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
+            [weight_factor2, near_elm] = fembygen.beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
                                                                 weight_factor2, near_elm)
         elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
-            near_elm = beso_filters.prepare_morphology(cg, cg_min, cg_max, f_range, domains_to_filter, near_elm)
+            near_elm = fembygen.beso_filters.prepare_morphology(cg, cg_min, cg_max, f_range, domains_to_filter, near_elm)
 
 # separating elements for reading nodal input
 if reference_points == "nodes":
-    beso_separate.separating(file_name, nodes)
+    fembygen.beso_separate.separating(file_name, nodes)
 
 # writing log table header
 msg = "\n"
@@ -327,13 +330,13 @@ if optimization_base == "buckling":
     msg += "  buckling_factors"
 
 msg += "\n"
-beso_lib.write_to_log(file_name, msg)
+fembygen.beso_lib.write_to_log(file_name, msg)
 
 # preparing for writing quick results
 file_name_resulting_states = os.path.join(path, "resulting_states")
-[en_all_vtk, associated_nodes] = beso_lib.vtk_mesh(file_name_resulting_states, nodes, Elements)
+[en_all_vtk, associated_nodes] = fembygen.beso_lib.vtk_mesh(file_name_resulting_states, nodes, Elements)
 # prepare for plotting
-beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
+fembygen.beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
 
 # ITERATION CYCLE
 sensitivity_number = {}
@@ -358,7 +361,7 @@ oscillations = False
 while True:
     # creating the new .inp file for CalculiX
     file_nameW = os.path.join(path, "file" + str(i).zfill(3))
-    beso_lib.write_inp(file_name, file_nameW, elm_states, number_of_states, domains, domains_from_config,
+    fembygen.beso_lib.write_inp(file_name, file_nameW, elm_states, number_of_states, domains, domains_from_config,
                        domain_optimized, domain_thickness, domain_offset, domain_orientation, domain_material,
                        domain_volumes, domain_shells, plane_strain, plane_stress, axisymmetry, save_iteration_results,
                        i, reference_points, shells_as_composite, optimization_base, displacement_graph,
@@ -373,12 +376,12 @@ while True:
     if (reference_points == "integration points") or (optimization_base == "stiffness") or \
             (optimization_base == "buckling") or (optimization_base == "heat"):  # from .dat file
         [FI_step, energy_density_step, disp_i, buckling_factors, energy_density_eigen, heat_flux] = \
-            beso_lib.import_FI_int_pt(reference_value, file_nameW, domains, criteria, domain_FI, file_name, elm_states,
+            fembygen.beso_lib.import_FI_int_pt(reference_value, file_nameW, domains, criteria, domain_FI, file_name, elm_states,
                                       domains_from_config, steps_superposition, displacement_graph)
     if reference_points == "nodes":  # from .frd file
-        FI_step = beso_lib.import_FI_node(reference_value, file_nameW, domains, criteria, domain_FI, file_name,
+        FI_step = fembygen.beso_lib.import_FI_node(reference_value, file_nameW, domains, criteria, domain_FI, file_name,
                                           elm_states, steps_superposition)
-        disp_i = beso_lib.import_displacement(file_nameW, displacement_graph, steps_superposition)
+        disp_i = fembygen.beso_lib.import_displacement(file_nameW, displacement_graph, steps_superposition)
     disp_max.append(disp_i)
 
     # check if results were found
@@ -393,7 +396,7 @@ while True:
         missing_ccx_results = True
     if missing_ccx_results:
         msg = "CalculiX results not found, check CalculiX for errors."
-        beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
+        fembygen.beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
         assert False, msg
 
     if domain_FI_filled:
@@ -407,12 +410,12 @@ while True:
                         FI_max[i][dn] = max(FI_max[i][dn], max(FI_step_en))
                     except ValueError:
                         msg = "FI_max computing failed. Check if each domain contains at least one failure criterion."
-                        beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
+                        fembygen.beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
                         raise Exception(msg)
                     except KeyError:
                         msg = "Some result values are missing. Check available disk space or steps_superposition " \
                               "settings"
-                        beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
+                        fembygen.beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
                         raise Exception(msg)
         print("FI_max, number of violated elements, domain name")
 
@@ -482,7 +485,7 @@ while True:
                     domains_to_filter = []
                     for dn in ft[3:]:
                         domains_to_filter += domains[dn]
-                sensitivity_number = beso_filters.run2_casting(sensitivity_number, above_elm, below_elm,
+                sensitivity_number = fembygen.beso_filters.run2_casting(sensitivity_number, above_elm, below_elm,
                                                                domains_to_filter)
                 continue  # to evaluate other filters
             if len(ft) == 2:
@@ -492,20 +495,20 @@ while True:
                 for dn in ft[2:]:
                     domains_to_filter += domains[dn]
             if ft[0] == "over points":
-                sensitivity_number = beso_filters.run3(sensitivity_number, weight_factor3[kp], near_elm3[kp],
+                sensitivity_number = fembygen.beso_filters.run3(sensitivity_number, weight_factor3[kp], near_elm3[kp],
                                                        near_points[kp])
                 kp += 1
             elif ft[0] == "over nodes":
-                sensitivity_number = beso_filters.run1(file_name, sensitivity_number, weight_factor_node[kn], M[kn],
+                sensitivity_number = fembygen.beso_filters.run1(file_name, sensitivity_number, weight_factor_node[kn], M[kn],
                                                        weight_factor_distance[kn], near_nodes[kn], nodes,
                                                        domains_to_filter)
                 kn += 1
             elif ft[0] == "simple":
-                sensitivity_number = beso_filters.run2(file_name, sensitivity_number, weight_factor2, near_elm,
+                sensitivity_number = fembygen.beso_filters.run2(file_name, sensitivity_number, weight_factor2, near_elm,
                                                        domains_to_filter)
             elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
                 if ft[0].split()[1] == "sensitivity":
-                    sensitivity_number = beso_filters.run_morphology(sensitivity_number, near_elm, domains_to_filter,
+                    sensitivity_number = fembygen.beso_filters.run_morphology(sensitivity_number, near_elm, domains_to_filter,
                                                                      ft[0].split()[0])
 
     if sensitivity_averaging:
@@ -594,15 +597,15 @@ while True:
             msg += " " + str(bf).rjust(17, " ")
         buckling_factors_all.append(buckling_factors)
     msg += "\n"
-    beso_lib.write_to_log(file_name, msg)
+    fembygen.beso_lib.write_to_log(file_name, msg)
 
     # export element values
     if save_iteration_results and np.mod(float(i), save_iteration_results) == 0:
         if "csv" in save_resulting_format:
-            beso_lib.export_csv(domains_from_config, domains, criteria, FI_step, FI_step_max, file_nameW, cg,
+            fembygen.beso_lib.export_csv(domains_from_config, domains, criteria, FI_step, FI_step_max, file_nameW, cg,
                                 elm_states, sensitivity_number)
         if "vtk" in save_resulting_format:
-            beso_lib.export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step,
+            fembygen.beso_lib.export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step,
                                 FI_step_max)
 
     # relative difference in a mean stress for the last 5 iterations must be < tolerance
@@ -636,14 +639,14 @@ while True:
     if continue_iterations is False or i >= iterations_limit:
         if not(save_iteration_results and np.mod(float(i), save_iteration_results) == 0):
             if "csv" in save_resulting_format:
-                beso_lib.export_csv(domains_from_config, domains, criteria, FI_step, FI_step_max, file_nameW, cg,
+                fembygen.beso_lib.export_csv(domains_from_config, domains, criteria, FI_step, FI_step_max, file_nameW, cg,
                                     elm_states, sensitivity_number)
             if "vtk" in save_resulting_format:
-                beso_lib.export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step,
+                fembygen.beso_lib.export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step,
                                     FI_step_max)
         break
     # plot and save figures
-    beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
+    fembygen.beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
                       FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
                       displacement_graph, disp_max, buckling_factors_all, savefig=True)
     i += 1  # iteration number
@@ -667,7 +670,7 @@ while True:
                 mass_goal_i
             except NameError:
                 msg = "\nWARNING: mass goal is lower than initial mass. Check mass_goal_ratio."
-                beso_lib.write_to_log(file_name, msg + "\n")
+                fembygen.beso_lib.write_to_log(file_name, msg + "\n")
         else:
             mass_goal_i = mass_goal_ratio * mass_full
     else:  # adding to initial mass  TODO include stress limit
@@ -684,7 +687,7 @@ while True:
         mass_referential = mass_full
     elif ratio_type == "relative":
         mass_referential = mass[i - 1]
-    [elm_states, mass] = beso_lib.switching(elm_states, domains_from_config, domain_optimized, domains, FI_step_max,
+    [elm_states, mass] = fembygen.beso_lib.switching(elm_states, domains_from_config, domain_optimized, domains, FI_step_max,
                                             domain_density, domain_thickness, domain_shells, area_elm, volume_elm,
                                             sensitivity_number, mass, mass_referential, mass_addition_ratio,
                                             mass_removal_ratio, compensate_state_filter, mass_excess, decay_coefficient,
@@ -706,7 +709,7 @@ while True:
             if ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
                 if ft[0].split()[1] == "state":
                     # the same filter as for sensitivity numbers
-                    elm_states_filtered = beso_filters.run_morphology(elm_states, near_elm, domains_to_filter,
+                    elm_states_filtered = fembygen.beso_filters.run_morphology(elm_states, near_elm, domains_to_filter,
                                                                       ft[0].split()[0], FI_step_max)
                     # compute mass difference
                     for dn in domains_from_config:
@@ -727,19 +730,19 @@ while True:
     mass_excess = mass[i] - mass_not_filtered
 
     # export the present mesh
-    beso_lib.append_vtk_states(file_name_resulting_states, i, en_all_vtk, elm_states)
+    fembygen.beso_lib.append_vtk_states(file_name_resulting_states, i, en_all_vtk, elm_states)
 
     file_nameW2 = os.path.join(path, "file" + str(i).zfill(3))
     if save_iteration_results and np.mod(float(i), save_iteration_results) == 0:
         if "frd" in save_resulting_format:
-            beso_lib.export_frd(file_nameW2, nodes, Elements, elm_states, number_of_states)
+            fembygen.beso_lib.export_frd(file_nameW2, nodes, Elements, elm_states, number_of_states)
         if "inp" in save_resulting_format:
-            beso_lib.export_inp(file_nameW2, nodes, Elements, elm_states, number_of_states)
+            fembygen.beso_lib.export_inp(file_nameW2, nodes, Elements, elm_states, number_of_states)
 
     # check for oscillation state
     if elm_states_before_last == elm_states:  # oscillating state
         msg = "\nOSCILLATION: model turns back to " + str(i - 2) + "th iteration.\n"
-        beso_lib.write_to_log(file_name, msg)
+        fembygen.beso_lib.write_to_log(file_name, msg)
         print(msg)
         oscillations = True
         break
@@ -768,9 +771,9 @@ while True:
 # export the resulting mesh
 if not (save_iteration_results and np.mod(float(i), save_iteration_results) == 0):
     if "frd" in save_resulting_format:
-        beso_lib.export_frd(file_nameW, nodes, Elements, elm_states, number_of_states)
+        fembygen.beso_lib.export_frd(file_nameW, nodes, Elements, elm_states, number_of_states)
     if "inp" in save_resulting_format:
-        beso_lib.export_inp(file_nameW, nodes, Elements, elm_states, number_of_states)
+        fembygen.beso_lib.export_inp(file_nameW, nodes, Elements, elm_states, number_of_states)
 
 # removing solver files
 if "inp" not in save_solver_files:
@@ -787,7 +790,7 @@ if "cvg" not in save_solver_files:
     os.remove(file_nameW + ".cvg")
 
 # plot and save figures
-beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
+fembygen.beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
                   FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
                   displacement_graph, disp_max, buckling_factors_all, savefig=True,)
 # print total time
@@ -799,5 +802,5 @@ msg = "\n"
 msg += ("Finished at  " + time.ctime() + "\n")
 msg += ("Total time   " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s\n")
 msg += "\n"
-beso_lib.write_to_log(file_name, msg)
+fembygen.beso_lib.write_to_log(file_name, msg)
 print("total time: " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s")

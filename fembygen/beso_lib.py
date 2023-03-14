@@ -1,6 +1,7 @@
 import numpy as np
 import operator
 from math import *
+import os
 
 
 # function to print ongoing messages to the log file
@@ -74,7 +75,7 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
             if line[:8].upper() == "*INCLUDE":
                 start = 1 + line.index("=")
                 include = line[start:].strip().strip('"')
-                f_include = open(include, "r")
+                f_include = open(os.path.join(os.path.split(file_name)[0]+ f"/{include}"), "r")
                 continue
             read_node = False
             elm_category = []
@@ -451,7 +452,7 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
         fR = open(file_name, "r")
     check_line_endings = False
     try:
-        fW = open(file_nameW + ".inp", "w", newline="\n")
+        fW =  open(file_nameW + ".inp", "w", newline="\n")
     except TypeError:  # python 2.x do not have newline argument
         fW = open(file_nameW + ".inp", "w")
         check_line_endings = True
