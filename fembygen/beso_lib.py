@@ -1584,7 +1584,7 @@ def export_inp(file_nameW, nodes, Elements, elm_states, number_of_states):
         f.close()
 
 
-# sub-function to write vth mesh
+# sub-function to write vtk mesh
 def vtk_mesh(file_nameW, nodes, Elements):
     f = open(file_nameW + ".vtk", "w")
     f.write("# vtk DataFile Version 3.0\n")
