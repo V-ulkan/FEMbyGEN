@@ -1,68 +1,35 @@
 # plotting graphs
-
-import matplotlib.pyplot as plt
 import os
+try:
+    from FreeCAD.Plot import Plot
+except ImportError:
+    from freecad.plot import Plot
+from matplotlib.transforms import Bbox
 
 
-def plotshow(domain_FI_filled, optimization_base, displacement_graph):
-    """prepare figures for incremental plotting"""
-    fn = 10  # figure number
-    # plot mass
-    fn += 1
-    plt.figure(fn)
-    plt.show()
-    if domain_FI_filled:  # FI contain something
-        # plot number of elements with FI > 1
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-        # plot mean failure index
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-        # plot maximal failure indices
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-    if optimization_base == "stiffness":
-        # plot mean energy density
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-    if optimization_base == "heat":
-        # plot mean heat flux
-        fn += 1
-        fig[fn] = plt.figure(fn)
-        fig[fn].show()
-    if displacement_graph:
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-    if optimization_base == "buckling":
-        fn += 1
-        plt.figure(fn)
-        plt.show()
-
+fig = Plot.figure(winTitle = "Topology Optimization")
+plt = Plot.getPlot()
+rect = plt.axes.get_position().get_points()
+rect[0][0] = rect[1][0]/1.7
+rect[0][1] = rect[1][1]/1.7
+bbox = Bbox(rect)
+Plot.addNewAxes(rect =bbox)
+axes = Plot.axesList()
 
 def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean, FI_mean_without_state0,
            FI_max, optimization_base, energy_density_mean, heat_flux_mean, displacement_graph, disp_max,
-           buckling_factors_all, savefig=False):
-    """plot graphs with actual data"""
-    fn = 10  # figure number
-    # plot mass
-    fn += 1
-    fig = plt.figure(fn)
-    plt.cla()
-    plt.plot(range(i+1), mass, label="mass")
-    plt.title("Mass of optimization domains")
-    plt.xlabel("Iteration")
-    plt.ylabel("Mass")
-    plt.grid()
-    plt.tight_layout()
+           buckling_factors_all,savefig=False):
+
+    ax = axes[0]
+    ax.cla()
+    ax.plot(range(i+1), mass, label="Mass",color ="red")
+    ax.grid()
+    ax.set_xlabel("Iteration")
+    ax.set_ylabel("Mass")
     # plt.pause(0.0001)
     fig.canvas.flush_events()
     if savefig:
-        plt.savefig(os.path.join(path, "Mass"))
+        Plot.save(os.path.join(path, "Mass"))
 
     if oscillations is True:
         i_plot = i - 1  # because other values for i-th iteration are not evaluated
@@ -71,137 +38,111 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
 
     if domain_FI_filled:  # FI contain something
         # plot number of elements with FI > 1
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
         dno = 0
         for dn in domains_from_config:
             FI_violated_dn = []
             for ii in range(i_plot + 1):
                 FI_violated_dn.append(FI_violated[ii][dno])
-            plt.plot(range(i_plot + 1), FI_violated_dn, label=dn)
+            ax = axes[1]
+            ax.cla()
+            ax.set_xlabel("Iteration")
+            ax.set_ylabel("FI_violated")
+            ax.plot(range(i_plot + 1), FI_violated_dn, label=dn,color ="orange")
+            ax.patch.set_alpha(0.01)
             dno += 1
         if len(domains_from_config) > 1:
             FI_violated_total = []
             for ii in range(i_plot + 1):
                 FI_violated_total.append(sum(FI_violated[ii]))
-            plt.plot(range(i_plot+1), FI_violated_total, label="Total")
-        plt.legend(loc=2, fontsize=10)
-        plt.title("Number of elements with Failure Index >= 1")
-        plt.xlabel("Iteration")
-        plt.ylabel("FI_violated")
-        plt.grid()
-        plt.tight_layout()
+            ax.plot(range(i_plot+1), FI_violated_total, label="Total",color ="orange")
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "FI_violated"))
+            Plot.save(os.path.join(path, "FI_violated"))
 
-        # plot mean failure index
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
-        plt.plot(range(i_plot+1), FI_mean, label="all")
-        plt.plot(range(i_plot+1), FI_mean_without_state0, label="without state 0")
-        plt.title("Mean Failure Index weighted by element mass")
-        plt.xlabel("Iteration")
-        plt.ylabel("FI_mean")
-        plt.legend(loc=2, fontsize=10)
-        plt.grid()
-        plt.tight_layout()
+        ax.plot(range(i_plot+1), FI_mean, label="all")
+        ax.plot(range(i_plot+1), FI_mean_without_state0, label="without state 0")
+        Plot.title("Mean Failure Index weighted by element mass")
+        Plot.xlabel("Iteration")
+        Plot.ylabel("FI_mean")
+        Plot.legend(loc=2, fontsize=10)
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "FI_mean"))
+            Plot.save(os.path.join(path, "FI_mean"))
 
         # plot maximal failure indices
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
         for dn in domains_from_config:
             FI_max_dn = []
             for ii in range(i_plot + 1):
                 FI_max_dn.append(FI_max[ii][dn])
-            plt.plot(range(i_plot + 1), FI_max_dn, label=dn)
-        plt.legend(loc=2, fontsize=10)
-        plt.title("Maximal domain Failure Index")
-        plt.xlabel("Iteration")
-        plt.ylabel("FI_max")
-        plt.grid()
-        plt.tight_layout()
+            plt.setActiveAxes(1)
+            """seriesList_2 = Plot.series()
+            if len(seriesList_2) > 1:
+                Plot.removeSerie(0)"""
+            ax.plot(range(i_plot + 1), FI_max_dn, label=dn)
+        Plot.legend(loc=2, fontsize=10)
+        Plot.title("Maximal domain Failure Index")
+        Plot.xlabel("Iteration")
+        Plot.ylabel("FI_max")
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "FI_max"))
+            Plot.save(os.path.join(path, "FI_max"))
 
     if optimization_base == "stiffness":
         # plot mean energy density
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
-        plt.plot(range(i_plot+1), energy_density_mean)
-        plt.title("Mean Energy Density weighted by element mass")
-        plt.xlabel("Iteration")
-        plt.ylabel("energy_density_mean")
-        plt.grid()
-        plt.tight_layout()
+        ax = axes[1]
+        ax.cla()
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Energy Density Mean")
+        ax.plot(range(i_plot+1), energy_density_mean,label ="energy density",color = "orange")
+        ax.patch.set_alpha(0.01)
         fig.canvas.flush_events()
         # plt.pause(0.0001)
         if savefig:
-            plt.savefig(os.path.join(path, "energy_density_mean"))
+            Plot.save(os.path.join(path, "energy_density_mean"))
 
     if optimization_base == "heat":
         # plot mean heat flux
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
-        plt.plot(range(i_plot+1), heat_flux_mean)
-        plt.title("Mean Heat Flux weighted by element mass")
-        plt.xlabel("Iteration")
-        plt.ylabel("heat_flux_mean")
-        plt.grid()
-        plt.tight_layout()
+        ax = axes[1]
+        ax.cla()
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Heat Flux Mean")
+        ax.plot(range(i_plot+1), heat_flux_mean,color = "orange")
+        ax.patch.set_alpha(0.01)
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "heat_flux_mean"))
+            Plot.save(os.path.join(path, "heat_flux_mean"))
 
     if displacement_graph:
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
+        ax = axes[1]
+        ax.cla()
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Displacement")
         for cn in range(len(displacement_graph)):
             disp_max_cn = []
             for ii in range(i_plot + 1):
                 disp_max_cn.append(disp_max[ii][cn])
-            plt.plot(range(i + 1), disp_max_cn, label=displacement_graph[cn][0] + "(" + displacement_graph[cn][1] + ")")
-        plt.legend(loc=2, fontsize=10)
-        plt.title("Node set maximal displacements")
-        plt.xlabel("Iteration")
-        plt.ylabel("Displacement")
-        plt.grid()
-        plt.tight_layout()
-        # plt.pause(0.0001)
+            ax.plot(range(i + 1), disp_max_cn, label=displacement_graph[cn][0] + "(" + displacement_graph[cn][1] + ")",color ="orange")
+        ax.patch.set_alpha(0.01)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "Displacement_max"))
+            Plot.save(os.path.join(path, "Displacement_max"))
 
     if optimization_base == "buckling":
-        fn += 1
-        fig = plt.figure(fn)
-        plt.cla()
+        ax = axes[1]
+        ax.cla()
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Buckling Factors")
         for bfn in range(len(buckling_factors_all[0])):
             buckling_factors_bfn = []
             for ii in range(i_plot + 1):
                 buckling_factors_bfn.append(buckling_factors_all[ii][bfn])
-            plt.plot(range(i_plot + 1), buckling_factors_bfn, label="mode " + str(bfn + 1))
-        plt.legend(loc=2, fontsize=10)
-        plt.title("Buckling factors")
-        plt.xlabel("Iteration")
-        plt.ylabel("buckling_factors")
-        plt.grid()
-        plt.tight_layout()
+            ax.plot(range(i_plot + 1), buckling_factors_bfn, label="mode " + str(bfn + 1))
+        ax.patch.set_alpha(0.01)
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
-            plt.savefig(os.path.join(path, "buckling_factors"))
+            Plot.save(os.path.join(path, "buckling_factors"))

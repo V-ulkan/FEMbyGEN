@@ -2,7 +2,6 @@
 # BESO (Bi-directional Evolutionary Structural Optimization Method)
 
 import numpy as np
-import matplotlib.pyplot as plt
 import multiprocessing
 import os
 import subprocess
@@ -14,7 +13,6 @@ import fembygen.beso_plots
 import fembygen.beso_separate
 # import importlib
 # importlib.reload(fembygen.beso_plots)  # reloads without FreeCAD restart
-plt.close("all")
 start_time = time.time()
 
 # initialization of variables - default values
@@ -336,7 +334,7 @@ fembygen.beso_lib.write_to_log(file_name, msg)
 file_name_resulting_states = os.path.join(path, "resulting_states")
 [en_all_vtk, associated_nodes] = fembygen.beso_lib.vtk_mesh(file_name_resulting_states, nodes, Elements)
 # prepare for plotting
-fembygen.beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
+#fembygen.beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
 
 # ITERATION CYCLE
 sensitivity_number = {}
@@ -358,9 +356,12 @@ elm_states_before_last = {}
 elm_states_last = elm_states
 oscillations = False
 
+if not os.path.exists(os.path.join(path,"topology_iterations")):
+    os.makedirs(os.path.join(path,"topology_iterations"))
+
 while True:
     # creating the new .inp file for CalculiX
-    file_nameW = os.path.join(path, "file" + str(i).zfill(3))
+    file_nameW = os.path.join(path,"topology_iterations", "file" + str(i).zfill(3))
     fembygen.beso_lib.write_inp(file_name, file_nameW, elm_states, number_of_states, domains, domains_from_config,
                        domain_optimized, domain_thickness, domain_offset, domain_orientation, domain_material,
                        domain_volumes, domain_shells, plane_strain, plane_stress, axisymmetry, save_iteration_results,
@@ -648,7 +649,9 @@ while True:
     # plot and save figures
     fembygen.beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
                       FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
-                      displacement_graph, disp_max, buckling_factors_all, savefig=True)
+                      displacement_graph, disp_max, buckling_factors_all,savefig = True)
+    
+
     i += 1  # iteration number
     print("\n----------- new iteration number %d ----------" % i)
 
@@ -732,7 +735,7 @@ while True:
     # export the present mesh
     fembygen.beso_lib.append_vtk_states(file_name_resulting_states, i, en_all_vtk, elm_states)
 
-    file_nameW2 = os.path.join(path, "file" + str(i).zfill(3))
+    file_nameW2 = os.path.join(path,"topology_iterations", "file" + str(i).zfill(3))
     if save_iteration_results and np.mod(float(i), save_iteration_results) == 0:
         if "frd" in save_resulting_format:
             fembygen.beso_lib.export_frd(file_nameW2, nodes, Elements, elm_states, number_of_states)
@@ -792,7 +795,7 @@ if "cvg" not in save_solver_files:
 # plot and save figures
 fembygen.beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
                   FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
-                  displacement_graph, disp_max, buckling_factors_all, savefig=True,)
+                  displacement_graph, disp_max, buckling_factors_all,savefig = True)
 # print total time
 total_time = time.time() - start_time
 total_time_h = int(total_time / 3600.0)
