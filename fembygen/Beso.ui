@@ -56,7 +56,7 @@
       <number>9</number>
      </property>
      <item row="0" column="0">
-      <widget class="QComboBox" name="comboBox_14">
+      <widget class="QComboBox" name="selectGen">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -85,7 +85,7 @@
      <item row="3" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_7">
        <item>
-        <widget class="QComboBox" name="comboBox_4">
+        <widget class="QComboBox" name="thicknessObject1">
          <item>
           <property name="text">
            <string>None</string>
@@ -94,7 +94,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_5">
+        <widget class="QComboBox" name="thicknessObject2">
          <item>
           <property name="text">
            <string>None</string>
@@ -103,7 +103,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_6">
+        <widget class="QComboBox" name="thicknessObject3">
          <item>
           <property name="text">
            <string>None</string>
@@ -119,7 +119,7 @@
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <item>
-        <widget class="QPushButton" name="pushButton_7">
+        <widget class="QPushButton" name="updateButton">
          <property name="text">
           <string>Update domains</string>
          </property>
@@ -218,7 +218,7 @@
         <enum>QLayout::SetFixedSize</enum>
        </property>
        <item>
-        <widget class="QLineEdit" name="lineEdit">
+        <widget class="QLineEdit" name="directionVector_1">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -244,7 +244,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_14">
+        <widget class="QLineEdit" name="directionVector_2">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -279,7 +279,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_15">
+        <widget class="QLineEdit" name="directionVector_3">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -328,7 +328,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QSlider" name="horizontalSlider_3">
+              <widget class="QSlider" name="iterationSlider">
                <property name="maximum">
                 <number>2</number>
                </property>
@@ -372,7 +372,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_13">
+            <widget class="QComboBox" name="optBase">
              <property name="editable">
               <bool>false</bool>
              </property>
@@ -392,7 +392,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="lineEdit_2">
+            <widget class="QLineEdit" name="massGoalRatio">
              <property name="text">
               <string>0.4</string>
              </property>
@@ -439,7 +439,7 @@
      <item row="5" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_10">
        <item>
-        <widget class="QLineEdit" name="lineEdit_4">
+        <widget class="QLineEdit" name="stressLimit_1">
          <property name="frame">
           <bool>false</bool>
          </property>
@@ -472,7 +472,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_5">
+        <widget class="QLineEdit" name="stressLimit_2">
          <property name="text">
           <string/>
          </property>
@@ -495,7 +495,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_6">
+        <widget class="QLineEdit" name="stressLimit_3">
          <property name="text">
           <string/>
          </property>
@@ -525,7 +525,10 @@
      <item row="4" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_9">
        <item>
-        <widget class="QCheckBox" name="checkBox_3">
+        <widget class="QCheckBox" name="asDesign_checkbox">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -548,7 +551,10 @@
         </spacer>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_2">
+        <widget class="QCheckBox" name="asDesign_checkbox2">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -571,7 +577,10 @@
         </spacer>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox">
+        <widget class="QCheckBox" name="asDesign_checkbox3">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
          <property name="text">
           <string/>
          </property>
@@ -639,14 +648,14 @@
           </spacer>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_14">
+          <widget class="QPushButton" name="openExample">
            <property name="text">
             <string>Example</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_15">
+          <widget class="QPushButton" name="confComments">
            <property name="text">
             <string>Config comments</string>
            </property>
@@ -711,28 +720,28 @@
      <item row="14" column="0">
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QPushButton" name="pushButton_8">
+        <widget class="QPushButton" name="generateConf">
          <property name="text">
           <string>Generate config file</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_9">
+        <widget class="QPushButton" name="editConf">
          <property name="text">
           <string>Edit config file</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_10">
+        <widget class="QPushButton" name="runOpt">
          <property name="text">
           <string>Run optimization</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_11">
+        <widget class="QPushButton" name="openLog">
          <property name="text">
           <string>Open log file</string>
          </property>
@@ -829,7 +838,7 @@
      <item row="8" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_11">
        <item>
-        <widget class="QComboBox" name="comboBox_10">
+        <widget class="QComboBox" name="selectFilter_1">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -873,7 +882,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_11">
+        <widget class="QComboBox" name="selectFilter_2">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -914,7 +923,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_12">
+        <widget class="QComboBox" name="selectFilter_3">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -946,7 +955,7 @@
         <enum>QLayout::SetDefaultConstraint</enum>
        </property>
        <item>
-        <widget class="QListWidget" name="listWidget_2">
+        <widget class="QListWidget" name="domainList_1">
          <property name="selectionMode">
           <enum>QAbstractItemView::MultiSelection</enum>
          </property>
@@ -973,7 +982,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="listWidget_3">
+        <widget class="QListWidget" name="domainList_2">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1003,7 +1012,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="listWidget">
+        <widget class="QListWidget" name="domainList_3">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1037,7 +1046,7 @@
      <item row="2" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_8">
        <item>
-        <widget class="QComboBox" name="comboBox_7">
+        <widget class="QComboBox" name="selectMaterial_1">
          <item>
           <property name="text">
            <string>None</string>
@@ -1046,7 +1055,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_8">
+        <widget class="QComboBox" name="selectMaterial_2">
          <item>
           <property name="text">
            <string>None</string>
@@ -1055,7 +1064,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_9">
+        <widget class="QComboBox" name="selectMaterial_3">
          <item>
           <property name="text">
            <string>None</string>
@@ -1269,7 +1278,7 @@
      <item row="9" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_13">
        <item>
-        <widget class="QComboBox" name="comboBox">
+        <widget class="QComboBox" name="filterRange_1">
          <property name="enabled">
           <bool>true</bool>
          </property>
@@ -1298,7 +1307,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_8">
+        <widget class="QLineEdit" name="range_1">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1333,7 +1342,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_2">
+        <widget class="QComboBox" name="filterRange_2">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1356,7 +1365,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_9">
+        <widget class="QLineEdit" name="range_2">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1391,7 +1400,7 @@
         </spacer>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_3">
+        <widget class="QComboBox" name="filterRange_3">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1408,7 +1417,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_12">
+        <widget class="QLineEdit" name="range_3">
          <property name="enabled">
           <bool>false</bool>
          </property>
@@ -1429,7 +1438,7 @@
       </layout>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit_3">
+      <widget class="QLineEdit" name="fileName">
        <property name="maximumSize">
         <size>
          <width>1000</width>
