@@ -62,10 +62,10 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
 
         ax.plot(range(i_plot+1), FI_mean, label="all")
         ax.plot(range(i_plot+1), FI_mean_without_state0, label="without state 0")
-        Plot.title("Mean Failure Index weighted by element mass")
-        Plot.xlabel("Iteration")
-        Plot.ylabel("FI_mean")
-        Plot.legend(loc=2, fontsize=10)
+        #Plot.title("Mean Failure Index weighted by element mass")
+        #Plot.xlabel("Iteration")
+        #Plot.ylabel("FI_mean")
+        #Plot.legend(loc=2, fontsize=10)
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
@@ -81,10 +81,10 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
             if len(seriesList_2) > 1:
                 Plot.removeSerie(0)"""
             ax.plot(range(i_plot + 1), FI_max_dn, label=dn)
-        Plot.legend(loc=2, fontsize=10)
+        """Plot.legend(loc=2, fontsize=10)
         Plot.title("Maximal domain Failure Index")
         Plot.xlabel("Iteration")
-        Plot.ylabel("FI_max")
+        Plot.ylabel("FI_max")"""
         # plt.pause(0.0001)
         fig.canvas.flush_events()
         if savefig:
