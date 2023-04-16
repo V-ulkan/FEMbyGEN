@@ -28,6 +28,7 @@ def makeGenerate():
 
 def returnPath():
     path = os.path.split(self.form.fileName.text())[0] #fileName contains full path not only file name
+
 class Generated:
     """ Finite Element Analysis """
 
@@ -54,8 +55,9 @@ class TopologyCommand():
                 'ToolTip': "Opens Beso gui"}
 
     def Activated(self):
-
-        def setEdit(self, vobj, mode):
+          pass
+    
+    def setEdit(self, vobj, mode):
             taskd = MyGui(vobj)
             taskd.obj = vobj.Object
             Gui.Control.showDialog(taskd)
@@ -95,7 +97,7 @@ class MyGui(QtGui.QWidget):
         MyGui.inp_file = ""
         MyGui.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
-        
+       
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
 
         self.form.updateButton.clicked.connect(self.Update) # Update domains button
@@ -126,15 +128,16 @@ class MyGui(QtGui.QWidget):
     def selectFile(self): 
         self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
         MyGui.inp_file = self.form.fileName.text()
+
     
     def resetViewControls(self, numGens):
         comboBoxItems = []
         if numGens > 0:
             self.form.selectGen.setEnabled(True)
+
             
             for i in range(1, numGens+1):
                 comboBoxItems.append("Generation " + str(i))
-
             self.form.selectGen.clear()
             self.form.selectGen.addItems(comboBoxItems)
             self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
@@ -208,6 +211,7 @@ class MyGui(QtGui.QWidget):
 
         file_name = os.path.split(self.form.fileName.text())[1]
         path = os.path.split(self.form.fileName.text())[0]
+
         #global elset2
         #global elset
         #global elset1
@@ -275,6 +279,7 @@ class MyGui(QtGui.QWidget):
 
         elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+
         if elset_id1 != -1:
             if thickness_id1 != -1:
                 elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
@@ -447,6 +452,7 @@ class MyGui(QtGui.QWidget):
                 range = self.form.range_1.text()
             direction = self.form.directionVector_1.text()
             selection = [item.text() for item in self.form.domainList_1.selectedItems()]
+
             filter_domains = []
             if "All defined" not in selection:
                 if "Domain 0" in selection:
@@ -499,6 +505,7 @@ class MyGui(QtGui.QWidget):
                 range2 = self.form.range_3.text()
             direction2 = self.form.directionVector_3.text()
             selection = [item.text() for item in self.form.domainList_3.selectedItems()]
+
             filter_domains2 = []
             if "All defined" not in selection:
                 if "Domain 0" in selection:
@@ -524,6 +531,7 @@ class MyGui(QtGui.QWidget):
             f.write("\n")
 
             slider_position = self.form.iterationSlider.value()
+
             if slider_position == 0:
                 f.write("mass_addition_ratio = 0.01\n")
                 f.write("mass_removal_ratio = 0.02\n")
@@ -719,6 +727,5 @@ class ViewProviderGen:
 
     def __setstate__(self, state):
         return None
-
 
 Gui.addCommand('Topology', TopologyCommand())
