@@ -9,7 +9,7 @@ from fembygen import Generate
 from fembygen import Common
 
 
-def makeGenerate():
+def makeTopology():
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
@@ -21,7 +21,7 @@ def makeGenerate():
         obj = App.ActiveDocument.addObject(
             "Part::FeaturePython", "Beso")
         App.ActiveDocument.Generative_Design.addObject(obj)
-    Generated(obj)
+    Topology(obj)
     if App.GuiUp:
         ViewProviderGen(obj.ViewObject)
     return obj
@@ -29,8 +29,7 @@ def makeGenerate():
 def returnPath():
     path = os.path.split(self.form.fileName.text())[0] #fileName contains full path not only file name
 
-class Generated:
-    """ Finite Element Analysis """
+class Topology:
 
     def __init__(self, obj):
         obj.Proxy = self
@@ -38,12 +37,12 @@ class Generated:
         self.initProperties(obj)
 
     def initProperties(self, obj):
-        try:
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+        # try:
+        #     obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+        #                     "Generated parameter matrix")
+        #     obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
                             "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
-                            "Generated parameter matrix")
-        except:
+        # except:
             pass
 
 
@@ -55,14 +54,7 @@ class TopologyCommand():
                 'ToolTip': "Opens Beso gui"}
 
     def Activated(self):
-          pass
-    
-    def setEdit(self, vobj, mode):
-            taskd = MyGui(vobj)
-            taskd.obj = vobj.Object
-            Gui.Control.showDialog(taskd)
-            return True
-        obj = makeGenerate()
+        obj = makeTopology()
         doc = Gui.ActiveDocument
         if not doc.getInEdit():
             doc.setEdit(obj.ViewObject.Object.Name)
@@ -78,9 +70,9 @@ class TopologyCommand():
         
     
 
-class MyGui(QtGui.QWidget):
+class TopologyPanel(QtGui.QWidget):
     def __init__(self,object):
-        super(MyGui, self).__init__()
+        super(TopologyPanel, self).__init__()
         self.obj = object
         guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
@@ -94,8 +86,8 @@ class MyGui(QtGui.QWidget):
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
 
-        MyGui.inp_file = ""
-        MyGui.beso_dir = os.path.dirname(__file__)
+        TopologyPanel.inp_file = ""
+        TopologyPanel.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
        
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
@@ -127,7 +119,7 @@ class MyGui(QtGui.QWidget):
 
     def selectFile(self): 
         self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
-        MyGui.inp_file = self.form.fileName.text()
+        TopologyPanel.inp_file = self.form.fileName.text()
 
     
     def resetViewControls(self, numGens):
@@ -546,7 +538,7 @@ class MyGui(QtGui.QWidget):
 
     def editConfig(self):
         """Open beso_conf.py in FreeCAD editor"""
-        Gui.insert(os.path.join(MyGui.beso_dir, "beso_conf.py"))
+        Gui.insert(os.path.join(TopologyPanel.beso_dir, "beso_conf.py"))
 
     def runOptimization(self):
         #Run optimization
@@ -713,7 +705,7 @@ class ViewProviderGen:
         return True
 
     def setEdit(self, vobj, mode):
-        taskd = MyGui(vobj)
+        taskd = TopologyPanel(vobj)
         taskd.obj = vobj.Object
         Gui.Control.showDialog(taskd)
         return True
