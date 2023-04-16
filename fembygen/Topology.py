@@ -41,7 +41,7 @@ class Topology:
         #     obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
         #                     "Generated parameter matrix")
         #     obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
-                            "Generated parameter matrix")
+                            # "Generated parameter matrix")
         # except:
             pass
 
