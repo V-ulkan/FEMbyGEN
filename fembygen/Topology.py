@@ -55,6 +55,7 @@ class TopologyCommand():
                 'ToolTip': "Opens Beso gui"}
 
     def Activated(self):
+
         obj = makeTopology()
         doc = Gui.ActiveDocument
         if not doc.getInEdit():
@@ -129,17 +130,18 @@ class TopologyPanel(QtGui.QWidget):
         comboBoxItems = []
         if numGens > 0:
             self.form.selectGen.setEnabled(True)
+
             self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
             file_names = os.listdir(self.path)
             inp_file=[file for file in file_names if file.endswith("inp")][0]
+
             
             for i in range(1, numGens+1):
                 comboBoxItems.append("Generation " + str(i))
             self.form.selectGen.clear()
             self.form.selectGen.addItems(comboBoxItems)
-            self.form.fileName.setText(self.path+inp_file)
-        else:
-            self.form.selectGen.setEnabled(False)
+            self.form.fileName.setText(self.path+inp_file)      
+
 
     
     def Update(self):
@@ -205,10 +207,10 @@ class TopologyPanel(QtGui.QWidget):
             self.form.thicknessObject3.addItem(th.Label)
 
     def generateConfig(self):
-
         file_name = os.path.split(self.form.fileName.text())[1]
         path = os.path.split(self.form.fileName.text())[0]
         print(path, file_name)
+
         #global elset2
         #global elset
         #global elset1
@@ -276,7 +278,9 @@ class TopologyPanel(QtGui.QWidget):
 
         elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+
         App.Console.PrintMessage("Config file created\n")
+
 
         if elset_id1 != -1:
             if thickness_id1 != -1:
