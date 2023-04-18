@@ -50,9 +50,7 @@ save_iteration_results = 1
 save_solver_files = ""
 save_resulting_format = "inp vtk"
 
-# read configuration file to fill variables listed above
-beso_dir = os.path.dirname(__file__)
-exec(open(os.path.join(beso_dir, "beso_conf.py")).read())
+
 
 domains_from_config = domain_optimized.keys()
 criteria = []

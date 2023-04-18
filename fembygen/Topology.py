@@ -50,6 +50,7 @@ class TopologyCommand():
 
     def GetResources(self):
         return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Topology.svg'),  # the name of a svg file available in the resources
+                'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
                 'ToolTip': "Opens Beso gui"}
 
@@ -68,11 +69,9 @@ class TopologyCommand():
         return App.ActiveDocument is not None
         
         
-    
 
 class TopologyPanel(QtGui.QWidget):
     def __init__(self,object):
-        super(TopologyPanel, self).__init__()
         self.obj = object
         guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
@@ -86,8 +85,8 @@ class TopologyPanel(QtGui.QWidget):
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
 
-        TopologyPanel.inp_file = ""
-        TopologyPanel.beso_dir = os.path.dirname(__file__)
+        self.inp_file = ""
+        self.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
        
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
@@ -118,21 +117,27 @@ class TopologyPanel(QtGui.QWidget):
 
 
     def selectFile(self): 
-        self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
-        TopologyPanel.inp_file = self.form.fileName.text()
+        self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
+        file_names = os.listdir(self.path)
+        inp_file=[file for file in file_names if file.endswith("inp")][0]
+
+        self.form.fileName.setText(self.path+inp_file)
+        self.inp_file = self.path+inp_file
 
     
     def resetViewControls(self, numGens):
         comboBoxItems = []
         if numGens > 0:
             self.form.selectGen.setEnabled(True)
-
+            self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
+            file_names = os.listdir(self.path)
+            inp_file=[file for file in file_names if file.endswith("inp")][0]
             
             for i in range(1, numGens+1):
                 comboBoxItems.append("Generation " + str(i))
             self.form.selectGen.clear()
             self.form.selectGen.addItems(comboBoxItems)
-            self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
+            self.form.fileName.setText(self.path+inp_file)
         else:
             self.form.selectGen.setEnabled(False)
 
@@ -203,7 +208,7 @@ class TopologyPanel(QtGui.QWidget):
 
         file_name = os.path.split(self.form.fileName.text())[1]
         path = os.path.split(self.form.fileName.text())[0]
-
+        print(path, file_name)
         #global elset2
         #global elset
         #global elset1
@@ -271,6 +276,7 @@ class TopologyPanel(QtGui.QWidget):
 
         elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+        App.Console.PrintMessage("Config file created\n")
 
         if elset_id1 != -1:
             if thickness_id1 != -1:
@@ -376,7 +382,7 @@ class TopologyPanel(QtGui.QWidget):
             else:
                 von_mises2 = 0.
 
-        with open(os.path.join(self.beso_dir, "beso_conf.py"), "w") as f:
+        with open(os.path.join(path, "beso_conf.py"), "w") as f:
             f.write("# This is the configuration file with input parameters. It will be executed as python commands\n")
             f.write("# Written at {}\n".format(datetime.datetime.now()))
             f.write("\n")
@@ -538,7 +544,7 @@ class TopologyPanel(QtGui.QWidget):
 
     def editConfig(self):
         """Open beso_conf.py in FreeCAD editor"""
-        Gui.insert(os.path.join(TopologyPanel.beso_dir, "beso_conf.py"))
+        Gui.insert(os.path.join(self.path, "beso_conf.py"))
 
     def runOptimization(self):
         #Run optimization
@@ -546,6 +552,8 @@ class TopologyPanel(QtGui.QWidget):
         #self.optimization_thread = RunOptimization("beso_main")
         #self.optimization_thread.start()
 
+        # read configuration file to fill variables listed above
+        exec(open(os.path.join(self.path, "beso_conf.py")).read())
         # run in foreground (freeze FreeCAD)
         exec(open(os.path.join(self.beso_dir, "beso_main.py")).read())
 
@@ -671,12 +679,13 @@ class TopologyPanel(QtGui.QWidget):
 
     
     def accept(self):
-        doc = App.ActiveDocument()
+        doc = Gui.getDocument(self.obj.Document)
         doc.resetEdit()
-	
+        doc.Document.recompute()
 
     def reject(self):
-        Gui.Control.closeDialog()
+        doc = Gui.getDocument(self.obj.Document)
+        doc.resetEdit()
      
 class ViewProviderGen:
     def __init__(self, vobj):
