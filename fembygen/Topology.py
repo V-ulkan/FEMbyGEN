@@ -394,53 +394,74 @@ class TopologyPanel(QtGui.QWidget):
             f.write("path = '{}'\n".format(path))
             f.write("file_name = '{}'\n".format(file_name))
             f.write("\n")
+            f.write("domain_offset = {}\n")
+            f.write("domain_orientation = {}\n")
+            f.write("domain_FI = {}\n")
+            f.write("domain_same_state = {}\n")
+            f.write("continue_from = ''\n")
+            f.write("filter_list = [['simple', 0]]\n")
+            f.write("cpu_cores = 0   # 0 means run all cores\n")
+            f.write("FI_violated_tolerance = 1\n")
+            f.write("decay_coefficient = -0.2\n")
+            f.write("shells_as_composite = False\n")
+            f.write("reference_points = 'integration points'\n")
+            f.write("reference_value = 'max'\n")
+            f.write("sensitivity_averaging = False\n")
+            f.write("compensate_state_filter = False\n")
+            f.write("steps_superposition = []\n")
+            f.write("iterations_limit = 'auto'\n")
+            f.write("tolerance = 1e-3\n")
+            f.write("displacement_graph = []\n")
+            f.write("save_iteration_results = 1\n")
+            f.write("save_solver_files = ''\n")
+            f.write("save_resulting_format = 'inp vtk'\n")
 
             if elset_id != -1:
                 f.write("elset_name = '{}'\n".format(elset))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density * 1e-6, density))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density * 1e-6, density))
                 if thickness:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness, thickness))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness, thickness))
                 if von_mises:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
+                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises * 1e6))
+                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises))
+                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
                         "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus * 1e-6, poisson,
                         density * 1e-6, conductivity * 1e-6, expansion * 1e-6, specific_heat * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus, poisson, density,
+                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus, poisson, density,
                          conductivity, expansion, specific_heat))
                 f.write("\n")
             if elset_id1 != -1:
                 f.write("elset_name = '{}'\n".format(elset1))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized1))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density1 * 1e-6, density1))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
                 if thickness1:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness1, thickness1))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
                 if von_mises1:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises1))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
+                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
+                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
                         poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus1, poisson1,
+                        "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
                          density1, conductivity1, expansion1, specific_heat1))
                 f.write("\n")
             if elset_id2 != -1:
                 f.write("elset_name = '{}'\n".format(elset2))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized2))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density2 * 1e-6, density2))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized2))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density2 * 1e-6, density2))
                 if thickness2:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness2, thickness2))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness2, thickness2))
                 if von_mises2:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
+                    f.write("domain_FI={{elset_name: [[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
                     f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises2))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                f.write("domain_material = {{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus2 * 1e-6,
                         poisson2, density2 * 1e-6, conductivity2 * 1e-6, expansion2 * 1e-6, specific_heat2 * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus2, poisson2,
+                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus2, poisson2,
                          density2, conductivity2, expansion2, specific_heat2))
                 f.write("\n")
             f.write("mass_goal_ratio = " + self.form.massGoalRatio.text())
