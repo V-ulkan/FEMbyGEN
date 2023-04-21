@@ -9,7 +9,7 @@ from fembygen import Generate
 from fembygen import Common
 
 
-def makeGenerate():
+def makeTopology():
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
@@ -21,7 +21,7 @@ def makeGenerate():
         obj = App.ActiveDocument.addObject(
             "Part::FeaturePython", "Beso")
         App.ActiveDocument.Generative_Design.addObject(obj)
-    Generated(obj)
+    Topology(obj)
     if App.GuiUp:
         ViewProviderGen(obj.ViewObject)
     return obj
@@ -29,8 +29,7 @@ def makeGenerate():
 def returnPath():
     path = os.path.split(self.form.fileName.text())[0] #fileName contains full path not only file name
 
-class Generated:
-    """ Finite Element Analysis """
+class Topology:
 
     def __init__(self, obj):
         obj.Proxy = self
@@ -38,12 +37,12 @@ class Generated:
         self.initProperties(obj)
 
     def initProperties(self, obj):
-        try:
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
-                            "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
-                            "Generated parameter matrix")
-        except:
+        # try:
+        #     obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+        #                     "Generated parameter matrix")
+        #     obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
+                            # "Generated parameter matrix")
+        # except:
             pass
 
 
@@ -51,18 +50,13 @@ class TopologyCommand():
 
     def GetResources(self):
         return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Topology.svg'),  # the name of a svg file available in the resources
+                'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
                 'ToolTip': "Opens Beso gui"}
 
     def Activated(self):
-          pass
-    
-    def setEdit(self, vobj, mode):
-            taskd = MyGui(vobj)
-            taskd.obj = vobj.Object
-            Gui.Control.showDialog(taskd)
-            return True
-        obj = makeGenerate()
+
+        obj = makeTopology()
         doc = Gui.ActiveDocument
         if not doc.getInEdit():
             doc.setEdit(obj.ViewObject.Object.Name)
@@ -76,11 +70,9 @@ class TopologyCommand():
         return App.ActiveDocument is not None
         
         
-    
 
-class MyGui(QtGui.QWidget):
+class TopologyPanel(QtGui.QWidget):
     def __init__(self,object):
-        super(MyGui, self).__init__()
         self.obj = object
         guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
@@ -94,8 +86,8 @@ class MyGui(QtGui.QWidget):
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
 
-        MyGui.inp_file = ""
-        MyGui.beso_dir = os.path.dirname(__file__)
+        self.inp_file = ""
+        self.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
        
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
@@ -126,8 +118,12 @@ class MyGui(QtGui.QWidget):
 
 
     def selectFile(self): 
-        self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
-        MyGui.inp_file = self.form.fileName.text()
+        self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
+        file_names = os.listdir(self.path)
+        inp_file=[file for file in file_names if file.endswith("inp")][0]
+
+        self.form.fileName.setText(self.path+inp_file)
+        self.inp_file = self.path+inp_file
 
     
     def resetViewControls(self, numGens):
@@ -135,14 +131,17 @@ class MyGui(QtGui.QWidget):
         if numGens > 0:
             self.form.selectGen.setEnabled(True)
 
+            self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
+            file_names = os.listdir(self.path)
+            inp_file=[file for file in file_names if file.endswith("inp")][0]
+
             
             for i in range(1, numGens+1):
                 comboBoxItems.append("Generation " + str(i))
             self.form.selectGen.clear()
             self.form.selectGen.addItems(comboBoxItems)
-            self.form.fileName.setText(self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/FEMMeshNetgen.inp")
-        else:
-            self.form.selectGen.setEnabled(False)
+            self.form.fileName.setText(self.path+inp_file)      
+
 
     
     def Update(self):
@@ -208,9 +207,9 @@ class MyGui(QtGui.QWidget):
             self.form.thicknessObject3.addItem(th.Label)
 
     def generateConfig(self):
-
         file_name = os.path.split(self.form.fileName.text())[1]
         path = os.path.split(self.form.fileName.text())[0]
+        print(path, file_name)
 
         #global elset2
         #global elset
@@ -279,6 +278,9 @@ class MyGui(QtGui.QWidget):
 
         elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+
+        App.Console.PrintMessage("Config file created\n")
+
 
         if elset_id1 != -1:
             if thickness_id1 != -1:
@@ -384,7 +386,7 @@ class MyGui(QtGui.QWidget):
             else:
                 von_mises2 = 0.
 
-        with open(os.path.join(self.beso_dir, "beso_conf.py"), "w") as f:
+        with open(os.path.join(path, "beso_conf.py"), "w") as f:
             f.write("# This is the configuration file with input parameters. It will be executed as python commands\n")
             f.write("# Written at {}\n".format(datetime.datetime.now()))
             f.write("\n")
@@ -392,53 +394,74 @@ class MyGui(QtGui.QWidget):
             f.write("path = '{}'\n".format(path))
             f.write("file_name = '{}'\n".format(file_name))
             f.write("\n")
+            f.write("domain_offset = {}\n")
+            f.write("domain_orientation = {}\n")
+            f.write("domain_FI = {}\n")
+            f.write("domain_same_state = {}\n")
+            f.write("continue_from = ''\n")
+            f.write("filter_list = [['simple', 0]]\n")
+            f.write("cpu_cores = 0   # 0 means run all cores\n")
+            f.write("FI_violated_tolerance = 1\n")
+            f.write("decay_coefficient = -0.2\n")
+            f.write("shells_as_composite = False\n")
+            f.write("reference_points = 'integration points'\n")
+            f.write("reference_value = 'max'\n")
+            f.write("sensitivity_averaging = False\n")
+            f.write("compensate_state_filter = False\n")
+            f.write("steps_superposition = []\n")
+            f.write("iterations_limit = 'auto'\n")
+            f.write("tolerance = 1e-3\n")
+            f.write("displacement_graph = []\n")
+            f.write("save_iteration_results = 1\n")
+            f.write("save_solver_files = ''\n")
+            f.write("save_resulting_format = 'inp vtk'\n")
 
             if elset_id != -1:
                 f.write("elset_name = '{}'\n".format(elset))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density * 1e-6, density))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density * 1e-6, density))
                 if thickness:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness, thickness))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness, thickness))
                 if von_mises:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
+                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises * 1e6))
+                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises))
+                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
                         "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus * 1e-6, poisson,
                         density * 1e-6, conductivity * 1e-6, expansion * 1e-6, specific_heat * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus, poisson, density,
+                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus, poisson, density,
                          conductivity, expansion, specific_heat))
                 f.write("\n")
             if elset_id1 != -1:
                 f.write("elset_name = '{}'\n".format(elset1))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized1))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density1 * 1e-6, density1))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
                 if thickness1:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness1, thickness1))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
                 if von_mises1:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises1))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
+                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
+                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
                         poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus1, poisson1,
+                        "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
                          density1, conductivity1, expansion1, specific_heat1))
                 f.write("\n")
             if elset_id2 != -1:
                 f.write("elset_name = '{}'\n".format(elset2))
-                f.write("domain_optimized[elset_name] = {}\n".format(optimized2))
-                f.write("domain_density[elset_name] = [{}, {}]\n".format(density2 * 1e-6, density2))
+                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized2))
+                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density2 * 1e-6, density2))
                 if thickness2:
-                    f.write("domain_thickness[elset_name] = [{}, {}]\n".format(thickness2, thickness2))
+                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness2, thickness2))
                 if von_mises2:
-                    f.write("domain_FI[elset_name] = [[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
+                    f.write("domain_FI={{elset_name: [[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
                     f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises2))
-                f.write("domain_material[elset_name] = ['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                f.write("domain_material = {{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus2 * 1e-6,
                         poisson2, density2 * 1e-6, conductivity2 * 1e-6, expansion2 * 1e-6, specific_heat2 * 1e-6))
                 f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']\n".format(modulus2, poisson2,
+                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus2, poisson2,
                          density2, conductivity2, expansion2, specific_heat2))
                 f.write("\n")
             f.write("mass_goal_ratio = " + self.form.massGoalRatio.text())
@@ -546,7 +569,7 @@ class MyGui(QtGui.QWidget):
 
     def editConfig(self):
         """Open beso_conf.py in FreeCAD editor"""
-        Gui.insert(os.path.join(MyGui.beso_dir, "beso_conf.py"))
+        Gui.insert(os.path.join(self.path, "beso_conf.py"))
 
     def runOptimization(self):
         #Run optimization
@@ -554,6 +577,8 @@ class MyGui(QtGui.QWidget):
         #self.optimization_thread = RunOptimization("beso_main")
         #self.optimization_thread.start()
 
+        # read configuration file to fill variables listed above
+        exec(open(os.path.join(self.path, "beso_conf.py")).read())
         # run in foreground (freeze FreeCAD)
         exec(open(os.path.join(self.beso_dir, "beso_main.py")).read())
 
@@ -679,12 +704,13 @@ class MyGui(QtGui.QWidget):
 
     
     def accept(self):
-        doc = App.ActiveDocument()
+        doc = Gui.getDocument(self.obj.Document)
         doc.resetEdit()
-	
+        doc.Document.recompute()
 
     def reject(self):
-        Gui.Control.closeDialog()
+        doc = Gui.getDocument(self.obj.Document)
+        doc.resetEdit()
      
 class ViewProviderGen:
     def __init__(self, vobj):
@@ -713,7 +739,7 @@ class ViewProviderGen:
         return True
 
     def setEdit(self, vobj, mode):
-        taskd = MyGui(vobj)
+        taskd = TopologyPanel(vobj)
         taskd.obj = vobj.Object
         Gui.Control.showDialog(taskd)
         return True

@@ -15,48 +15,10 @@ import fembygen.beso_separate
 # importlib.reload(fembygen.beso_plots)  # reloads without FreeCAD restart
 start_time = time.time()
 
-# initialization of variables - default values
-domain_optimized = {}
-domain_density = {}
-domain_thickness = {}
-domain_offset = {}
-domain_orientation = {}
-domain_FI = {}
-domain_material = {}
-domain_same_state = {}
-path = "."
-path_calculix = ""
-file_name = "Plane_Mesh.inp"
-mass_goal_ratio = 0.4
-continue_from = ""
-filter_list = [["simple", 0]]
-optimization_base = "stiffness"
-cpu_cores = 0
-FI_violated_tolerance = 1
-decay_coefficient = -0.2
-shells_as_composite = False
-reference_points = "integration points"
-reference_value = "max"
-sensitivity_averaging = False
-mass_addition_ratio = 0.01
-mass_removal_ratio = 0.03
-ratio_type = "relative"
-compensate_state_filter = False
-steps_superposition = []
-iterations_limit = "auto"
-tolerance = 1e-3
-displacement_graph = []
-save_iteration_results = 1
-save_solver_files = ""
-save_resulting_format = "inp vtk"
-
-# read configuration file to fill variables listed above
-beso_dir = os.path.dirname(__file__)
-exec(open(os.path.join(beso_dir, "beso_conf.py")).read())
-
 domains_from_config = domain_optimized.keys()
 criteria = []
 domain_FI_filled = False
+
 for dn in domain_FI:  # extracting each type of criteria
     if domain_FI[dn]:
         domain_FI_filled = True
@@ -64,6 +26,8 @@ for dn in domain_FI:  # extracting each type of criteria
         for dn_crit in domain_FI[dn][state]:
             if dn_crit not in criteria:
                 criteria.append(dn_crit)
+
+
 
 # default values if not defined by user
 for dn in domain_optimized:
@@ -107,7 +71,7 @@ for dn in domain_optimized:
     msg += ("domain_orientation      = %s\n" % domain_orientation[dn])
     try:
         msg += ("domain_FI               = %s\n" % domain_FI[dn])
-    except KeyError:
+    except:
         msg += "domain_FI               = None\n"
     msg += ("domain_material         = %s\n" % domain_material[dn])
     msg += ("domain_same_state       = %s\n" % domain_same_state[dn])
