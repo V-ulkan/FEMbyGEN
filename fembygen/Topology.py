@@ -395,6 +395,7 @@ class TopologyPanel(QtGui.QWidget):
             f.write("file_name = '{}'\n".format(file_name))
             f.write("\n")
             f.write("domain_offset = {}\n")
+            f.write("domain_thickness = {}\n")
             f.write("domain_orientation = {}\n")
             f.write("domain_FI = {}\n")
             f.write("domain_same_state = {}\n")
