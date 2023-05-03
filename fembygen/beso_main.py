@@ -1,6 +1,7 @@
 # optimization program using CalculiX solver
 # BESO (Bi-directional Evolutionary Structural Optimization Method)
 
+import FreeCADGui as Gui
 import numpy as np
 import multiprocessing
 import os
@@ -324,6 +325,8 @@ if not os.path.exists(os.path.join(path,"topology_iterations")):
     os.makedirs(os.path.join(path,"topology_iterations"))
 
 while True:
+    if Gui.activeDocument() == None:
+        break
     # creating the new .inp file for CalculiX
     file_nameW = os.path.join(path,"topology_iterations", "file" + str(i).zfill(3))
     fembygen.beso_lib.write_inp(file_name, file_nameW, elm_states, number_of_states, domains, domains_from_config,
@@ -332,6 +335,7 @@ while True:
                        i, reference_points, shells_as_composite, optimization_base, displacement_graph,
                        domain_FI_filled)
     # running CalculiX analysis
+    
     if sys.platform.startswith('linux'):
         subprocess.call([os.path.normpath(path_calculix), file_nameW], cwd=path)
     else:
