@@ -5,8 +5,8 @@ from PySide import QtGui, QtCore
 from femtools import ccxtools
 import datetime
 import webbrowser
-from fembygen import Generate
 from fembygen import Common
+from PySide2.QtWidgets import QPushButton,QComboBox,QSplitter,QCheckBox,QLineEdit,QListWidget,QLabel,QVBoxLayout
 
 
 def makeTopology():
@@ -89,10 +89,135 @@ class TopologyPanel(QtGui.QWidget):
         self.inp_file = ""
         self.beso_dir = os.path.dirname(__file__)
         #self.form.Faces.setReadOnly(True)
+
+
+        self.materials = []
+        self.thicknesses = []
+        try:
+            App.ActiveDocument.Objects
+        except AttributeError:
+            App.newDocument("Unnamed")
+            print("Warning: Missing active document with FEM analysis. New document have been created.")
+        for obj in App.ActiveDocument.Objects:
+            if obj.Name[:23] == "MechanicalSolidMaterial":
+                self.materials.append(obj)
+            elif obj.Name[:13] == "MaterialSolid":
+                self.materials.append(obj)
+            elif obj.Name[:13] == "SolidMaterial":
+                self.materials.append(obj)
+            elif obj.Name[:17] == "ElementGeometry2D":
+                self.thicknesses.append(obj)
+
+        #necessary layouts to add new domain widgets
+        self.form.layout = self.form.horizontalLayout_13
+        self.form.layout2 = self.form.horizontalLayout_12
+        self.form.layout3 = self.form.horizontalLayout_11
+        self.form.layout4 = self.form.horizontalLayout_10
+        self.form.layout5 = self.form.horizontalLayout_9
+        self.form.layout6 = self.form.horizontalLayout_7
+        self.form.layout7 = self.form.horizontalLayout_6
+        self.form.layout8 = self.form.horizontalLayout_5
+        self.form.layout9 = self.form.horizontalLayout_4
+        self.form.layout10 = self.form.horizontalLayout_3
+        self.form.verticalLayout2 = QVBoxLayout()
+        self.form.verticalLayout3 = QVBoxLayout()
+
+        #new Domain labels
+        self.form.label1 = QLabel("Domain 1")
+        self.form.label2 = QLabel("Domain 2")
+        self.form.label3 =QLabel("Filter 1")
+        self.form.label4 =QLabel("Filter 2")
+
+        #Creating widgets for new domains
+        self.form.horizontal1= QSplitter() #creating horizantal sliders to set placement
+        self.form.horizontal2 = QSplitter()
+        self.form.horizontal3 = QSplitter()
+        self.form.horizontal4 = QSplitter()
+        self.form.horizontal5 = QSplitter()
+        self.form.horizontal6 = QSplitter()
+        self.form.horizontal7 = QSplitter()
+        self.form.horizontal8 = QSplitter()
+        self.form.horizontal9 = QSplitter()
+        self.form.horizontal10 = QSplitter()
+        self.form.horizontal11 = QSplitter()
+        self.form.horizontal12 = QSplitter()
+        self.form.horizontal13 = QSplitter()
+        self.form.horizontal14 = QSplitter()
+        self.form.horizontal15 = QSplitter()
+        """self.form.vertical1 = QSplitter()
+        self.form.vertical2 = QSplitter()"""
+
+        self.form.selectMaterial_2 = QComboBox()
+        self.form.selectMaterial_3 = QComboBox()
+        self.form.thicknessObject2 = QComboBox()
+        self.form.thicknessObject3 = QComboBox()
+        self.form.asDesign_checkbox2 = QCheckBox()
+        self.form.asDesign_checkbox2.setChecked(True)
+        self.form.asDesign_checkbox3 = QCheckBox()
+        self.form.asDesign_checkbox3.setChecked(True)
+        self.form.stressLimit_2 = QLineEdit()
+        self.form.stressLimit_3 = QLineEdit()
+        self.form.selectFilter_2 = QComboBox()
+        self.form.selectFilter_2.addItems(["None","simple","casting"])
+        self.form.selectFilter_3 = QComboBox()
+        self.form.selectFilter_3.addItems(["None","simple","casting"])
+        self.form.filterRange_2 = QComboBox()
+        self.form.filterRange_2.addItems(["auto","manual"])
+        self.form.filterRange_2.setEnabled(False)
+        self.form.filterRange_3 = QComboBox()
+        self.form.filterRange_3.addItems(["auto","manual"])
+        self.form.filterRange_3.setEnabled(False)
+        self.form.filterRange_2.setMaximumSize(50,20)
+        self.form.filterRange_3.setMaximumSize(50,20)
+        self.form.range_2 = QLineEdit()
+        self.form.range_3 = QLineEdit()
+        self.form.range_2.setMaximumSize(50,20)
+        self.form.range_2.setText("0.")
+        self.form.range_2.setEnabled(False)
+        self.form.range_3.setMaximumSize(50,20)
+        self.form.range_3.setText("0.")
+        self.form.range_3.setEnabled(False)
+        self.form.directionVector_2 = QLineEdit()
+        self.form.directionVector_2.setText("0,0,1")
+        self.form.directionVector_2.setEnabled(False)
+        self.form.directionVector_3 = QLineEdit()
+        self.form.directionVector_3.setText("0,0,1")
+        self.form.directionVector_3.setEnabled(False)
+        self.form.domainList_2 = QListWidget()
+        self.form.domainList_3 = QListWidget()
+        self.form.addButton.setFixedSize(30,23)
+        self.form.newAddButton = QPushButton("+")
+        self.form.newAddButton.setFixedSize(30,23)
+
+        #adding constraint for mass goal ratio between 0.0 - 1.0
+        rx = QtCore.QRegExp("^(?:0(?:\.\d{0,1})?|1(?:\.0{0,1})?)$")
+        self.form.validator = QtGui.QRegExpValidator(rx)
+        self.form.massGoalRatio.setValidator(self.form.validator)
+
+        self.form.selectMaterial_1.clear()
+        self.form.selectMaterial_1.addItem("None")
+        self.form.thicknessObject1.clear()
+        self.form.thicknessObject1.addItem("None")
+        self.form.domainList_1.clear()
+        self.form.domainList_1.addItem("All defined")
+        self.form.domainList_1.addItem("Domain 0")
+        #self.form.domainList_1.addItem("Domain 1")
+        self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
+
+
+        for mat in self.materials:
+            self.form.selectMaterial_1.addItem(mat.Label) 
+        if self.materials:
+            self.form.selectMaterial_1.setCurrentIndex(1)
+        for th in self.thicknesses:
+            self.form.thicknessObject1.addItem(th.Label)
+
+
+        self.form.addButton.clicked.connect(self.addNewDomain) #adding new domains widgets to ui
        
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
 
-        self.form.updateButton.clicked.connect(self.Update) # Update domains button
+        #self.form.updateButton.clicked.connect(self.Update) # Update domains button
 
         self.form.selectMaterial_1.currentIndexChanged.connect(self.selectMaterial1) #select domain by material object comboBox 1
         self.form.selectMaterial_2.currentIndexChanged.connect(self.selectMaterial2) #select domain by material object comboBox 2
@@ -114,9 +239,95 @@ class TopologyPanel(QtGui.QWidget):
         self.form.confComments.clicked.connect(self.openConfComments) # opens config comments on beso github
         self.form.openLog.clicked.connect(self.openLog) # # opens log file
 
-        self.Update()  # first update
+        #self.Update()  # first update
+
+    def addNewDomain2(self):
+        self.form.newAddButton.deleteLater()
+        self.form.layout.addWidget(self.form.label2,stretch=1)
+        self.form.layout2.addWidget(self.form.horizontal2,stretch =1)
+        self.form.layout2.addWidget(self.form.selectMaterial_3,stretch=1)
+        self.form.layout3.addWidget(self.form.horizontal3,stretch=1)
+        self.form.layout3.addWidget(self.form.thicknessObject3,stretch=1)
+        self.form.layout4.addWidget(self.form.horizontal4,stretch=1)
+        self.form.layout4.addWidget(self.form.asDesign_checkbox3,stretch=1)
+        self.form.layout5.addWidget(self.form.horizontal5,stretch=1)
+        self.form.layout5.addWidget(self.form.stressLimit_3,stretch=1)
+
+        self.form.layout6.addWidget(self.form.horizontal6,stretch=1)
+        self.form.layout6.addWidget(self.form.label4,stretch=1)
+        self.form.layout7.addWidget(self.form.horizontal7,stretch=1)
+        self.form.layout7.addWidget(self.form.selectFilter_3,stretch=1)
+        self.form.layout8.addWidget(self.form.horizontal8,stretch=1)
+        self.form.layout8.addWidget(self.form.filterRange_3,stretch=1)
+        self.form.layout8.addWidget(self.form.range_3,stretch=1)
+        self.form.layout9.addWidget(self.form.horizontal9,stretch=1)
+        self.form.layout9.addWidget(self.form.directionVector_3,stretch=1)
+        self.form.layout10.addWidget(self.form.horizontal10,stretch=1)
+        self.form.layout10.addLayout(self.form.verticalLayout3,stretch=1)
+        self.form.verticalLayout3.addWidget(self.form.domainList_3,stretch=1)
+        self.form.selectMaterial_3.currentIndexChanged.connect(self.selectMaterial3)
+        self.form.selectFilter_3.currentIndexChanged.connect(self.filterType3)
+        self.form.filterRange_3.currentIndexChanged.connect(self.filterRange3)
+        #self.Update()
+        #self.form.verticalLayout3.addWidget(self.form.vertical1,stretch=4)
+
+        self.form.selectMaterial_3.clear()
+        self.form.selectMaterial_3.addItem("None")
+        self.form.thicknessObject3.clear()
+        self.form.thicknessObject3.addItem("None")
+        self.form.domainList_3.clear()
+        self.form.domainList_3.addItem("All defined")
+        self.form.domainList_3.addItem("Domain 0")
+        self.form.domainList_3.addItem("Domain 1")
+        self.form.domainList_3.addItem("Domain 2")
+        self.form.domainList_2.addItem("Domain 2")
+        self.form.domainList_1.addItem("Domain 2")
+        self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
+        for mat in self.materials:
+            self.form.selectMaterial_3.addItem(mat.Label)
+        for th in self.thicknesses:
+            self.form.thicknessObject3.addItem(th.Label)
 
 
+            
+    def addNewDomain(self):
+        self.form.addButton.deleteLater()
+        self.form.layout.addWidget(self.form.label1,stretch=1)
+        self.form.layout.addWidget(self.form.horizontal1,stretch=1)
+        self.form.layout.addWidget(self.form.newAddButton,stretch=1)
+        self.form.layout2.addWidget(self.form.selectMaterial_2,stretch=1)
+        self.form.layout3.addWidget(self.form.thicknessObject2,stretch=1)
+        self.form.layout4.addWidget(self.form.asDesign_checkbox2,stretch=1)
+        self.form.layout5.addWidget(self.form.stressLimit_2,stretch=1)
+        self.form.layout6.addWidget(self.form.label3,stretch=1)
+        self.form.layout7.addWidget(self.form.selectFilter_2,stretch=1)
+        self.form.layout8.addWidget(self.form.filterRange_2,stretch=1)
+        self.form.layout8.addWidget(self.form.range_2,stretch=1)
+        self.form.layout9.addWidget(self.form.directionVector_2,stretch=1)
+        self.form.layout10.addLayout(self.form.verticalLayout2,stretch=1)
+        self.form.verticalLayout2.addWidget(self.form.domainList_2,stretch=1)
+        #self.form.verticalLayout2.addWidget(self.form.vertical2,stretch=4)
+        self.form.selectMaterial_2.currentIndexChanged.connect(self.selectMaterial2)
+        self.form.selectFilter_2.currentIndexChanged.connect(self.filterType2)
+        self.form.filterRange_2.currentIndexChanged.connect(self.filterRange2)
+        self.form.newAddButton.clicked.connect(self.addNewDomain2)
+
+        self.form.selectMaterial_2.clear()
+        self.form.selectMaterial_2.addItem("None")
+        self.form.thicknessObject2.clear()
+        self.form.thicknessObject2.addItem("None")
+        self.form.domainList_2.clear()
+        self.form.domainList_2.addItem("All defined")
+        self.form.domainList_2.addItem("Domain 0")
+        self.form.domainList_2.addItem("Domain 1")
+        self.form.domainList_1.addItem("Domain 1")
+        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
+        for mat in self.materials:
+            self.form.selectMaterial_2.addItem(mat.Label)
+        for th in self.thicknesses:
+            self.form.thicknessObject2.addItem(th.Label)
+
+    
     def selectFile(self): 
         self.path= self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
         file_names = os.listdir(self.path)
@@ -144,7 +355,7 @@ class TopologyPanel(QtGui.QWidget):
 
 
     
-    def Update(self):
+    """def Update(self):
         # get material objects
         self.materials = []
         self.thicknesses = []
@@ -163,10 +374,55 @@ class TopologyPanel(QtGui.QWidget):
             elif obj.Name[:17] == "ElementGeometry2D":
                 self.thicknesses.append(obj)
 
+        
+
+
+
         self.form.selectMaterial_1.clear()
         self.form.selectMaterial_1.addItem("None")
-        self.form.selectMaterial_2.clear()
-        self.form.selectMaterial_2.addItem("None")
+        self.form.thicknessObject1.clear()
+        self.form.thicknessObject1.addItem("None")
+        self.form.domainList_1.clear()
+        self.form.domainList_1.addItem("All defined")
+        self.form.domainList_1.addItem("Domain 0")
+        #self.form.domainList_1.addItem("Domain 1")
+        self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
+
+
+
+
+
+
+        if self.form.layout2.count() == 5:
+            self.form.selectMaterial_2.clear()
+            self.form.selectMaterial_2.addItem("None")
+            self.form.thicknessObject2.clear()
+            self.form.thicknessObject2.addItem("None")
+            self.form.domainList_2.clear()
+            self.form.domainList_2.addItem("All defined")
+            self.form.domainList_2.addItem("Domain 0")
+            self.form.domainList_2.addItem("Domain 1")
+            self.form.domainList_1.addItem("Domain 1")
+        #self.form.domainList_2.addItem("Domain 2")
+            self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
+
+        
+        if self.form.layout2.count() == 7:
+            self.form.selectMaterial_3.clear()
+            self.form.selectMaterial_3.addItem("None")
+            self.form.thicknessObject3.clear()
+            self.form.thicknessObject3.addItem("None")
+            self.form.domainList_3.clear()
+            self.form.domainList_3.addItem("All defined")
+            self.form.domainList_3.addItem("Domain 0")
+            self.form.domainList_3.addItem("Domain 1")
+            self.form.domainList_3.addItem("Domain 2")
+            self.form.domainList_2.addItem("Domain 2")
+            self.form.domainList_1.addItem("Domain 2")
+            self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
+
+
+
         self.form.selectMaterial_3.clear()
         self.form.selectMaterial_3.addItem("None")
         self.form.thicknessObject1.clear()
@@ -196,24 +452,24 @@ class TopologyPanel(QtGui.QWidget):
 
         
         for mat in self.materials:
-            self.form.selectMaterial_1.addItem(mat.Label)
+            self.form.selectMaterial_1.addItem(mat.Label) 
             self.form.selectMaterial_2.addItem(mat.Label)
             self.form.selectMaterial_3.addItem(mat.Label)
         if self.materials:
             self.form.selectMaterial_1.setCurrentIndex(1)
         for th in self.thicknesses:
             self.form.thicknessObject1.addItem(th.Label)
-            self.form.thicknessObject2.addItem(th.Label)
-            self.form.thicknessObject3.addItem(th.Label)
+            self.form.thicknessObject2.addItem(th.Label)    
+            self.form.thicknessObject3.addItem(th.Label)"""
 
     def generateConfig(self):
         file_name = os.path.split(self.form.fileName.text())[1]
         path = os.path.split(self.form.fileName.text())[0]
         print(path, file_name)
 
-        #global elset2
-        #global elset
-        #global elset1
+        global elset2
+        global elset
+        global elset1
         elset2 = ""
         elset = ""
         elset1 = ""
@@ -275,116 +531,169 @@ class TopologyPanel(QtGui.QWidget):
                 von_mises = float(self.form.stressLimit_1.text())
             else:
                 von_mises = 0.
-
-        elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
-        thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
-
-        App.Console.PrintMessage("Config file created\n")
+        if self.form.layout2.count() == 5:
+            elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
+            thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
 
 
-        if elset_id1 != -1:
-            if thickness_id1 != -1:
-                elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
-            else:  # 0 means None thickness selected
-                elset1 = self.materials[elset_id1].Name + "Solid"
-            modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
-            if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
-                raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-            poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
-            try:
-                density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+            if elset_id1 != -1:
+                if thickness_id1 != -1:
+                    elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
+                else:  # 0 means None thickness selected
+                    elset1 = self.materials[elset_id1].Name + "Solid"
+                modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
+                if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
                     raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-            except KeyError:
-                density1 = 0.
-            try:
-                conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
-                if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-            except KeyError:
-                conductivity1 = 0.
-            try:
-                if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                    expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+                poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
+                try:
+                    density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+                    if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    density1 = 0.
+                try:
+                    conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
+                    if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    conductivity1 = 0.
+                try:
+                    if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
                                        0]) * 1e-6  # um/m/K -> mm/mm/K
-                elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                    expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+                    elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
                                        0])  # m/m/K -> mm/mm/K
-                else:
-                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-            except KeyError:
-                expansion1 = 0.
-            try:
-                specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
+                    else:
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    expansion1 = 0.
+                try:
+                    specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
                                        0]) * 1e6  #  J/kg/K -> mm^2/s^2/K
-                if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
-                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-            except KeyError:
-                specific_heat1 = 0.
-            if thickness_id1 != -1:
-                thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
-                if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
-                    raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
-            else:
-                thickness1 = 0.
-            optimized1 = self.form.asDesign_checkbox2.isChecked()
-            if self.form.stressLimit_2.text():
-                von_mises1 = float(self.form.stressLimit_2.text())
-            else:
-                von_mises1 = 0.
+                    if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    specific_heat1 = 0.
+                if thickness_id1 != -1:
+                    thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
+                    if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
+                else:
+                    thickness1 = 0.
+                optimized1 = self.form.asDesign_checkbox2.isChecked()
+                if self.form.stressLimit_2.text():
+                    von_mises1 = float(self.form.stressLimit_2.text())
+                else:
+                    von_mises1 = 0.
+        if self.form.layout2.count() == 7:
+            elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
+            thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
 
-        elset_id2 = self.form.selectMaterial_3.currentIndex() - 1
-        thickness_id2 = self.form.thicknessObject3.currentIndex() - 1
-        if elset_id2 != -1:
-            if thickness_id2 != -1:
-                elset2 = self.materials[elset_id2].Name + self.thicknesses[thickness_id2].Name
-            else:  # 0 means None thickness selected
-                else2t = self.materials[elset_id2].Name + "Solid"
-            modulus2 = float(self.materials[elset_id2].Material["YoungsModulus"].split()[0])  # MPa
-            if self.materials[elset_id2].Material["YoungsModulus"].split()[1] != "MPa":
-                raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-            poisson2 = float(self.materials[elset_id2].Material["PoissonRatio"].split()[0])
-            try:
-                density2 = float(self.materials[elset_id2].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                if self.materials[elset_id2].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
-                    raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-            except KeyError:
-                density2 = 0.
-            try:
-                conductivity2 = float(self.materials[elset_id2].Material["ThermalConductivity"].split()[0])  # W/m/K
-                if self.materials[elset_id2].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                    raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-            except KeyError:
-                conductivity2 = 0.
-            try:
-                if self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                    expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+
+            if elset_id1 != -1:
+                if thickness_id1 != -1:
+                    elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
+                else:  # 0 means None thickness selected
+                    elset1 = self.materials[elset_id1].Name + "Solid"
+                modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
+                if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
+                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
+                try:
+                    density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+                    if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    density1 = 0.
+                try:
+                    conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
+                    if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    conductivity1 = 0.
+                try:
+                    if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
                                        0]) * 1e-6  # um/m/K -> mm/mm/K
-                elif self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                    expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+                    elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
                                        0])  # m/m/K -> mm/mm/K
-                else:
-                    raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-            except KeyError:
-                expansion2 = 0.
-            try:
-                specific_heat2 = float(self.materials[elset_id2].Material["SpecificHeat"].split()[
+                    else:
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    expansion1 = 0.
+                try:
+                    specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
                                        0]) * 1e6  #  J/kg/K -> mm^2/s^2/K
-                if self.materials[elset_id2].Material["SpecificHeat"].split()[1] != "J/kg/K":
+                    if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                except KeyError:
+                    specific_heat1 = 0.
+                if thickness_id1 != -1:
+                    thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
+                    if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
+                else:
+                    thickness1 = 0.
+                optimized1 = self.form.asDesign_checkbox2.isChecked()
+                if self.form.stressLimit_2.text():
+                    von_mises1 = float(self.form.stressLimit_2.text())
+                else:
+                    von_mises1 = 0.
+            
+            elset_id2 = self.form.selectMaterial_3.currentIndex() - 1
+            thickness_id2 = self.form.thicknessObject3.currentIndex() - 1
+            if elset_id2 != -1:
+                if thickness_id2 != -1:
+                    elset2 = self.materials[elset_id2].Name + self.thicknesses[thickness_id2].Name
+                else:  # 0 means None thickness selected
+                    elset2 = self.materials[elset_id2].Name + "Solid"
+                modulus2 = float(self.materials[elset_id2].Material["YoungsModulus"].split()[0])  # MPa
+                if self.materials[elset_id2].Material["YoungsModulus"].split()[1] != "MPa":
                     raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-            except KeyError:
-                specific_heat2 = 0.
-            if thickness_id2 != -1:
-                thickness2 = str(self.thicknesses[thickness_id2].Thickness).split()[0]  # mm
-                if str(self.thicknesses[thickness_id2].Thickness).split()[1] != "mm":
-                    raise Exception(" units not recognised in " + self.thicknesses[thickness_id2].Name)
-            else:
-                thickness2 = 0.
-            optimized2 = self.form.asDesign_checkbox3.isChecked()
-            if self.form.stressLimit_3.text():
-                von_mises2 = float(self.form.stressLimit_3.text())
-            else:
-                von_mises2 = 0.
+                poisson2 = float(self.materials[elset_id2].Material["PoissonRatio"].split()[0])
+                try:
+                    density2 = float(self.materials[elset_id2].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+                    if self.materials[elset_id2].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+                except KeyError:
+                    density2 = 0.
+                try:
+                    conductivity2 = float(self.materials[elset_id2].Material["ThermalConductivity"].split()[0])  # W/m/K
+                    if self.materials[elset_id2].Material["ThermalConductivity"].split()[1] != "W/m/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+                except KeyError:
+                    conductivity2 = 0.
+                try:
+                    if self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+                        expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+                                       0]) * 1e-6  # um/m/K -> mm/mm/K
+                    elif self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+                        expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+                                       0])  # m/m/K -> mm/mm/K
+                    else:
+                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+                except KeyError:
+                    expansion2 = 0.
+                try:
+                    specific_heat2 = float(self.materials[elset_id2].Material["SpecificHeat"].split()[
+                                       0]) * 1e6  #  J/kg/K -> mm^2/s^2/K
+                    if self.materials[elset_id2].Material["SpecificHeat"].split()[1] != "J/kg/K":
+                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+                except KeyError:
+                    specific_heat2 = 0.
+                if thickness_id2 != -1:
+                    thickness2 = str(self.thicknesses[thickness_id2].Thickness).split()[0]  # mm
+                    if str(self.thicknesses[thickness_id2].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id2].Name)
+                else:
+                    thickness2 = 0.
+                optimized2 = self.form.asDesign_checkbox3.isChecked()
+                if self.form.stressLimit_3.text():
+                    von_mises2 = float(self.form.stressLimit_3.text())
+                else:
+                    von_mises2 = 0.
 
         with open(os.path.join(path, "beso_conf.py"), "w") as f:
             f.write("# This is the configuration file with input parameters. It will be executed as python commands\n")
@@ -433,38 +742,57 @@ class TopologyPanel(QtGui.QWidget):
                         "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus, poisson, density,
                          conductivity, expansion, specific_heat))
                 f.write("\n")
-            if elset_id1 != -1:
-                f.write("elset_name = '{}'\n".format(elset1))
-                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
-                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
-                if thickness1:
-                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
-                if von_mises1:
-                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
-                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+            if self.form.layout2.count() == 5:
+                if elset_id1 != -1:
+                    f.write("elset_name = '{}'\n".format(elset1))
+                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
+                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
+                    if thickness1:
+                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
+                    if von_mises1:
+                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
+                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
+                    f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
                         poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
-                f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
+                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
                         "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
                          density1, conductivity1, expansion1, specific_heat1))
-                f.write("\n")
-            if elset_id2 != -1:
-                f.write("elset_name = '{}'\n".format(elset2))
-                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized2))
-                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density2 * 1e-6, density2))
-                if thickness2:
-                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness2, thickness2))
-                if von_mises2:
-                    f.write("domain_FI={{elset_name: [[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]\n".format(von_mises2))
-                f.write("domain_material = {{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                    f.write("\n")
+            if self.form.layout2.count() == 7:
+                if elset_id1 != -1:
+                    f.write("elset_name = '{}'\n".format(elset1))
+                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
+                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
+                    if thickness1:
+                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
+                    if von_mises1:
+                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
+                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
+                    f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
+                        "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
+                        poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
+                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
+                        "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
+                         density1, conductivity1, expansion1, specific_heat1))
+                    f.write("\n")
+                
+                if elset_id2 != -1:
+                    f.write("elset_name = '{}'\n".format(elset2))
+                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized2))
+                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density2 * 1e-6, density2))
+                    if thickness2:
+                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness2, thickness2))
+                    if von_mises2:
+                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
+                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises2))
+                    f.write("domain_material = {{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
                         "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus2 * 1e-6,
                         poisson2, density2 * 1e-6, conductivity2 * 1e-6, expansion2 * 1e-6, specific_heat2 * 1e-6))
-                f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
+                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
                         "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus2, poisson2,
                          density2, conductivity2, expansion2, specific_heat2))
-                f.write("\n")
+                    f.write("\n")
             f.write("mass_goal_ratio = " + self.form.massGoalRatio.text())
             f.write("\n")
 
@@ -567,6 +895,7 @@ class TopologyPanel(QtGui.QWidget):
                 f.write("mass_removal_ratio = 0.06\n")
             f.write("ratio_type = 'relative'\n")
             f.write("\n")
+        App.Console.PrintMessage("Config file created\n")
 
     def editConfig(self):
         """Open beso_conf.py in FreeCAD editor"""
@@ -597,6 +926,7 @@ class TopologyPanel(QtGui.QWidget):
         else:
             log_file = os.path.normpath(self.form.fileName.text()[:-4] + ".log")
             webbrowser.open(log_file)
+
 
     def selectMaterial1(self):
         if self.form.selectMaterial_1.currentText() == "None":
