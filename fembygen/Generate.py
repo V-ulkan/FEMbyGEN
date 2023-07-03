@@ -383,14 +383,16 @@ class GeneratePanel():
 
     def design(self, method, parameters, numberofgen):
         from fembygen.design import Design, Taguchi
-        if method == "Plackett Burman Design":
+        if method == "Full Factorial Design":
+            return Design.fullfact(parameters)
+        elif method == "Plackett Burman Design":
             return Design.designpb(parameters)
         elif method == "Box Behnken Design":
             return Design.designboxBen(parameters)
         elif method == "Central Composite Design":
             return Design.designcentalcom(parameters)
-        elif method == "Full Factorial Design":
-            return Design.fullfact(parameters)
+        elif method == "Latin Hyper Cube Design":
+            return Design.designlhc(parameters)
         elif method == "Taguchi Optimization Design":
             result = Taguchi.Taguchipy(parameters, numberofgen)
             res = result.selection()
