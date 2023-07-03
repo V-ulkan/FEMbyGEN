@@ -51,6 +51,11 @@
        </item>
        <item>
         <property name="text">
+         <string>Latin Hyper Cube Design</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Central Composite Design</string>
         </property>
        </item>
