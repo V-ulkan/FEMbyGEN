@@ -31,7 +31,7 @@
       <widget class="QComboBox" name="selectDesign">
        <item>
         <property name="text">
-         <string>Full Factorial  Design</string>
+         <string>Full Factorial Design</string>
         </property>
        </item>
        <item>

@@ -5,7 +5,7 @@ import os.path
 import shutil
 from fembygen import Common
 import numpy as np
-import PySide
+import PySide2
 import multiprocessing.dummy as mp
 from multiprocessing import cpu_count
 from functools import partial
@@ -90,7 +90,6 @@ class GeneratePanel():
 
         self.form.numGensLabel.setText(f"{numGens} generations produced")
 
-
         self.selectedGen = -1
 
         # Connect the button procedures
@@ -119,12 +118,8 @@ class GeneratePanel():
         try:
             os.mkdir(self.workingDir + f"/Gen{i+1}")
         except:
-            self.deleteGenerations()
-            FreeCAD.Console.PrintError(
-
-                f"Earlier generations are deleted...\n")
-            os.mkdir(self.workingDir + f"/Gen{i+1}")
-
+            FreeCAD.Console.PrintError(f"Please delete earlier generations folders...\n")
+            return
 
         filename = f"Gen{i+1}.FCStd"
         directory = self.workingDir + f"/Gen{i+1}/"
@@ -220,9 +215,15 @@ class GeneratePanel():
         # Combination of all parameters
 
         selectedModule = self.form.selectDesign.currentText()
+
         try:
 
-            numgenerations = self.design(selectedModule, param,numberofgen)
+            numgenerations = self.design(selectedModule, param, numberofgen)
+
+            numGens = Common.checkGenerations(self.workingDir)  # delete earlier generations files before
+            print(numGens)
+            if numGens > 0:
+                self.deleteGenerations()
 
             func = partial(self.copy_mesh, numgenerations)
             iterationnumber = len(numgenerations)
@@ -252,41 +253,49 @@ class GeneratePanel():
         except TypeError:
             print("Please install pyDOE2 module\n")
 
-
     def deleteGenerations(self):
-        FreeCAD.Console.PrintMessage("Deleting...\n")
-        numGens = Common.checkGenerations(self.workingDir)
-        for i in range(1, numGens+1):
-            # Delete analysis directories
-            try:
-                shutil.rmtree(self.workingDir + f"/Gen{i}/")
-                FreeCAD.Console.PrintMessage(
-                    self.workingDir + f"/Gen{i}/ deleted\n")
-            except FileNotFoundError:
-                FreeCAD.Console.PrintError("INFO: Generation " + str(i) +
-                                           " analysis data not found\n")
-                pass
-            except:
-                FreeCAD.Console.PrintError(
-                    "Error while trying to delete analysis folder for generation\n " + str(i))
+        qm = PySide2.QtWidgets.QMessageBox
+        ret = qm.question(None, '', "Are you sure to delete all the earlier generation files?", qm.Yes | qm.No)
 
-        # Delete if earlier generative objects exist
-        try:
-            for l in self.doc.Generative_Design.Group:
-                if l.Name == "Parameters" or l.Name == "Generate":
+        if ret == qm.Yes:
+
+            FreeCAD.Console.PrintMessage("Deleting...\n")
+
+            numGens = Common.checkGenerations(self.workingDir)
+            for i in range(1, numGens+1):
+                # Delete analysis directories
+                try:
+                    shutil.rmtree(self.workingDir + f"/Gen{i}/")
+                    FreeCAD.Console.PrintMessage(
+                        self.workingDir + f"/Gen{i}/ deleted\n")
+                except FileNotFoundError:
+                    FreeCAD.Console.PrintError("INFO: Generation " + str(i) +
+                                               " analysis data not found\n")
                     pass
-                elif l.Name == "Results":
-                    Common.purge_results(self.doc)
-                else:
-                    self.doc.removeObject(l.Name)
-        except:
-            pass
+                except:
+                    FreeCAD.Console.PrintError(
+                        "Error while trying to delete analysis folder for generation\n " + str(i))
 
-        self.doc.Generate.Generated_Parameters = None
-        # refreshing the table
-        self.resetViewControls(numGens)
-        self.updateParametersTable()
-        FreeCAD.setActiveDocument(self.doc.Name)
+            # Delete if earlier generative objects exist
+            try:
+                for l in self.doc.Generative_Design.Group:
+                    if l.Name == "Parameters" or l.Name == "Generate":
+                        pass
+                    elif l.Name == "Results":
+                        Common.purge_results(self.doc)
+                    else:
+                        self.doc.removeObject(l.Name)
+            except:
+                pass
+
+            self.doc.Generate.Generated_Parameters = None
+            # refreshing the table
+            self.resetViewControls(numGens)
+            self.updateParametersTable()
+            FreeCAD.setActiveDocument(self.doc.Name)
+        else:
+            qm.information(None, '', "Nothing Changed")
+            FreeCAD.Console.PrintMessage("Nothing Deleted\n")
 
     def nextG(self, numGens):
         index = self.form.selectGenBox.currentIndex()
@@ -354,7 +363,7 @@ class GeneratePanel():
         tableModel.layoutChanged.emit()
         self.form.parametersTable.setModel(tableModel)
         self.form.parametersTable.horizontalHeader().setResizeMode(
-            PySide.QtGui.QHeaderView.ResizeToContents)
+            PySide2.QtWidgets.QHeaderView.ResizeToContents)
         self.form.parametersTable.clicked.connect(partial(
             Common.showGen, self.form.parametersTable, self.doc))
         self.form.parametersTable.setMinimumHeight(22+len(parameterValues)*30)
@@ -372,29 +381,20 @@ class GeneratePanel():
         doc.resetEdit()
         # Common.showGen("close", self.doc, None)   # closes the gen file If a generated file opened to check before
 
-    def design(self,method,parameters,numberofgen):
-        try:
-            from fembygen import Design,Taguchi
-
-            if method == "Plackett Burman Design":
-                return Design.designpb(parameters)
-            elif method == "Box Behnken Design":
-                return Design.designboxBen(parameters)
-            elif method == "Full Factorial Design":
-                return Design.fullfact2(parameters)
-            elif method == "Central Composite Design":
-                return Design.designcentalcom(parameters)
-            elif method == "Full Factorial  Design":
-                return Design.fullfact(parameters)
-
-            elif method == "Taguchi Optimization Design":
-                result=Taguchi.Taguchipy(parameters,numberofgen)
-                res=result.selection()
-                return list(res)
-        except ModuleNotFoundError:
-            pass
-
-
+    def design(self, method, parameters, numberofgen):
+        from fembygen.design import Design, Taguchi
+        if method == "Plackett Burman Design":
+            return Design.designpb(parameters)
+        elif method == "Box Behnken Design":
+            return Design.designboxBen(parameters)
+        elif method == "Central Composite Design":
+            return Design.designcentalcom(parameters)
+        elif method == "Full Factorial Design":
+            return Design.fullfact(parameters)
+        elif method == "Taguchi Optimization Design":
+            result = Taguchi.Taguchipy(parameters, numberofgen)
+            res = result.selection()
+            return list(res)
 
 
 class ViewProviderGen:

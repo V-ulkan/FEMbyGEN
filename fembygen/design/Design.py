@@ -1,5 +1,5 @@
 import numpy as np
-import pyDOE2 as pydoe2
+from fembygen.design import pydoe2
 import itertools
 
 
@@ -59,17 +59,5 @@ def designboxBen(A):
             elif bb[r, c] == 1:
                 bb[r, c] = A[c][-1]
 
-            
-    
-        
-
     bb = bb.tolist()
     return bb
-
-        
-
-       
- 
-
-     
-     
