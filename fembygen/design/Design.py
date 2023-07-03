@@ -7,6 +7,15 @@ def fullfact(A):
     numgenerations = list(itertools.product(*A))
     return numgenerations
 
+def designlhc(A):
+    lhc = pydoe2.lhs(len(A),samples=len(A)**2, criterion='center')
+    row, column = lhc.shape
+    for i,param in enumerate(A):
+        diff=param[-1]-param[0]
+        lhc[:,i]=diff*lhc[:,i]+param[0]
+
+    lhc = lhc.tolist()
+    return lhc
 
 def designpb(A):
     pb = pydoe2.pbdesign(len(A))
