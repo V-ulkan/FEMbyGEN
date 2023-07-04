@@ -16,8 +16,7 @@ Abraham Lee.
 import numpy as np
 from scipy import spatial
 from scipy import stats
-from scipy import linalg
-from numpy import ma
+from numpy import ma, linalg
 
 __all__ = ['lhs']
 

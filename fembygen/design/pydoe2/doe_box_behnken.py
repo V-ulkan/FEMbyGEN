@@ -14,8 +14,8 @@ Abraham Lee.
 """
 
 import numpy as np
-from pyDOE2.doe_factorial import ff2n
-from pyDOE2.doe_repeat_center import repeat_center
+from fembygen.design.pydoe2.doe_factorial import ff2n
+
 
 __all__ = ['bbdesign']
 
@@ -71,7 +71,7 @@ def bbdesign(n, center=None):
     # - Make two loops
     Index = 0
     nb_lines = int((0.5*n*(n-1))*H_fact.shape[0])
-    H = repeat_center(n, nb_lines)
+    H = np.zeros((nb_lines,n))
     
     for i in range(n - 1):
         for j in range(i + 1, n):
@@ -86,6 +86,6 @@ def bbdesign(n, center=None):
         else:
             center = n
         
-    H = np.c_[H.T, repeat_center(n, center).T].T
+    H = np.c_[H.T, np.zeros((center, n)).T].T
     
     return H

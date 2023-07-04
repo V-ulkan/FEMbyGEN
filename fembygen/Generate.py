@@ -47,7 +47,7 @@ class GenerateCommand():
     """Produce part generations"""
 
     def GetResources(self):
-        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Generate.svg'),  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Generate.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+G",  # a default shortcut (optional)
                 'MenuText': "Generate",
                 'ToolTip': "Produce part generations"}
@@ -72,7 +72,7 @@ class GeneratePanel():
 
         self.obj = object
         # this will create a Qt widget from our ui file
-        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Generate.ui"
+        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Generate.ui"
         self.form = FreeCADGui.PySideUic.loadUi(guiPath)
         self.workingDir = '/'.join(
             object.Object.Document.FileName.split('/')[0:-1])

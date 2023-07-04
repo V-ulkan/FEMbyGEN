@@ -49,7 +49,7 @@ class Topology:
 class TopologyCommand():
 
     def GetResources(self):
-        return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Topology.svg'),  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
                 'ToolTip': "Opens Beso gui"}
@@ -74,7 +74,7 @@ class TopologyCommand():
 class TopologyPanel(QtGui.QWidget):
     def __init__(self,object):
         self.obj = object
-        guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso.ui"
+        guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Beso.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
         self.workingDir = '/'.join(
             object.Object.Document.FileName.split('/')[0:-1])

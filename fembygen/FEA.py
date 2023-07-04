@@ -1,7 +1,7 @@
 import FreeCAD
 import FreeCADGui
 import FemGui
-import os.path
+import os
 from fembygen import Common
 import shutil
 import os
@@ -53,7 +53,7 @@ class FEACommand():
     """Perform FEA on generated parts"""
 
     def GetResources(self):
-        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/FEA.svg'),  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/FEA.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+A",  # a default shortcut (optional)
                 'MenuText': "FEA Generations",
                 'ToolTip': "Perform FEA on generated parts"}
@@ -82,7 +82,7 @@ class FEAPanel:
         self.obj = object
         self.doc = object.Object.Document
         # this will create a Qt widget from our ui file
-        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/PerformFEA.ui"
+        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/PerformFEA.ui"
         self.form = FreeCADGui.PySideUic.loadUi(guiPath)
         self.workingDir = '/'.join(
             object.Object.Document.FileName.split('/')[0:-1])

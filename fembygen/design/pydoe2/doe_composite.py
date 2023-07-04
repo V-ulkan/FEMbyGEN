@@ -14,10 +14,9 @@ Abraham Lee.
 """
 
 import numpy as np
-from pyDOE2.doe_factorial import ff2n
-from pyDOE2.doe_star import star
-from pyDOE2.doe_union import union
-from pyDOE2.doe_repeat_center import repeat_center
+from fembygen.design.pydoe2.doe_factorial import ff2n
+from fembygen.design.pydoe2.doe_star import star
+from fembygen.design.pydoe2.doe_union import union
 
 __all__ = ['ccdesign']
 
@@ -150,8 +149,8 @@ def ccdesign(n, center=(4, 4), alpha='orthogonal', face='circumscribed'):
     if face.lower() in ('circumscribed', 'ccc'):
         H1 = ff2n(n)
     
-    C1 = repeat_center(n, center[0])
-    C2 = repeat_center(n, center[1])
+    C1 = np.zeros((center[0],n))
+    C2 = np.zeros((center[1],n))
 
     H1 = union(H1, C1)
     H2 = union(H2, C2)
