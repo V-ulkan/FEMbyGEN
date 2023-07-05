@@ -19,7 +19,7 @@ def makeTopology():
         obj.isValid()
     except:
         obj = App.ActiveDocument.addObject(
-            "Part::FeaturePython", "Beso")
+            "App::DocumentObjectGroupPython", "Beso")
         App.ActiveDocument.Generative_Design.addObject(obj)
     Topology(obj)
     if App.GuiUp:
@@ -186,6 +186,10 @@ class TopologyPanel(QtGui.QWidget):
         self.form.domainList_2 = QListWidget()
         self.form.domainList_3 = QListWidget()
         self.form.addButton.setFixedSize(30,23)
+        """self.form.deleteDomainButton = QPushButton("-")
+        self.form.deleteDomainButton.setFixedSize(30,23)
+        self.form.deleteDomainButton2 = QPushButton("-")
+        self.form.deleteDomainButton2.setFixedSize(30,23)"""
         self.form.newAddButton = QPushButton("+")
         self.form.newAddButton.setFixedSize(30,23)
 
@@ -241,9 +245,12 @@ class TopologyPanel(QtGui.QWidget):
 
         #self.Update()  # first update
 
+
     def addNewDomain2(self):
         self.form.newAddButton.deleteLater()
+        #self.form.deleteDomainButton.deleteLater()
         self.form.layout.addWidget(self.form.label2,stretch=1)
+        #self.form.layout.addWidget(self.form.deleteDomainButton2,stretch =1)
         self.form.layout2.addWidget(self.form.horizontal2,stretch =1)
         self.form.layout2.addWidget(self.form.selectMaterial_3,stretch=1)
         self.form.layout3.addWidget(self.form.horizontal3,stretch=1)
@@ -295,6 +302,7 @@ class TopologyPanel(QtGui.QWidget):
         self.form.layout.addWidget(self.form.label1,stretch=1)
         self.form.layout.addWidget(self.form.horizontal1,stretch=1)
         self.form.layout.addWidget(self.form.newAddButton,stretch=1)
+        #self.form.layout.addWidget(self.form.deleteDomainButton,stretch=1)
         self.form.layout2.addWidget(self.form.selectMaterial_2,stretch=1)
         self.form.layout3.addWidget(self.form.thicknessObject2,stretch=1)
         self.form.layout4.addWidget(self.form.asDesign_checkbox2,stretch=1)

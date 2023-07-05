@@ -2,6 +2,7 @@
 # BESO (Bi-directional Evolutionary Structural Optimization Method)
 
 import FreeCADGui as Gui
+import FreeCAD
 import numpy as np
 import multiprocessing
 import os
@@ -12,6 +13,7 @@ import fembygen.beso_lib
 import fembygen.beso_filters
 import fembygen.beso_plots
 import fembygen.beso_separate
+import Fem
 # import importlib
 # importlib.reload(fembygen.beso_plots)  # reloads without FreeCAD restart
 start_time = time.time()
@@ -613,6 +615,19 @@ while True:
             if "vtk" in save_resulting_format:
                 fembygen.beso_lib.export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step,
                                     FI_step_max)
+        doc= FreeCAD.ActiveDocument
+        result_state0 = f"{file_nameW2}_state0"
+        result_state1 = f"{file_nameW2}_state1"
+        Fem.insert(f"{result_state0}.inp",doc.Name)
+        Fem.insert(f"{result_state1}.inp",doc.Name)
+        Gui.getDocument(doc).getObject(os.path.split(result_state0)[1]).ShapeColor = (1.,0.,0.)
+        Gui.getDocument(doc).getObject(os.path.split(result_state1)[1]).ShapeColor = (0.,1.,0.)
+        doc.Beso.addObject(doc.getObject(os.path.split(result_state0)[1]))
+        doc.Beso.addObject(doc.getObject(os.path.split(result_state1)[1]))
+        for obj in doc.Objects:
+            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh":
+                obj.Visibility = False
+
         break
     # plot and save figures
     fembygen.beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
@@ -716,6 +731,18 @@ while True:
         fembygen.beso_lib.write_to_log(file_name, msg)
         print(msg)
         oscillations = True
+        doc= FreeCAD.ActiveDocument
+        result_state0 = f"{file_nameW2}_state0"
+        result_state1 = f"{file_nameW2}_state1"
+        Fem.insert(f"{result_state0}.inp",doc.Name)
+        Fem.insert(f"{result_state1}.inp",doc.Name)
+        Gui.getDocument(doc).getObject(os.path.split(result_state0)[1]).ShapeColor = (1.,0.,0.)
+        Gui.getDocument(doc).getObject(os.path.split(result_state1)[1]).ShapeColor = (0.,1.,0.)
+        doc.Beso.addObject(doc.getObject(os.path.split(result_state0)[1]))
+        doc.Beso.addObject(doc.getObject(os.path.split(result_state1)[1]))
+        for obj in doc.Objects:
+            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh":
+                obj.Visibility = False
         break
     elm_states_before_last = elm_states_last.copy()
     elm_states_last = elm_states.copy()
