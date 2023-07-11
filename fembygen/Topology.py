@@ -6,7 +6,7 @@ from femtools import ccxtools
 import datetime
 import webbrowser
 from fembygen import Common
-from PySide2.QtWidgets import QPushButton,QComboBox,QSplitter,QCheckBox,QLineEdit,QListWidget,QLabel,QVBoxLayout
+from PySide2.QtWidgets import QPushButton,QComboBox,QSplitter,QCheckBox,QLineEdit,QListWidget,QLabel,QVBoxLayout,QAbstractItemView
 
 
 def makeTopology():
@@ -49,7 +49,7 @@ class Topology:
 class TopologyCommand():
 
     def GetResources(self):
-        return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Topology.svg'),  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
                 'ToolTip': "Opens Beso gui"}
@@ -74,7 +74,7 @@ class TopologyCommand():
 class TopologyPanel(QtGui.QWidget):
     def __init__(self,object):
         self.obj = object
-        guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/Beso.ui"
+        guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Beso.ui"
         self.form  = Gui.PySideUic.loadUi(guiPath)
         self.workingDir = '/'.join(
             object.Object.Document.FileName.split('/')[0:-1])
@@ -184,12 +184,14 @@ class TopologyPanel(QtGui.QWidget):
         self.form.directionVector_3.setText("0,0,1")
         self.form.directionVector_3.setEnabled(False)
         self.form.domainList_2 = QListWidget()
+        self.form.domainList_2.setSelectionMode(QAbstractItemView.MultiSelection)
         self.form.domainList_3 = QListWidget()
+        self.form.domainList_3.setSelectionMode(QAbstractItemView.MultiSelection)
         self.form.addButton.setFixedSize(30,23)
-        """self.form.deleteDomainButton = QPushButton("-")
+        self.form.deleteDomainButton = QPushButton("-")
         self.form.deleteDomainButton.setFixedSize(30,23)
         self.form.deleteDomainButton2 = QPushButton("-")
-        self.form.deleteDomainButton2.setFixedSize(30,23)"""
+        self.form.deleteDomainButton2.setFixedSize(30,23)
         self.form.newAddButton = QPushButton("+")
         self.form.newAddButton.setFixedSize(30,23)
 
@@ -205,24 +207,134 @@ class TopologyPanel(QtGui.QWidget):
         self.form.domainList_1.clear()
         self.form.domainList_1.addItem("All defined")
         self.form.domainList_1.addItem("Domain 0")
-        #self.form.domainList_1.addItem("Domain 1")
         self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
+
+        self.form.layout.addWidget(self.form.label1,stretch=1)
+        self.form.layout.addWidget(self.form.horizontal1,stretch=1)
+        self.form.layout.addWidget(self.form.label2,stretch=1)
+
+        self.form.layout.addWidget(self.form.newAddButton,stretch=1)
+        self.form.newAddButton.setVisible(False)
+        self.form.horizontal1.setVisible(False)
+        self.form.label1.setVisible(False)
+        self.form.label2.setVisible(False)
+        self.form.layout.addWidget(self.form.deleteDomainButton,stretch=1)
+        self.form.layout.addWidget(self.form.deleteDomainButton2,stretch =1)
+        self.form.deleteDomainButton.setVisible(False)
+        self.form.deleteDomainButton2.setVisible(False)
+        self.form.layout2.addWidget(self.form.selectMaterial_2,stretch=1)
+        self.form.layout2.addWidget(self.form.horizontal2,stretch=1)
+        self.form.layout2.addWidget(self.form.selectMaterial_3,stretch=1)
+        self.form.selectMaterial_2.setVisible(False)
+        self.form.selectMaterial_3.setVisible(False)
+        self.form.horizontal2.setVisible(False)
+        self.form.layout3.addWidget(self.form.thicknessObject2,stretch=1)
+        self.form.layout3.addWidget(self.form.horizontal3,stretch=1)
+        self.form.layout3.addWidget(self.form.thicknessObject3, stretch=1)
+        self.form.thicknessObject2.setVisible(False)
+        self.form.thicknessObject3.setVisible(False)
+        self.form.horizontal3.setVisible(False)
+        self.form.layout4.addWidget(self.form.asDesign_checkbox2,stretch=1)
+        self.form.layout4.addWidget(self.form.horizontal4,stretch=1)
+        self.form.layout4.addWidget(self.form.asDesign_checkbox3,stretch=1)
+        self.form.asDesign_checkbox2.setVisible(False)
+        self.form.asDesign_checkbox3.setVisible(False)
+        self.form.horizontal4.setVisible(False)
+        self.form.layout5.addWidget(self.form.stressLimit_2,stretch=1)
+        self.form.layout5.addWidget(self.form.horizontal5,stretch=1)
+        self.form.layout5.addWidget(self.form.stressLimit_3,stretch =1)
+        self.form.stressLimit_2.setVisible(False)
+        self.form.stressLimit_3.setVisible(False)
+        self.form.horizontal5.setVisible(False)
+        self.form.layout6.addWidget(self.form.label3,stretch=1)
+        self.form.layout6.addWidget(self.form.horizontal6,stretch=1)
+        self.form.layout6.addWidget(self.form.label4,stretch=1)
+        self.form.label3.setVisible(False)
+        self.form.label4.setVisible(False)
+        self.form.horizontal6.setVisible(False)
+        self.form.layout7.addWidget(self.form.selectFilter_2,stretch=1)
+        self.form.layout7.addWidget(self.form.horizontal7,stretch=1)
+        self.form.layout7.addWidget(self.form.selectFilter_3,stretch=1)
+        self.form.selectFilter_2.setVisible(False)
+        self.form.selectFilter_3.setVisible(False)
+        self.form.horizontal7.setVisible(False)
+        self.form.layout8.addWidget(self.form.filterRange_2,stretch=1)
+        self.form.layout8.addWidget(self.form.horizontal8,stretch=1)
+        self.form.layout8.addWidget(self.form.range_2,stretch=1)
+        self.form.filterRange_2.setVisible(False)
+        self.form.range_2.setVisible(False)
+        self.form.horizontal8.setVisible(False)
+        self.form.layout8.addWidget(self.form.horizontal9,stretch=1)
+        self.form.layout8.addWidget(self.form.filterRange_3,stretch=1)
+        self.form.layout8.addWidget(self.form.range_3,stretch=1)
+        self.form.filterRange_3.setVisible(False)
+        self.form.range_3.setVisible(False)
+        self.form.horizontal9.setVisible(False)
+        self.form.layout9.addWidget(self.form.directionVector_2,stretch=1)
+        self.form.layout9.addWidget(self.form.horizontal10,stretch=1)
+        self.form.layout9.addWidget(self.form.directionVector_3,stretch=1)
+        self.form.directionVector_2.setVisible(False)
+        self.form.directionVector_3.setVisible(False)
+        self.form.horizontal10.setVisible(False)
+        self.form.layout10.addWidget(self.form.horizontal12,stretch=1)
+        self.form.layout10.addLayout(self.form.verticalLayout2,stretch=1)
+        self.form.layout10.addWidget(self.form.horizontal11,stretch=1)
+        self.form.layout10.addLayout(self.form.verticalLayout3,stretch=1)
+        self.form.verticalLayout2.addWidget(self.form.domainList_2,stretch=1)
+        self.form.verticalLayout3.addWidget(self.form.domainList_3,stretch=1)
+        self.form.verticalLayout2.setEnabled(False)
+        self.form.verticalLayout3.setEnabled(False)
+        self.form.domainList_2.setVisible(False)
+        self.form.domainList_3.setVisible(False)
+        self.form.horizontal11.setVisible(False)
+        self.form.selectFilter_2.currentIndexChanged.connect(self.filterType2)
+        self.form.selectFilter_3.currentIndexChanged.connect(self.filterType3)
+        self.form.filterRange_2.currentIndexChanged.connect(self.filterRange2)
+        self.form.filterRange_3.currentIndexChanged.connect(self.filterRange2)
+
+        self.form.selectMaterial_2.clear()
+        self.form.selectMaterial_3.clear()
+        self.form.selectMaterial_2.addItem("None")
+        self.form.selectMaterial_3.addItem("None")
+        self.form.thicknessObject2.clear()
+        self.form.thicknessObject3.clear()
+        self.form.thicknessObject2.addItem("None")
+        self.form.thicknessObject3.addItem("None")
+        self.form.domainList_2.clear()
+        self.form.domainList_2.addItem("All defined")
+        self.form.domainList_2.addItem("Domain 0")
+        self.form.domainList_2.addItem("Domain 1")
+        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
+
+        self.form.domainList_3.clear()
+        self.form.domainList_3.addItem("All defined")
+        self.form.domainList_3.addItem("Domain 0")
+        self.form.domainList_3.addItem("Domain 1")
+        self.form.domainList_3.addItem("Domain 2")
+        self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
 
 
         for mat in self.materials:
-            self.form.selectMaterial_1.addItem(mat.Label) 
+            self.form.selectMaterial_1.addItem(mat.Label)
+            self.form.selectMaterial_2.addItem(mat.Label)
+            self.form.selectMaterial_3.addItem(mat.Label)
         if self.materials:
             self.form.selectMaterial_1.setCurrentIndex(1)
         for th in self.thicknesses:
             self.form.thicknessObject1.addItem(th.Label)
+            self.form.thicknessObject2.addItem(th.Label)
+            self.form.thicknessObject3.addItem(th.Label)
+        
+        
 
-
+        self.form.newAddButton.clicked.connect(self.addNewDomain2)
+        self.form.deleteDomainButton.clicked.connect(self.deleteDomain)
+        self.form.deleteDomainButton2.clicked.connect(self.deleteDomain2)
         self.form.addButton.clicked.connect(self.addNewDomain) #adding new domains widgets to ui
        
         self.form.selectGen.currentIndexChanged.connect(self.selectFile) # Select generated analysis file
 
         #self.form.updateButton.clicked.connect(self.Update) # Update domains button
-
         self.form.selectMaterial_1.currentIndexChanged.connect(self.selectMaterial1) #select domain by material object comboBox 1
         self.form.selectMaterial_2.currentIndexChanged.connect(self.selectMaterial2) #select domain by material object comboBox 2
         self.form.selectMaterial_3.currentIndexChanged.connect(self.selectMaterial3) #select domain by material object comboBox 3
@@ -247,93 +359,174 @@ class TopologyPanel(QtGui.QWidget):
 
 
     def addNewDomain2(self):
-        self.form.newAddButton.deleteLater()
-        #self.form.deleteDomainButton.deleteLater()
-        self.form.layout.addWidget(self.form.label2,stretch=1)
-        #self.form.layout.addWidget(self.form.deleteDomainButton2,stretch =1)
-        self.form.layout2.addWidget(self.form.horizontal2,stretch =1)
-        self.form.layout2.addWidget(self.form.selectMaterial_3,stretch=1)
-        self.form.layout3.addWidget(self.form.horizontal3,stretch=1)
-        self.form.layout3.addWidget(self.form.thicknessObject3,stretch=1)
-        self.form.layout4.addWidget(self.form.horizontal4,stretch=1)
-        self.form.layout4.addWidget(self.form.asDesign_checkbox3,stretch=1)
-        self.form.layout5.addWidget(self.form.horizontal5,stretch=1)
-        self.form.layout5.addWidget(self.form.stressLimit_3,stretch=1)
+        self.form.deleteDomainButton.setVisible(False)
+        self.form.horizontal1.setVisible(True)
+        self.form.horizontal2.setVisible(True)
+        self.form.horizontal3.setVisible(True)
+        self.form.horizontal4.setVisible(True)
+        self.form.horizontal5.setVisible(True)
+        self.form.horizontal6.setVisible(True)
+        self.form.horizontal7.setVisible(True)
+        self.form.horizontal8.setVisible(True)
+        self.form.horizontal9.setVisible(True)
+        self.form.horizontal10.setVisible(True)
+        self.form.horizontal11.setVisible(True)
 
-        self.form.layout6.addWidget(self.form.horizontal6,stretch=1)
-        self.form.layout6.addWidget(self.form.label4,stretch=1)
-        self.form.layout7.addWidget(self.form.horizontal7,stretch=1)
-        self.form.layout7.addWidget(self.form.selectFilter_3,stretch=1)
-        self.form.layout8.addWidget(self.form.horizontal8,stretch=1)
-        self.form.layout8.addWidget(self.form.filterRange_3,stretch=1)
-        self.form.layout8.addWidget(self.form.range_3,stretch=1)
-        self.form.layout9.addWidget(self.form.horizontal9,stretch=1)
-        self.form.layout9.addWidget(self.form.directionVector_3,stretch=1)
-        self.form.layout10.addWidget(self.form.horizontal10,stretch=1)
-        self.form.layout10.addLayout(self.form.verticalLayout3,stretch=1)
-        self.form.verticalLayout3.addWidget(self.form.domainList_3,stretch=1)
-        self.form.selectMaterial_3.currentIndexChanged.connect(self.selectMaterial3)
-        self.form.selectFilter_3.currentIndexChanged.connect(self.filterType3)
-        self.form.filterRange_3.currentIndexChanged.connect(self.filterRange3)
-        #self.Update()
-        #self.form.verticalLayout3.addWidget(self.form.vertical1,stretch=4)
-
-        self.form.selectMaterial_3.clear()
-        self.form.selectMaterial_3.addItem("None")
-        self.form.thicknessObject3.clear()
-        self.form.thicknessObject3.addItem("None")
-        self.form.domainList_3.clear()
-        self.form.domainList_3.addItem("All defined")
-        self.form.domainList_3.addItem("Domain 0")
-        self.form.domainList_3.addItem("Domain 1")
-        self.form.domainList_3.addItem("Domain 2")
-        self.form.domainList_2.addItem("Domain 2")
+        self.form.label2.setVisible(True)
+        self.form.newAddButton.setVisible(False)
+        self.form.label3.setVisible(True)
+        self.form.deleteDomainButton2.setVisible(True)
+        self.form.selectMaterial_3.setVisible(True)
+        self.form.selectMaterial_3.setEnabled(True)
+        self.form.thicknessObject3.setVisible(True)
+        self.form.asDesign_checkbox3.setVisible(True)
+        self.form.stressLimit_3.setVisible(True)
+        self.form.label4.setVisible(True)
+        self.form.selectFilter_3.setVisible(True)
+        self.form.selectFilter_3.setEnabled(True)
+        self.form.filterRange_3.setVisible(True)
+        self.form.range_3.setVisible(True)
+        self.form.directionVector_3.setVisible(True)
+        self.form.verticalLayout3.setEnabled(True)
+        self.form.domainList_3.setVisible(True)
         self.form.domainList_1.addItem("Domain 2")
-        self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
-        for mat in self.materials:
-            self.form.selectMaterial_3.addItem(mat.Label)
-        for th in self.thicknesses:
-            self.form.thicknessObject3.addItem(th.Label)
+        self.form.domainList_2.addItem("Domain 2")
+
+    def deleteDomain2(self):
 
 
+        self.form.horizontal1.setVisible(False)
+        self.form.horizontal2.setVisible(False)
+        self.form.horizontal3.setVisible(False)
+        self.form.horizontal4.setVisible(False)
+        self.form.horizontal5.setVisible(False)
+        self.form.horizontal6.setVisible(False)
+        self.form.horizontal7.setVisible(False)
+        self.form.horizontal8.setVisible(False)
+        self.form.horizontal9.setVisible(False)
+        self.form.horizontal10.setVisible(False)
+        self.form.horizontal11.setVisible(False)
+
+        self.form.label2.setEnabled(False)
+        self.form.label2.setVisible(False)
+
+
+        self.form.deleteDomainButton2.setVisible(False)
+
+        self.form.selectMaterial_3.setEnabled(False)
+        self.form.selectMaterial_3.setVisible(False)
+
+        self.form.thicknessObject3.setEnabled(False)
+        self.form.thicknessObject3.setVisible(False)
+
+        self.form.asDesign_checkbox3.setEnabled(False)
+        self.form.asDesign_checkbox3.setVisible(False)
+
+        self.form.stressLimit_3.setEnabled(False)
+        self.form.stressLimit_3.setVisible(False)
+
+        self.form.label4.setEnabled(False)
+        self.form.label4.setVisible(False)
+
+        self.form.selectFilter_3.setEnabled(False)
+        self.form.selectFilter_3.setVisible(False)
+
+        self.form.filterRange_3.setEnabled(False)
+        self.form.filterRange_3.setVisible(False)
+
+        self.form.range_3.setEnabled(False)
+        self.form.range_3.setVisible(False)
+
+        self.form.directionVector_3.setEnabled(False)
+        self.form.directionVector_3.setVisible(False)
+
+        self.form.verticalLayout3.setEnabled(False)
+
+        self.form.domainList_3.setEnabled(False)
+        self.form.domainList_3.setVisible(False)
+
+
+        self.form.newAddButton.setVisible(True)
+        self.form.deleteDomainButton.setVisible(True)
+        
+        self.form.selectMaterial_3.setCurrentIndex(0)
+        self.form.selectFilter_3.setCurrentIndex(0)
+        self.form.domainList_1.takeItem(3)
+        self.form.domainList_2.takeItem(3)
+
+    def deleteDomain(self):
+
+        self.form.horizontal12.setVisible(False)
+
+        self.form.label1.setEnabled(False)
+        self.form.label1.setVisible(False)
+
+        self.form.newAddButton.setVisible(False)
+
+        self.form.deleteDomainButton.setVisible(False)
+
+        self.form.selectMaterial_2.setEnabled(False)
+        self.form.selectMaterial_2.setVisible(False)
+
+        self.form.thicknessObject2.setEnabled(False)
+        self.form.thicknessObject2.setVisible(False)
+
+        self.form.asDesign_checkbox2.setEnabled(False)
+        self.form.asDesign_checkbox2.setVisible(False)
+
+        self.form.stressLimit_2.setEnabled(False)
+        self.form.stressLimit_2.setVisible(False)
+
+        self.form.label3.setEnabled(False)
+        self.form.label3.setVisible(False)
+
+        self.form.selectFilter_2.setEnabled(False)
+        self.form.selectFilter_2.setVisible(False)
+
+        self.form.filterRange_2.setEnabled(False)
+        self.form.filterRange_2.setVisible(False)
+
+        self.form.range_2.setEnabled(False)
+        self.form.range_2.setVisible(False)
+
+        self.form.directionVector_2.setEnabled(False)
+        self.form.directionVector_2.setVisible(False)
+
+        self.form.verticalLayout2.setEnabled(False)
+
+        self.form.domainList_2.setEnabled(False)
+        self.form.domainList_2.setVisible(False)
+
+
+        self.form.addButton.setVisible(True)
+        
+        self.form.selectMaterial_2.setCurrentIndex(0)
+        self.form.selectFilter_2.setCurrentIndex(0)
+        self.form.domainList_1.takeItem(2)
+        
             
     def addNewDomain(self):
-        self.form.addButton.deleteLater()
-        self.form.layout.addWidget(self.form.label1,stretch=1)
-        self.form.layout.addWidget(self.form.horizontal1,stretch=1)
-        self.form.layout.addWidget(self.form.newAddButton,stretch=1)
-        #self.form.layout.addWidget(self.form.deleteDomainButton,stretch=1)
-        self.form.layout2.addWidget(self.form.selectMaterial_2,stretch=1)
-        self.form.layout3.addWidget(self.form.thicknessObject2,stretch=1)
-        self.form.layout4.addWidget(self.form.asDesign_checkbox2,stretch=1)
-        self.form.layout5.addWidget(self.form.stressLimit_2,stretch=1)
-        self.form.layout6.addWidget(self.form.label3,stretch=1)
-        self.form.layout7.addWidget(self.form.selectFilter_2,stretch=1)
-        self.form.layout8.addWidget(self.form.filterRange_2,stretch=1)
-        self.form.layout8.addWidget(self.form.range_2,stretch=1)
-        self.form.layout9.addWidget(self.form.directionVector_2,stretch=1)
-        self.form.layout10.addLayout(self.form.verticalLayout2,stretch=1)
-        self.form.verticalLayout2.addWidget(self.form.domainList_2,stretch=1)
-        #self.form.verticalLayout2.addWidget(self.form.vertical2,stretch=4)
-        self.form.selectMaterial_2.currentIndexChanged.connect(self.selectMaterial2)
-        self.form.selectFilter_2.currentIndexChanged.connect(self.filterType2)
-        self.form.filterRange_2.currentIndexChanged.connect(self.filterRange2)
-        self.form.newAddButton.clicked.connect(self.addNewDomain2)
-
-        self.form.selectMaterial_2.clear()
-        self.form.selectMaterial_2.addItem("None")
-        self.form.thicknessObject2.clear()
-        self.form.thicknessObject2.addItem("None")
-        self.form.domainList_2.clear()
-        self.form.domainList_2.addItem("All defined")
-        self.form.domainList_2.addItem("Domain 0")
-        self.form.domainList_2.addItem("Domain 1")
+        self.form.addButton.setVisible(False)
+        self.form.horizontal12.setVisible(True)
+        self.form.label1.setVisible(True)
+        self.form.newAddButton.setVisible(True)
+        self.form.deleteDomainButton.setVisible(True)
+        self.form.selectMaterial_2.setVisible(True)
+        self.form.selectMaterial_2.setEnabled(True)
+        self.form.thicknessObject2.setVisible(True)
+        self.form.asDesign_checkbox2.setVisible(True)
+        self.form.stressLimit_2.setVisible(True)
+        self.form.label3.setVisible(True)
+        self.form.selectFilter_2.setVisible(True)
+        self.form.selectFilter_2.setEnabled(True)
+        self.form.filterRange_2.setVisible(True)
+        self.form.range_2.setVisible(True)
+        self.form.directionVector_2.setVisible(True)
+        self.form.horizontal12.setVisible(True)
+        self.form.verticalLayout2.setEnabled(True)
+        self.form.domainList_2.setVisible(True)
         self.form.domainList_1.addItem("Domain 1")
-        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
-        for mat in self.materials:
-            self.form.selectMaterial_2.addItem(mat.Label)
-        for th in self.thicknesses:
-            self.form.thicknessObject2.addItem(th.Label)
+        
 
     
     def selectFile(self): 

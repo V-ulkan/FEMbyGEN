@@ -625,7 +625,7 @@ while True:
         doc.Beso.addObject(doc.getObject(os.path.split(result_state0)[1]))
         doc.Beso.addObject(doc.getObject(os.path.split(result_state1)[1]))
         for obj in doc.Objects:
-            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh":
+            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh" or obj.Label == "ResultMesh":
                 obj.Visibility = False
 
         break
@@ -741,7 +741,7 @@ while True:
         doc.Beso.addObject(doc.getObject(os.path.split(result_state0)[1]))
         doc.Beso.addObject(doc.getObject(os.path.split(result_state1)[1]))
         for obj in doc.Objects:
-            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh":
+            if obj.Label == "FEMMeshNetgen" or obj.Label == "FEMMeshGmsh" or obj.Label == "ResultMesh":
                 obj.Visibility = False
         break
     elm_states_before_last = elm_states_last.copy()

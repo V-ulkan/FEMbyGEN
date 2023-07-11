@@ -1,12 +1,13 @@
 import FreeCAD
 import FreeCADGui
+import os
 
 
 class AliasCommand():
     """Analyse the generated parts"""
 
     def GetResources(self):
-        return {'Pixmap': FreeCAD.getUserAppDataDir() +'Mod/FEMbyGEN/fembygen/Alias.svg',  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Alias.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+A",  # a default shortcut (optional)
                 'MenuText': "Alias",
                 'ToolTip': "Alias in spreadsheet"}

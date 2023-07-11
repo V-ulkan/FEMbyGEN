@@ -1,5 +1,5 @@
 import numpy as np
-import pyDOE2 as pydoe2
+from fembygen.design.pydoe2 import doe_lhs,doe_box_behnken,doe_composite,doe_plackett_burman
 import itertools
 
 
@@ -7,9 +7,18 @@ def fullfact(A):
     numgenerations = list(itertools.product(*A))
     return numgenerations
 
+def designlhc(A):
+    lhc = doe_lhs.lhs(len(A),samples=len(A)**2, criterion='center')
+    row, column = lhc.shape
+    for i,param in enumerate(A):
+        diff=param[-1]-param[0]
+        lhc[:,i]=diff*lhc[:,i]+param[0]
+
+    lhc = lhc.tolist()
+    return lhc
 
 def designpb(A):
-    pb = pydoe2.pbdesign(len(A))
+    pb = doe_plackett_burman.pbdesign(len(A))
     row, column = pb.shape
     for c in range(column):
 
@@ -24,7 +33,7 @@ def designpb(A):
 
 
 def designcentalcom(A):
-    cc = pydoe2.ccdesign(len(A), alpha="r")
+    cc = doe_composite.ccdesign(len(A), alpha="r")
     row, column = cc.shape
     for c in range(column):
 
@@ -46,7 +55,7 @@ def designcentalcom(A):
 
 
 def designboxBen(A):
-    bb = pydoe2.bbdesign(len(A))
+    bb = doe_box_behnken.bbdesign(len(A))
     row, column = bb.shape
     for c in range(column):
 
@@ -59,17 +68,5 @@ def designboxBen(A):
             elif bb[r, c] == 1:
                 bb[r, c] = A[c][-1]
 
-            
-    
-        
-
     bb = bb.tolist()
     return bb
-
-        
-
-       
- 
-
-     
-     

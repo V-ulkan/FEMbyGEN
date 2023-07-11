@@ -34,7 +34,7 @@ class InitiateCommand():
     """Analyse the generated parts"""
 
     def GetResources(self):
-        return {'Pixmap': FreeCAD.getUserAppDataDir() +'Mod/FEMbyGEN/fembygen/Initiate.svg',  # the name of a svg file available in the resources
+        return {'Pixmap': FreeCAD.getUserAppDataDir() +'Mod/FEMbyGEN/fembygen/icons/Initiate.svg',  # the name of a svg file available in the resources
                 'Accel': "Shift+N",  # a default shortcut (optional)
                 'MenuText': "Initiate",
                 'ToolTip': "Initialise the generation process"}
