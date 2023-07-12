@@ -15,6 +15,8 @@ import Fem
 # importlib.reload(beso_plots)  # reloads without FreeCAD restart
 start_time = time.time()
 doc= FreeCAD.ActiveDocument
+mass_removal_ratio=doc.Topology.mass_removal_ratio
+mass_addition_ratio=doc.Topology.mass_addition_ratio
 domains_from_config = domain_optimized.keys()
 criteria = []
 domain_FI_filled = False

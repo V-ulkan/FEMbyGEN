@@ -118,8 +118,7 @@ def get_results_fc(case):
     result_state1 = f"{file}_state1"
 
     # hide all previous mesh objects
-    for obj in doc.Objects:
-        if obj.TypeId == 'Fem::FemMeshObjectPython' or obj.TypeId == 'Fem::FemMeshShapeNetgenObject' or obj.TypeId == 'Fem::FemMeshObject':
+    for obj in doc.Topology.Group:
             obj.Visibility = False
     # if the file already imported open it
     if doc.getObject(os.path.split(file)[1]):
