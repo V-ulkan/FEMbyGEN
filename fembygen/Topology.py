@@ -8,7 +8,6 @@ import webbrowser
 from fembygen import Common
 from PySide2.QtWidgets import QPushButton,QComboBox,QSplitter,QCheckBox,QLineEdit,QListWidget,QLabel,QVBoxLayout,QAbstractItemView
 
-
 def makeTopology():
     def attach(self, vobj):
         self.ViewObject = vobj
@@ -19,7 +18,7 @@ def makeTopology():
         obj.isValid()
     except:
         obj = App.ActiveDocument.addObject(
-            "App::DocumentObjectGroupPython", "Beso")
+            "App::DocumentObjectGroupPython", "Topology")
         App.ActiveDocument.Generative_Design.addObject(obj)
     Topology(obj)
     if App.GuiUp:
@@ -30,19 +29,22 @@ def returnPath():
     path = os.path.split(self.form.fileName.text())[0] #fileName contains full path not only file name
 
 class Topology:
-
     def __init__(self, obj):
         obj.Proxy = self
-        self.Type = "Beso"
+        self.Type = "Topology"
         self.initProperties(obj)
 
     def initProperties(self, obj):
-        # try:
-        #     obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
-        #                     "Generated parameter matrix")
-        #     obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
-                            # "Generated parameter matrix")
-        # except:
+        try:
+            obj.addProperty("App::PropertyString", "Path", "Base",
+                            "Path of topology trials")
+            obj.addProperty("App::PropertyInteger", "mass_addition_ratio", "Inputs",
+                                "The ratio to add mass between iterations ")
+            obj.addProperty("App::PropertyInteger", "mass_removal_ratio", "Inputs",
+                                "The ratio to add mass between iterations ")
+            obj.addProperty("App::PropertyInteger", "LastState", "Results",
+                            "Last state")
+        except:
             pass
 
 
@@ -52,7 +54,7 @@ class TopologyCommand():
         return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
-                'ToolTip': "Opens Beso gui"}
+                'ToolTip': "Opens Topology gui"}
 
     def Activated(self):
 
@@ -79,9 +81,8 @@ class TopologyPanel(QtGui.QWidget):
         self.workingDir = '/'.join(
             object.Object.Document.FileName.split('/')[0:-1])
         self.doc = object.Object.Document
-        (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
-        self.doc.Generate.Parameters_Name = paramNames
-        self.doc.Generate.Generated_Parameters = parameterValues
+
+    
 
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
@@ -1111,8 +1112,36 @@ class TopologyPanel(QtGui.QWidget):
         # read configuration file to fill variables listed above
         exec(open(os.path.join(self.path, "beso_conf.py")).read())
         # run in foreground (freeze FreeCAD)
-        exec(open(os.path.join(self.beso_dir, "beso_main.py")).read())
+        exec(open(os.path.join(self.beso_dir, "topology", "beso_main.py")).read())
+        self.doc.Topology.Path=os.path.split(self.form.fileName.text())[0]
+        Gui.runCommand('Std_ActivatePrevWindow')
+        self.get_case("last")
 
+    def get_case(self, numberofcase):
+        lastcase=self.doc.Topology.LastState
+        if not numberofcase:
+            FreeCAD.Console.PrintError("The simulations are not completed\n")
+            return
+        elif numberofcase == "last":
+            numberofcase=lastcase
+        mw = Gui.getMainWindow()
+        mdi = mw.findChild(QtGui.QMdiArea)
+        subWinMW=mdi.activeSubWindow().findChild(QtGui.QMainWindow)
+        graphic=subWinMW.findChild(QtGui.QGraphicsView)
+        graphicScene=graphic.findChild(QtGui.QGraphicsScene)
+
+        slider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        slider.setGeometry(10,graphicScene.height()-50, graphicScene.width()-50, 50)
+        slider.setMinimum(1)
+        slider.setMaximum(lastcase)
+        slider.setValue(numberofcase)
+        slider.setTickPosition(QtGui.QSlider.TicksBelow)
+        slider.setTickInterval(1)
+        slider.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        slider.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        graphicScene.addWidget(slider) 
+        Common.get_results_fc(numberofcase)
+        slider.valueChanged.connect(Common.get_results_fc)
     
     def openExample(self):
         webbrowser.open_new_tab("https://github.com/fandaL/beso/wiki/Example-4:-GUI-in-FreeCAD")
@@ -1249,7 +1278,7 @@ class ViewProviderGen:
         vobj.Proxy = self
 
     def getIcon(self):
-        icon_path = os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Topology.svg')
+        icon_path = os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg')
         return icon_path
 
     def attach(self, vobj):

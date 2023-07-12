@@ -273,7 +273,7 @@ class ViewProviderFEA:
 
     def getIcon(self):
         icon_path = os.path.join(
-            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/FEA.svg')
+            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/FEA.svg')
         return icon_path
 
     def attach(self, vobj):

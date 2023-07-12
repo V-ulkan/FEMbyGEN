@@ -405,7 +405,7 @@ class ViewProviderGen:
 
     def getIcon(self):
         icon_path = os.path.join(
-            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Generate.svg')
+            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Generate.svg')
         return icon_path
 
     def attach(self, vobj):

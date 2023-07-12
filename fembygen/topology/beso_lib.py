@@ -3,7 +3,6 @@ import operator
 from math import *
 import os
 
-
 # function to print ongoing messages to the log file
 def write_to_log(file_name, msg):
     f_log = open(file_name[:-4] + ".log", "a")
