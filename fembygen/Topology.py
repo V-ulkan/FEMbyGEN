@@ -15,7 +15,7 @@ def makeTopology():
         self.Object = vobj.Object
 
     try:
-        obj = App.ActiveDocument.Beso
+        obj = App.ActiveDocument.Topology
         obj.isValid()
     except:
         obj = App.ActiveDocument.addObject(
