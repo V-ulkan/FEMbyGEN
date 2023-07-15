@@ -35,6 +35,11 @@ class Generate:
 
     def initProperties(self, obj):
         try:
+            obj.addProperty("App::PropertyEnumeration", "GenerationMethod", "Generations",
+                            "Generation Method")
+            obj.GenerationMethod=["Full Factorial Design","Taguchi Optimization Design",
+                                  "Plackett Burman Design","Box Behnken Design",
+                                "Latin Hyper Cube Design","Central Composite Design"]
             obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
                             "Generated parameter matrix")
             obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
@@ -83,6 +88,9 @@ class GeneratePanel():
         (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
         self.doc.Generate.Parameters_Name = paramNames
         self.doc.Generate.Generated_Parameters = parameterValues
+        index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide2.QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            self.form.selectDesign.setCurrentIndex(index)
         # Check if any generations have been made already, and up to what number
 
         numGens = Common.checkGenerations(self.workingDir)
@@ -213,45 +221,41 @@ class GeneratePanel():
         self.form.progressBar.setStyleSheet(
             'QProgressBar {text-align: center; } QProgressBar::chunk {background-color: #009688;}')
         # Combination of all parameters
-
         selectedModule = self.form.selectDesign.currentText()
+        self.doc.Generate.GenerationMethod =selectedModule
 
-        try:
+        numgenerations = self.design(selectedModule, param, numberofgen)
 
-            numgenerations = self.design(selectedModule, param, numberofgen)
+        numGens = Common.checkGenerations(self.workingDir)  # delete earlier generations files before
+        if numGens > 0:
+            self.deleteGenerations()
 
-            numGens = Common.checkGenerations(self.workingDir)  # delete earlier generations files before
-            print(numGens)
-            if numGens > 0:
-                self.deleteGenerations()
+        func = partial(self.copy_mesh, numgenerations)
+        iterationnumber = len(numgenerations)
+        p = mp.Pool(cpu_count()-1)
+        for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
+            # Update progress bar
+            progress = ((i+1)/iterationnumber) * 100
+            self.form.progressBar.setValue(progress)
+        p.close()
+        p.join()
 
-            func = partial(self.copy_mesh, numgenerations)
-            iterationnumber = len(numgenerations)
-            p = mp.Pool(cpu_count()-1)
-            for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
-                # Update progress bar
-                progress = ((i+1)/iterationnumber) * 100
-                self.form.progressBar.setValue(progress)
-            p.close()
-            p.join()
+        # ReActivate document again once finished
+        FreeCAD.setActiveDocument(master.Name)
+        master.Generate.Generated_Parameters = numgenerations
+        master.Generate.Parameters_Name = paramNames
+        self.updateParametersTable()
 
-            # ReActivate document again once finished
-            FreeCAD.setActiveDocument(master.Name)
-            master.Generate.Generated_Parameters = numgenerations
-            master.Generate.Parameters_Name = paramNames
-            self.updateParametersTable()
+        # Update number of generations produced in window
+        numGens = Common.checkGenerations(self.workingDir)
+        self.form.numGensLabel.setText(
+            str(numGens) + " generations produced")
+        self.resetViewControls(numGens)
+        self.updateParametersTable()
+        master.save()  # too store generated values in generate object
+        FreeCAD.Console.PrintMessage("Generation done successfully!\n")
 
-            # Update number of generations produced in window
-            numGens = Common.checkGenerations(self.workingDir)
-            self.form.numGensLabel.setText(
-                str(numGens) + " generations produced")
-            self.resetViewControls(numGens)
-            self.updateParametersTable()
-            master.save()  # too store generated values in generate object
-            FreeCAD.Console.PrintMessage("Generation done successfully!\n")
 
-        except TypeError:
-            print("Please install pyDOE2 module\n")
 
     def deleteGenerations(self):
         qm = PySide2.QtWidgets.QMessageBox

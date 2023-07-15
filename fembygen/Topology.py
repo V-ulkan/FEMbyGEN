@@ -920,7 +920,7 @@ class TopologyPanel(QtGui.QWidget):
             f.write("displacement_graph = []\n")
             f.write("save_iteration_results = 1\n")
             f.write("save_solver_files = ''\n")
-            f.write("save_resulting_format = 'inp vtk'\n")
+            f.write("save_resulting_format = 'inp'\n")
 
             if elset_id != -1:
                 f.write("elset_name = '{}'\n".format(elset))

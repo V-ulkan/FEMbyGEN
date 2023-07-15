@@ -247,8 +247,6 @@ class FEAPanel:
         else:
             FreeCAD.Console.PrintError(
                 "Houston, we have a problem! {}\n".format(message))  # in report view
-            print("Houston, we have a problem! {}\n".format(
-                message))  # in python console
 
         # save FEA results
         doc.save()
