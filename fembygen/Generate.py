@@ -107,7 +107,29 @@ class GeneratePanel():
         self.form.nextGen.clicked.connect(lambda: self.nextG(numGens))
         self.form.previousGen.clicked.connect(
             lambda: self.previousG(numGens))
+        
+        pix = PySide2.QtWidgets.QStyle.SP_FileDialogDetailedView
+        icon = self.form.more.style().standardIcon(pix)
+        self.form.more.setIcon(icon)
+        self.form.more.clicked.connect(self.more)
         self.updateParametersTable()
+
+    def more(self):
+        """I will write here a detailed inputs screens for methods"""
+        path=FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/"
+        method = self.form.selectDesign.currentText()
+        if method == "Full Factorial Design":
+            pass
+        elif method == "Plackett Burman Design":
+            pass
+        elif method == "Box Behnken Design":
+            FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui").show()
+        elif method == "Central Composite Design":
+            FreeCADGui.PySideUic.loadUi(path+"more_composite.ui").show()
+        elif method == "Latin Hyper Cube Design":
+            pass
+        elif method == "Taguchi Optimization Design":
+            pass
 
     def meshing(self, mesh, type):
         # Remeshing new generation
