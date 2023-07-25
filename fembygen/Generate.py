@@ -176,7 +176,46 @@ class GeneratePanel():
             settings.save.clicked.connect(save)
 
         elif method == "Latin Hyper Cube Design":
-            pass
+            def save():
+                import ast
+                self.doc.Generate.Samples = int(settings.samples.text())
+                self.doc.Generate.Criterion = settings.criterion.currentText()
+                self.doc.Generate.Iterations = int(settings.iterations.text())
+                self.doc.Generate.Random_State = int(settings.randomstate.text())
+                corrmat=settings.correlationmatrix.text()
+                if corrmat != "None":
+                    self.doc.Generate.Correlation_Matrix=ast.literal_eval(corrmat)
+                settings.close()
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_lhs.ui")
+            settings.samples.setText(str(len(self.doc.Generate.Parameters_Name)))
+            settings.show()
+            try:
+                settings.samples.setText(str(self.doc.Generate.Samples))
+                index = settings.criterion.findText(self.doc.Generate.Criterion, PySide2.QtCore.Qt.MatchFixedString)
+                if index >= 0:
+                    settings.criterion.setCurrentIndex(index)
+                settings.iterations.setText(str(self.doc.Generate.Iterations))
+                settings.randomstate.setText(str(self.doc.Generate.Random_State))
+                settings.correlationmatrix.setText(str(self.doc.Generate.Correlation_Matrix))
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyInteger", "Samples", "Latin Hyper Cube",
+                                              "The number of samples to generate for each factor (Default: number of parameters)")
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Criterion", "Latin Hyper Cube",
+                                              "Criterion")
+                self.doc.Generate.Criterion = ["center", "maxmin","centermaximin","correlation","lhsmu"]
+                self.doc.Generate.addProperty("App::PropertyInteger", "Iterations", "Latin Hyper Cube",
+                                              "The number of iterations in the maximin and correlations algorithms.")
+                self.doc.Generate.addProperty("App::PropertyInteger", "Random_State", "Latin Hyper Cube",
+                                              "Random state (or seed-number) which controls the seed and random draws")
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "Correlation_Matrix", "Latin Hyper Cube",
+                                              "Enforce correlation between factors (only used in lhsmu)")
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)            
         elif method == "Taguchi Optimization Design":
             pass
 
@@ -477,7 +516,19 @@ class GeneratePanel():
                 face = "circumscribed"
             return Design.designcentalcom(parameters, center, alpha, face)
         elif method == "Latin Hyper Cube Design":
-            return Design.designlhc(parameters)
+            try:
+                samples = self.doc.Generate.Samples
+                criterion = self.doc.Generate.Criterion
+                iterations = self.doc.Generate.Iterations
+                random_state = self.doc.Generate.Random_State
+                correlation_matrix = self.doc.Generate.Correlation_Matrix
+            except:
+                samples = None
+                criterion = None
+                iterations = None
+                random_state = None
+                correlation_matrix = None
+            return Design.designlhc(parameters,samples,criterion, iterations, random_state, correlation_matrix)
         elif method == "Taguchi Optimization Design":
             result = Taguchi.Taguchipy(parameters, numberofgen)
             res = result.selection()

@@ -8,8 +8,8 @@ def fullfact(A):
     return numgenerations
 
 
-def designlhc(A):
-    lhc = doe_lhs.lhs(len(A), samples=len(A)**2, criterion='center')
+def designlhc(A,samples,criterion, iterations, random_state, correlation_matrix):
+    lhc = doe_lhs.lhs(len(A), samples, criterion,iterations, random_state, correlation_matrix)
     row, column = lhc.shape
     for i, param in enumerate(A):
         diff = param[-1]-param[0]
