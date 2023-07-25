@@ -37,9 +37,9 @@ class Generate:
         try:
             obj.addProperty("App::PropertyEnumeration", "GenerationMethod", "Generations",
                             "Generation Method")
-            obj.GenerationMethod=["Full Factorial Design","Taguchi Optimization Design",
-                                  "Plackett Burman Design","Box Behnken Design",
-                                "Latin Hyper Cube Design","Central Composite Design"]
+            obj.GenerationMethod = ["Full Factorial Design", "Taguchi Optimization Design",
+                                    "Plackett Burman Design", "Box Behnken Design",
+                                    "Latin Hyper Cube Design", "Central Composite Design"]
             obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
                             "Generated parameter matrix")
             obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
@@ -107,7 +107,7 @@ class GeneratePanel():
         self.form.nextGen.clicked.connect(lambda: self.nextG(numGens))
         self.form.previousGen.clicked.connect(
             lambda: self.previousG(numGens))
-        
+
         pix = PySide2.QtWidgets.QStyle.SP_FileDialogDetailedView
         icon = self.form.more.style().standardIcon(pix)
         self.form.more.setIcon(icon)
@@ -116,16 +116,65 @@ class GeneratePanel():
 
     def more(self):
         """I will write here a detailed inputs screens for methods"""
-        path=FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/"
+        path = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/"
         method = self.form.selectDesign.currentText()
         if method == "Full Factorial Design":
             pass
         elif method == "Plackett Burman Design":
             pass
         elif method == "Box Behnken Design":
-            FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui").show()
+            def save():
+                self.doc.Generate.Center_Points = int(settings.center.text())
+                settings.close()
+
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui")
+            try:
+                settings.center.setText(str(self.doc.Generate.Center_Points))
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyInteger", "Center_Points", "Box Behnken",
+                                              "The number of center points to include")
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)
+
         elif method == "Central Composite Design":
-            FreeCADGui.PySideUic.loadUi(path+"more_composite.ui").show()
+            def save():
+                import ast
+                self.doc.Generate.Center = ast.literal_eval(settings.center.text())
+                self.doc.Generate.Alpha = settings.alpha.currentText()
+                self.doc.Generate.Face = settings.face.currentText()
+                settings.close()
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_composite.ui")
+            settings.show()
+            try:
+                settings.center.setText(str(self.doc.Generate.Center))
+                index_alpha = settings.alpha.findText(self.doc.Generate.Alpha, PySide2.QtCore.Qt.MatchFixedString)
+                if index_alpha >= 0:
+                    settings.alpha.setCurrentIndex(index_alpha)
+                index_face = settings.face.findText(self.doc.Generate.Face, PySide2.QtCore.Qt.MatchFixedString)
+                if index_face >= 0:
+                    settings.face.setCurrentIndex(index_face)
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "Center", "Central Composite",
+                                              "Number of center array")
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Alpha", "Central Composite",
+                                              "The effect of alpha has on the variance")
+                self.doc.Generate.Alpha = ["orthogonal", "rotatable"]
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Face", "Central Composite",
+                                              "The relation between the start points and the corner (factorial) points.")
+                self.doc.Generate.Face = ["circumscribed", "inscribed", "faced"]
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)
+
         elif method == "Latin Hyper Cube Design":
             pass
         elif method == "Taguchi Optimization Design":
@@ -244,7 +293,7 @@ class GeneratePanel():
             'QProgressBar {text-align: center; } QProgressBar::chunk {background-color: #009688;}')
         # Combination of all parameters
         selectedModule = self.form.selectDesign.currentText()
-        self.doc.Generate.GenerationMethod =selectedModule
+        self.doc.Generate.GenerationMethod = selectedModule
 
         numgenerations = self.design(selectedModule, param, numberofgen)
 
@@ -276,8 +325,6 @@ class GeneratePanel():
         self.updateParametersTable()
         master.save()  # too store generated values in generate object
         FreeCAD.Console.PrintMessage("Generation done successfully!\n")
-
-
 
     def deleteGenerations(self):
         qm = PySide2.QtWidgets.QMessageBox
@@ -414,9 +461,21 @@ class GeneratePanel():
         elif method == "Plackett Burman Design":
             return Design.designpb(parameters)
         elif method == "Box Behnken Design":
-            return Design.designboxBen(parameters)
+            try:
+                center = self.doc.Generate.Center_Points
+            except:
+                center = None
+            return Design.designboxBen(parameters, center)
         elif method == "Central Composite Design":
-            return Design.designcentalcom(parameters)
+            try:
+                center = self.doc.Generate.Center
+                face = self.doc.Generate.Face
+                alpha = self.doc.Generate.Alpha
+            except:
+                center = (4, 4)
+                alpha = "orthogonal"
+                face = "circumscribed"
+            return Design.designcentalcom(parameters, center, alpha, face)
         elif method == "Latin Hyper Cube Design":
             return Design.designlhc(parameters)
         elif method == "Taguchi Optimization Design":

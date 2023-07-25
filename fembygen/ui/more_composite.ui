@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>177</width>
-    <height>202</height>
+    <width>182</width>
+    <height>188</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -67,7 +67,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="alpha">
           <property name="toolTip">
            <string>A string describing the effect of alpha has on the variance. ``alpha``
         can take on the following values</string>
@@ -100,7 +100,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_2">
+         <widget class="QComboBox" name="face">
           <property name="toolTip">
            <string>The relation between the start points and the corner (factorial) points.
         There are three options for this input</string>
@@ -125,7 +125,7 @@
        </layout>
       </item>
       <item>
-       <widget class="QPushButton" name="Save">
+       <widget class="QPushButton" name="save">
         <property name="text">
          <string>Save</string>
         </property>
@@ -140,7 +140,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>177</width>
+     <width>182</width>
      <height>22</height>
     </rect>
    </property>

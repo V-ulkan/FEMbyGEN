@@ -39,7 +39,7 @@
          <enum>Qt::RightToLeft</enum>
         </property>
         <property name="text">
-         <string notr="true">0</string>
+         <string notr="true">-1</string>
         </property>
        </widget>
       </item>

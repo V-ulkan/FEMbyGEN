@@ -1,5 +1,5 @@
 import numpy as np
-from fembygen.design.pydoe2 import doe_lhs,doe_box_behnken,doe_composite,doe_plackett_burman
+from fembygen.design.pydoe2 import doe_lhs, doe_box_behnken, doe_composite, doe_plackett_burman
 import itertools
 
 
@@ -7,15 +7,17 @@ def fullfact(A):
     numgenerations = list(itertools.product(*A))
     return numgenerations
 
+
 def designlhc(A):
-    lhc = doe_lhs.lhs(len(A),samples=len(A)**2, criterion='center')
+    lhc = doe_lhs.lhs(len(A), samples=len(A)**2, criterion='center')
     row, column = lhc.shape
-    for i,param in enumerate(A):
-        diff=param[-1]-param[0]
-        lhc[:,i]=diff*lhc[:,i]+param[0]
+    for i, param in enumerate(A):
+        diff = param[-1]-param[0]
+        lhc[:, i] = diff*lhc[:, i]+param[0]
 
     lhc = lhc.tolist()
     return lhc
+
 
 def designpb(A):
     pb = doe_plackett_burman.pbdesign(len(A))
@@ -32,8 +34,8 @@ def designpb(A):
     return pb
 
 
-def designcentalcom(A):
-    cc = doe_composite.ccdesign(len(A), alpha="r")
+def designcentalcom(A, center, alpha, face):
+    cc = doe_composite.ccdesign(len(A), center, alpha, face)
     row, column = cc.shape
     for c in range(column):
 
@@ -54,8 +56,8 @@ def designcentalcom(A):
     return cc
 
 
-def designboxBen(A):
-    bb = doe_box_behnken.bbdesign(len(A))
+def designboxBen(A, center=None):
+    bb = doe_box_behnken.bbdesign(len(A), center)
     row, column = bb.shape
     for c in range(column):
 
