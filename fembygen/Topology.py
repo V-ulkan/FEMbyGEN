@@ -49,6 +49,108 @@ class Topology:
             obj.mass_removal_ratio = 0.03
             obj.addProperty("App::PropertyInteger", "LastState", "Results",
                             "Last state")
+            
+            obj.addProperty("App::PropertyString", "path_calculix", "Base", "Path to CalculiX")
+            obj.path_calculix = '/usr/bin/ccx'
+
+            obj.addProperty("App::PropertyString", "path", "Base", "Path")
+            obj.path = '/home/trial/Masaüstü/fem/Gen1/loadCase1'
+
+            obj.addProperty("App::PropertyString", "file_name", "Base", "File Name")
+            obj.file_name = 'FEMMeshGmsh.inp'
+
+            obj.addProperty("App::PropertyStringList", "domain_offset", "Base", "Domain Offset")
+            obj.domain_offset = []
+
+            obj.addProperty("App::PropertyStringList", "domain_thickness", "Base", "Domain Thickness")
+            obj.domain_thickness = []
+
+            obj.addProperty("App::PropertyStringList", "domain_orientation", "Base", "Domain Orientation")
+            obj.domain_orientation = []
+
+            obj.addProperty("App::PropertyStringList", "domain_FI", "Base", "Domain FI")
+            obj.domain_FI = []
+
+            obj.addProperty("App::PropertyStringList", "domain_same_state", "Base", "Domain Same State")
+            obj.domain_same_state = []
+
+            obj.addProperty("App::PropertyString", "continue_from", "Base", "Continue From")
+            obj.continue_from = ''
+
+            obj.addProperty("App::PropertyStringList", "filter_list", "Base", "Filter List")
+            obj.filter_list = ['simple', '0']
+
+            obj.addProperty("App::PropertyInteger", "cpu_cores", "Base", "CPU Cores")
+            obj.cpu_cores = 0
+
+            obj.addProperty("App::PropertyFloat", "FI_violated_tolerance", "Base", "FI Violated Tolerance")
+            obj.FI_violated_tolerance = 1.0
+
+            obj.addProperty("App::PropertyFloat", "decay_coefficient", "Base", "Decay Coefficient")
+            obj.decay_coefficient = -0.2
+
+            obj.addProperty("App::PropertyBool", "shells_as_composite", "Base", "Shells as Composite")
+            obj.shells_as_composite = False
+
+            obj.addProperty("App::PropertyString", "reference_points", "Base", "Reference Points")
+            obj.reference_points = 'integration points'
+
+            obj.addProperty("App::PropertyString", "reference_value", "Base", "Reference Value")
+            obj.reference_value = 'max'
+
+            obj.addProperty("App::PropertyBool", "sensitivity_averaging", "Base", "Sensitivity Averaging")
+            obj.sensitivity_averaging = False
+
+            obj.addProperty("App::PropertyBool", "compensate_state_filter", "Base", "Compensate State Filter")
+            obj.compensate_state_filter = False
+
+            obj.addProperty("App::PropertyStringList", "steps_superposition", "Base", "Steps Superposition")
+            obj.steps_superposition = []
+
+            obj.addProperty("App::PropertyString", "iterations_limit", "Base", "Iterations Limit")
+            obj.iterations_limit = 'auto'
+
+            obj.addProperty("App::PropertyFloat", "tolerance", "Base", "Tolerance")
+            obj.tolerance = 1e-3
+
+            obj.addProperty("App::PropertyStringList", "displacement_graph", "Base", "Displacement Graph")
+            obj.displacement_graph = []
+
+            obj.addProperty("App::PropertyInteger", "save_iteration_results", "Base", "Save Iteration Results")
+            obj.save_iteration_results = 1
+
+            obj.addProperty("App::PropertyString", "save_solver_files", "Base", "Save Solver Files")
+            obj.save_solver_files = ''
+
+            obj.addProperty("App::PropertyString", "save_resulting_format", "Base", "Save Resulting Format")
+            obj.save_resulting_format = 'inp'
+
+            obj.addProperty("App::PropertyString", "elset_name", "Base", "Elset Name")
+            obj.elset_name = 'MaterialSolidSolid'
+
+            obj.addProperty("App::PropertyBool", "domain_optimized", "Base", "Domain Optimized")
+            obj.domain_optimized = True
+
+            obj.addProperty("App::PropertyStringList", "domain_density", "Base", "Domain Density")
+            obj.domain_density = ['7.9e-15', '7.9e-09']
+
+            obj.addProperty("App::PropertyStringList", "domain_material", "Base", "Domain Material")
+            obj.domain_material = [
+                '*ELASTIC\n0.2, 0.3\n*DENSITY\n7.9e-15\n*CONDUCTIVITY\n5e-05\n*EXPANSION\n1.2e-11\n*SPECIFIC HEAT\n500.0\n',
+                '*ELASTIC\n2e+05, 0.3\n*DENSITY\n7.9e-09\n*CONDUCTIVITY\n50.0\n*EXPANSION\n1.2e-05\n*SPECIFIC HEAT\n5e+08\n'
+            ]
+
+            obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Base", "Mass Goal Ratio")
+            obj.mass_goal_ratio = 0.5
+
+            obj.addProperty("App::PropertyStringList", "filter_list2", "Base", "Filter List 2")
+            obj.filter_list2 = ['simple', 'auto']
+
+            obj.addProperty("App::PropertyString", "optimization_base", "Base", "Optimization Base")
+            obj.optimization_base = 'stiffness'
+
+            obj.addProperty("App::PropertyString", "ratio_type", "Base", "Ratio Type")
+            obj.ratio_type = 'relative'
         except:
             pass
 
