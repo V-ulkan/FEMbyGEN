@@ -35,15 +35,20 @@ class Generate:
 
     def initProperties(self, obj):
         try:
-            obj.addProperty("App::PropertyEnumeration", "GenerationMethod", "Generations",
+            obj.addProperty("App::PropertyEnumeration", "GenerationMethod", "Base",
                             "Generation Method")
             obj.GenerationMethod = ["Full Factorial Design", "Taguchi Optimization Design",
                                     "Plackett Burman Design", "Box Behnken Design",
                                     "Latin Hyper Cube Design", "Central Composite Design"]
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Base",
                             "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
+            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Base",
                             "Generated parameter matrix")
+            
+            obj.addProperty("App::PropertyInteger", "Number_of_CPU", "Base",
+                            "Number of CPU's to use ")
+            
+            obj.Number_of_CPU = cpu_count()-1
         except:
             pass
 
@@ -343,7 +348,7 @@ class GeneratePanel():
 
         func = partial(self.copy_mesh, numgenerations)
         iterationnumber = len(numgenerations)
-        p = mp.Pool(cpu_count())
+        p = mp.Pool(self.doc.Generate.Number_of_CPU)
         for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
             # Update progress bar
             progress = ((i+1)/iterationnumber) * 100
