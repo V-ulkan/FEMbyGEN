@@ -92,7 +92,8 @@ class GeneratePanel():
         if index >= 0:
             self.form.selectDesign.setCurrentIndex(index)
         # Check if any generations have been made already, and up to what number
-
+        close = partial(Common.showGen,"close", self.doc)
+        self.form.selectDesign.currentTextChanged.connect(close)
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
 
@@ -342,7 +343,7 @@ class GeneratePanel():
 
         func = partial(self.copy_mesh, numgenerations)
         iterationnumber = len(numgenerations)
-        p = mp.Pool(cpu_count()-1)
+        p = mp.Pool(cpu_count())
         for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
             # Update progress bar
             progress = ((i+1)/iterationnumber) * 100

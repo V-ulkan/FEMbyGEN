@@ -1,5 +1,5 @@
 import numpy as np
-import fembygen.beso_lib
+from fembygen.topology import beso_lib
 
 def find_size_elm(Elements, nodes):
     """calculate size of elements used for automatic filter range"""
@@ -133,7 +133,7 @@ def check_same_state(domain_same_state, filtered_dn, file_name):
     if wrong_domains is True:
         msg = "\nERROR: Filtering is used on domain with prescribed same state. It is recommended to exclude this domain" \
               " from filtering.\n"
-        fembygen.beso_lib.write_to_log(file_name, msg)
+        beso_lib.write_to_log(file_name, msg)
         print(msg)
 
 
@@ -384,7 +384,7 @@ def run1(file_name, sensitivity_number, weight_factor_node, M, weight_factor_dis
             msg = "\nERROR: filter over nodes failed due to division by 0." \
                   "Some element CG has not a node in distance <= r_min.\n"
             print(msg)
-            fembygen.beso_lib.write_to_log(file_name, msg)
+            beso_lib.write_to_log(file_name, msg)
             filter_on_sensitivity = 0
             return sensitivity_number
     return sensitivity_number_filtered
@@ -506,7 +506,7 @@ def run2(file_name, sensitivity_number, weight_factor2, near_elm, opt_domains):
             msg = "\nERROR: simple filter failed due to division by 0." \
                   "Some element has not a near element in distance <= r_min.\n"
             print(msg)
-            fembygen.beso_lib.write_to_log(file_name, msg)
+            beso_lib.write_to_log(file_name, msg)
             filter_on_sensitivity = 0
             return sensitivity_number
     return sensitivity_number_filtered
@@ -586,7 +586,7 @@ def prepare3_ortho_grid(file_name, cg, cg_min, r_min, opt_domains):
     msg += str(hist_near_elm) + "\n"
     msg += "histogram - number of near points (list index) vs. number of elements (value)\n"
     msg += str(hist_near_points) + "\n"
-    fembygen.beso_lib.write_to_log(file_name, msg)
+    beso_lib.write_to_log(file_name, msg)
     return weight_factor3, near_elm, near_points
 
 
@@ -644,7 +644,7 @@ def prepare3_tetra_grid(file_name, cg, r_min, opt_domains):
     msg = "\nfilter over points statistics:\n"
     msg += "histogram - number of near points (list index) vs. number of elements (value)\n"
     msg += str(hist_near_points) + "\n"
-    fembygen.beso_lib.write_to_log(file_name, msg)
+    beso_lib.write_to_log(file_name, msg)
     return weight_factor3, near_elm, near_points
 
 
