@@ -266,23 +266,16 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <widget class="QPushButton" name="generateConf">
-         <property name="text">
-          <string>Generate config file</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="editConf">
-         <property name="text">
-          <string>Edit config file</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="runOpt">
          <property name="text">
           <string>Run optimization</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="results">
+         <property name="text">
+          <string>Results</string>
          </property>
         </widget>
        </item>

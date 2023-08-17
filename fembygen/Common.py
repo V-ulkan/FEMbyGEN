@@ -112,7 +112,7 @@ def showGen(table, master, item):
 
 def get_results_fc(case):
     doc= FreeCAD.ActiveDocument
-    file_path=doc.Topology.Path
+    file_path=doc.Topology.path
     file=os.path.join(file_path,"topology_iterations", "file" + str(case).zfill(3))
     result_state0 = f"{file}_state0"
     result_state1 = f"{file}_state1"

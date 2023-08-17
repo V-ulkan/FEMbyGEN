@@ -5,7 +5,9 @@ from PySide import QtGui, QtCore
 from femtools import ccxtools
 import datetime
 import webbrowser
+from fembygen.topology import beso_main
 from fembygen import Common
+from multiprocessing import cpu_count
 from PySide2.QtWidgets import QPushButton, QComboBox, QSplitter, QCheckBox, QLineEdit, QListWidget, QLabel, QVBoxLayout, QAbstractItemView
 
 
@@ -39,49 +41,42 @@ class Topology:
 
     def initProperties(self, obj):
         try:
-            obj.addProperty("App::PropertyString", "Path", "Base",
-                            "Path of topology trials")
-            obj.addProperty("App::PropertyFloat", "mass_addition_ratio", "Inputs",
+            obj.addProperty("App::PropertyFloat", "mass_addition_ratio", "Mass",
                             "The ratio to add mass between iterations ")
             obj.mass_addition_ratio = 0.015
-            obj.addProperty("App::PropertyFloat", "mass_removal_ratio", "Inputs",
+            obj.addProperty("App::PropertyFloat", "mass_removal_ratio", "Mass",
                             "The ratio to add mass between iterations ")
             obj.mass_removal_ratio = 0.03
             obj.addProperty("App::PropertyInteger", "LastState", "Results",
                             "Last state")
             
             obj.addProperty("App::PropertyString", "path_calculix", "Base", "Path to CalculiX")
-            obj.path_calculix = '/usr/bin/ccx'
+       
 
             obj.addProperty("App::PropertyString", "path", "Base", "Path")
-            obj.path = '/home/trial/Masaüstü/fem/Gen1/loadCase1'
 
             obj.addProperty("App::PropertyString", "file_name", "Base", "File Name")
-            obj.file_name = 'FEMMeshGmsh.inp'
 
-            obj.addProperty("App::PropertyStringList", "domain_offset", "Base", "Domain Offset")
-            obj.domain_offset = []
+            obj.addProperty("App::PropertyPythonObject", "domain_offset", "Domain", "Domain Offset")
+            obj.domain_offset={}
 
-            obj.addProperty("App::PropertyStringList", "domain_thickness", "Base", "Domain Thickness")
-            obj.domain_thickness = []
+            obj.addProperty("App::PropertyPythonObject", "domain_orientation", "Domain", "Domain Orientation")
+            obj.domain_orientation={}
 
-            obj.addProperty("App::PropertyStringList", "domain_orientation", "Base", "Domain Orientation")
-            obj.domain_orientation = []
+            obj.addProperty("App::PropertyPythonObject", "domain_FI", "Domain", "Domain FI")
+            obj.domain_FI={}
 
-            obj.addProperty("App::PropertyStringList", "domain_FI", "Base", "Domain FI")
-            obj.domain_FI = []
-
-            obj.addProperty("App::PropertyStringList", "domain_same_state", "Base", "Domain Same State")
-            obj.domain_same_state = []
+            obj.addProperty("App::PropertyPythonObject", "domain_same_state", "Domain", "Domain Same State")
+            obj.domain_same_state={}
 
             obj.addProperty("App::PropertyString", "continue_from", "Base", "Continue From")
             obj.continue_from = ''
 
-            obj.addProperty("App::PropertyStringList", "filter_list", "Base", "Filter List")
-            obj.filter_list = ['simple', '0']
+            obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
+            obj.filter_list = [['simple', 0]]
 
             obj.addProperty("App::PropertyInteger", "cpu_cores", "Base", "CPU Cores")
-            obj.cpu_cores = 0
+            obj.cpu_cores = cpu_count()
 
             obj.addProperty("App::PropertyFloat", "FI_violated_tolerance", "Base", "FI Violated Tolerance")
             obj.FI_violated_tolerance = 1.0
@@ -104,7 +99,7 @@ class Topology:
             obj.addProperty("App::PropertyBool", "compensate_state_filter", "Base", "Compensate State Filter")
             obj.compensate_state_filter = False
 
-            obj.addProperty("App::PropertyStringList", "steps_superposition", "Base", "Steps Superposition")
+            obj.addProperty("App::PropertyIntegerList", "steps_superposition", "Base", "Steps Superposition")
             obj.steps_superposition = []
 
             obj.addProperty("App::PropertyString", "iterations_limit", "Base", "Iterations Limit")
@@ -125,30 +120,29 @@ class Topology:
             obj.addProperty("App::PropertyString", "save_resulting_format", "Base", "Save Resulting Format")
             obj.save_resulting_format = 'inp'
 
-            obj.addProperty("App::PropertyString", "elset_name", "Base", "Elset Name")
-            obj.elset_name = 'MaterialSolidSolid'
 
-            obj.addProperty("App::PropertyBool", "domain_optimized", "Base", "Domain Optimized")
-            obj.domain_optimized = True
+            obj.addProperty("App::PropertyPythonObject", "domain_optimized", "Domain", "Domain Optimized")
+            obj.domain_optimized={}
+         
 
-            obj.addProperty("App::PropertyStringList", "domain_density", "Base", "Domain Density")
-            obj.domain_density = ['7.9e-15', '7.9e-09']
+            obj.addProperty("App::PropertyPythonObject", "domain_density", "Domain", "Domain Density")
+            obj.domain_density={}
+            obj.addProperty("App::PropertyPythonObject", "domain_thickness", "Domain", "Domain Density")
+            obj.domain_thickness={}
+            obj.addProperty("App::PropertyFloat", "stress_limit", "Base", "Stress Limit")
 
-            obj.addProperty("App::PropertyStringList", "domain_material", "Base", "Domain Material")
-            obj.domain_material = [
-                '*ELASTIC\n0.2, 0.3\n*DENSITY\n7.9e-15\n*CONDUCTIVITY\n5e-05\n*EXPANSION\n1.2e-11\n*SPECIFIC HEAT\n500.0\n',
-                '*ELASTIC\n2e+05, 0.3\n*DENSITY\n7.9e-09\n*CONDUCTIVITY\n50.0\n*EXPANSION\n1.2e-05\n*SPECIFIC HEAT\n5e+08\n'
-            ]
+            
+            obj.addProperty("App::PropertyPythonObject", "domain_material", "Domain", "Domain Material")
+            obj.domain_material={}
+            
+            obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Mass", "Mass Goal Ratio")
+         
 
-            obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Base", "Mass Goal Ratio")
-            obj.mass_goal_ratio = 0.5
-
-            obj.addProperty("App::PropertyStringList", "filter_list2", "Base", "Filter List 2")
-            obj.filter_list2 = ['simple', 'auto']
+            obj.addProperty("App::PropertyPythonObject", "filter_list2", "Base", "Filter List 2")
+            obj.filter_list2 = [['simple', 'auto']]
 
             obj.addProperty("App::PropertyString", "optimization_base", "Base", "Optimization Base")
-            obj.optimization_base = 'stiffness'
-
+            
             obj.addProperty("App::PropertyString", "ratio_type", "Base", "Ratio Type")
             obj.ratio_type = 'relative'
         except:
@@ -198,11 +192,7 @@ class TopologyPanel(QtGui.QWidget):
         self.materials = []
         self.thicknesses = []
         self.form.iterationSlider.sliderMoved.connect(self.massratio)
-        try:
-            App.ActiveDocument.Objects
-        except AttributeError:
-            App.newDocument("Unnamed")
-            print("Warning: Missing active document with FEM analysis. New document have been created.")
+
         for obj in App.ActiveDocument.Objects:
             if obj.Name[:23] == "MechanicalSolidMaterial":
                 self.materials.append(obj)
@@ -301,8 +291,7 @@ class TopologyPanel(QtGui.QWidget):
         self.form.newAddButton.setFixedSize(30, 23)
 
         # adding constraint for mass goal ratio between 0.0 - 1.0
-        rx = QtCore.QRegExp("^(?:0(?:\.\d{0,1})?|1(?:\.0{0,1})?)$")
-        self.form.validator = QtGui.QRegExpValidator(rx)
+        self.form.validator = QtGui.QDoubleValidator(0.0,1.0, 2) 
         self.form.massGoalRatio.setValidator(self.form.validator)
 
         self.form.selectMaterial_1.clear()
@@ -458,8 +447,7 @@ class TopologyPanel(QtGui.QWidget):
         self.form.filterRange_3.currentIndexChanged.connect(
             self.filterRange3)  # select filter range comboBox 3 (auto,manual)
 
-        self.form.generateConf.clicked.connect(self.generateConfig)  # generate config file button
-        self.form.editConf.clicked.connect(self.editConfig)  # edit config file button
+        self.form.results.clicked.connect(lambda: self.get_case("last"))  # show results
 
         self.form.runOpt.clicked.connect(self.runOptimization)  # run optimization button
         self.form.openExample.clicked.connect(self.openExample)  # example button, opens examples on beso github
@@ -655,118 +643,12 @@ class TopologyPanel(QtGui.QWidget):
             self.form.selectGen.addItems(comboBoxItems)
             self.form.fileName.setText(self.path+inp_file)
 
-    """def Update(self):
-        # get material objects
-        self.materials = []
-        self.thicknesses = []
-        try:
-            App.ActiveDocument.Objects
-        except AttributeError:
-            App.newDocument("Unnamed")
-            print("Warning: Missing active document with FEM analysis. New document have been created.")
-        for obj in App.ActiveDocument.Objects:
-            if obj.Name[:23] == "MechanicalSolidMaterial":
-                self.materials.append(obj)
-            elif obj.Name[:13] == "MaterialSolid":
-                self.materials.append(obj)
-            elif obj.Name[:13] == "SolidMaterial":
-                self.materials.append(obj)
-            elif obj.Name[:17] == "ElementGeometry2D":
-                self.thicknesses.append(obj)
+    
 
-        
-
-
-
-        self.form.selectMaterial_1.clear()
-        self.form.selectMaterial_1.addItem("None")
-        self.form.thicknessObject1.clear()
-        self.form.thicknessObject1.addItem("None")
-        self.form.domainList_1.clear()
-        self.form.domainList_1.addItem("All defined")
-        self.form.domainList_1.addItem("Domain 0")
-        #self.form.domainList_1.addItem("Domain 1")
-        self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
-
-
-
-
-
-
-        if self.form.layout2.count() == 5:
-            self.form.selectMaterial_2.clear()
-            self.form.selectMaterial_2.addItem("None")
-            self.form.thicknessObject2.clear()
-            self.form.thicknessObject2.addItem("None")
-            self.form.domainList_2.clear()
-            self.form.domainList_2.addItem("All defined")
-            self.form.domainList_2.addItem("Domain 0")
-            self.form.domainList_2.addItem("Domain 1")
-            self.form.domainList_1.addItem("Domain 1")
-        #self.form.domainList_2.addItem("Domain 2")
-            self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
-
-        
-        if self.form.layout2.count() == 7:
-            self.form.selectMaterial_3.clear()
-            self.form.selectMaterial_3.addItem("None")
-            self.form.thicknessObject3.clear()
-            self.form.thicknessObject3.addItem("None")
-            self.form.domainList_3.clear()
-            self.form.domainList_3.addItem("All defined")
-            self.form.domainList_3.addItem("Domain 0")
-            self.form.domainList_3.addItem("Domain 1")
-            self.form.domainList_3.addItem("Domain 2")
-            self.form.domainList_2.addItem("Domain 2")
-            self.form.domainList_1.addItem("Domain 2")
-            self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
-
-
-
-        self.form.selectMaterial_3.clear()
-        self.form.selectMaterial_3.addItem("None")
-        self.form.thicknessObject1.clear()
-        self.form.thicknessObject1.addItem("None")
-        self.form.thicknessObject2.clear()
-        self.form.thicknessObject2.addItem("None")
-        self.form.thicknessObject3.clear()
-        self.form.thicknessObject3.addItem("None")
-        self.form.domainList_1.clear()
-        self.form.domainList_1.addItem("All defined")
-        self.form.domainList_1.addItem("Domain 0")
-        self.form.domainList_1.addItem("Domain 1")
-        self.form.domainList_1.addItem("Domain 2")
-        self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
-        self.form.domainList_2.clear()
-        self.form.domainList_2.addItem("All defined")
-        self.form.domainList_2.addItem("Domain 0")
-        self.form.domainList_2.addItem("Domain 1")
-        self.form.domainList_2.addItem("Domain 2")
-        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
-        self.form.domainList_3.clear()
-        self.form.domainList_3.addItem("All defined")
-        self.form.domainList_3.addItem("Domain 0")
-        self.form.domainList_3.addItem("Domain 1")
-        self.form.domainList_3.addItem("Domain 2")
-        self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
-
-        
-        for mat in self.materials:
-            self.form.selectMaterial_1.addItem(mat.Label) 
-            self.form.selectMaterial_2.addItem(mat.Label)
-            self.form.selectMaterial_3.addItem(mat.Label)
-        if self.materials:
-            self.form.selectMaterial_1.setCurrentIndex(1)
-        for th in self.thicknesses:
-            self.form.thicknessObject1.addItem(th.Label)
-            self.form.thicknessObject2.addItem(th.Label)    
-            self.form.thicknessObject3.addItem(th.Label)"""
-
-    def generateConfig(self):
-        file_name = os.path.split(self.form.fileName.text())[1]
-        path = os.path.split(self.form.fileName.text())[0]
-        print(path, file_name)
-
+    def setConfig(self):
+        self.doc.Topology.file_name = os.path.split(self.form.fileName.text())[1]
+        self.doc.Topology.path = os.path.split(self.form.fileName.text())[0]
+    
         global elset2
         global elset
         global elset1
@@ -775,27 +657,28 @@ class TopologyPanel(QtGui.QWidget):
         elset1 = ""
         fea = ccxtools.FemToolsCcx()
         fea.setup_ccx()
-        path_calculix = fea.ccx_binary
+        self.doc.Topology.path_calculix = fea.ccx_binary
 
-        optimization_base = self.form.optBase.currentText()  # stiffness,heat
+        self.doc.Topology.optimization_base = self.form.optBase.currentText()  # stiffness,heat
 
         elset_id = self.form.selectMaterial_1.currentIndex() - 1
         thickness_id = self.form.thicknessObject1.currentIndex() - 1
         if elset_id != -1:
             if thickness_id != -1:
-                elset = self.materials[elset_id].Name + self.thicknesses[thickness_id].Name
+                elset_name = self.materials[elset_id].Name + self.thicknesses[thickness_id].Name
             else:  # 0 means None thickness selected
-                elset = self.materials[elset_id].Name + "Solid"
+                elset_name = self.materials[elset_id].Name + "Solid"
             modulus = float(self.materials[elset_id].Material["YoungsModulus"].split()[0])  # MPa
             if self.materials[elset_id].Material["YoungsModulus"].split()[1] != "MPa":
                 raise Exception(" units not recognised in " + self.materials[elset_id].Name)
             poisson = float(self.materials[elset_id].Material["PoissonRatio"].split()[0])
             try:
                 density = float(self.materials[elset_id].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+                self.doc.Topology.domain_density[elset_name] = [density*1e-6,density]
                 if self.materials[elset_id].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
                     raise Exception(" units not recognised in " + self.materials[elset_id].Name)
             except KeyError:
-                density = 0.
+                self.doc.Topology.domain_density[elset_name] = [0,0]
             try:
                 conductivity = float(self.materials[elset_id].Material["ThermalConductivity"].split()[0])  # W/m/K
                 if self.materials[elset_id].Material["ThermalConductivity"].split()[1] != "W/m/K":
@@ -821,11 +704,11 @@ class TopologyPanel(QtGui.QWidget):
             except KeyError:
                 specific_heat = 0.
             if thickness_id != -1:
-                thickness = str(self.thicknesses[thickness_id].Thickness).split()[0]  # mm
+                thickness = float(str(self.thicknesses[thickness_id].Thickness).split()[0])  # mm
                 if str(self.thicknesses[thickness_id].Thickness).split()[1] != "mm":
                     raise Exception(" units not recognised in " + self.thicknesses[thickness_id].Name)
             else:
-                thickness = 0.
+                thickness = 0
             optimized = self.form.asDesign_checkbox.isChecked()
             if self.form.stressLimit_1.text():
                 von_mises = float(self.form.stressLimit_1.text())
@@ -992,197 +875,14 @@ class TopologyPanel(QtGui.QWidget):
                     von_mises2 = float(self.form.stressLimit_3.text())
                 else:
                     von_mises2 = 0.
-
-        with open(os.path.join(path, "beso_conf.py"), "w") as f:
-            f.write("# This is the configuration file with input parameters. It will be executed as python commands\n")
-            f.write("# Written at {}\n".format(datetime.datetime.now()))
-            f.write("\n")
-            f.write("path_calculix = '{}'\n".format(path_calculix))
-            f.write("path = '{}'\n".format(path))
-            f.write("file_name = '{}'\n".format(file_name))
-            f.write("\n")
-            f.write("domain_offset = {}\n")
-            f.write("domain_thickness = {}\n")
-            f.write("domain_orientation = {}\n")
-            f.write("domain_FI = {}\n")
-            f.write("domain_same_state = {}\n")
-            f.write("continue_from = ''\n")
-            f.write("filter_list = [['simple', 0]]\n")
-            f.write("cpu_cores = 0   # 0 means run all cores\n")
-            f.write("FI_violated_tolerance = 1\n")
-            f.write("decay_coefficient = -0.2\n")
-            f.write("shells_as_composite = False\n")
-            f.write("reference_points = 'integration points'\n")
-            f.write("reference_value = 'max'\n")
-            f.write("sensitivity_averaging = False\n")
-            f.write("compensate_state_filter = False\n")
-            f.write("steps_superposition = []\n")
-            f.write("iterations_limit = 'auto'\n")
-            f.write("tolerance = 1e-3\n")
-            f.write("displacement_graph = []\n")
-            f.write("save_iteration_results = 1\n")
-            f.write("save_solver_files = ''\n")
-            f.write("save_resulting_format = 'inp'\n")
-
-            if elset_id != -1:
-                f.write("elset_name = '{}'\n".format(elset))
-                f.write("domain_optimized={{elset_name:{}}}\n".format(optimized))
-                f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density * 1e-6, density))
-                if thickness:
-                    f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness, thickness))
-                if von_mises:
-                    f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises * 1e6))
-                    f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises))
-                f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus * 1e-6, poisson,
-                                                                                            density * 1e-6, conductivity * 1e-6, expansion * 1e-6, specific_heat * 1e-6))
-                f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                        "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus, poisson, density,
-                                                                                              conductivity, expansion, specific_heat))
-                f.write("\n")
-            if self.form.layout2.count() == 5:
-                if elset_id1 != -1:
-                    f.write("elset_name = '{}'\n".format(elset1))
-                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
-                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
-                    if thickness1:
-                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
-                    if von_mises1:
-                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
-                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
-                    f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
-                            "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
-                                                                                                   poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
-                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                            "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
-                                                                                                     density1, conductivity1, expansion1, specific_heat1))
-                    f.write("\n")
-            if self.form.layout2.count() == 7:
-                if elset_id1 != -1:
-                    f.write("elset_name = '{}'\n".format(elset1))
-                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized1))
-                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density1 * 1e-6, density1))
-                    if thickness1:
-                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness1, thickness1))
-                    if von_mises1:
-                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises1 * 1e6))
-                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises1))
-                    f.write("domain_material={{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
-                            "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus1 * 1e-6,
-                                                                                                   poisson1, density1 * 1e-6, conductivity1 * 1e-6, expansion1 * 1e-6, specific_heat1 * 1e-6))
-                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                            "{:.6}\\n" "*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus1, poisson1,
-                                                                                                     density1, conductivity1, expansion1, specific_heat1))
-                    f.write("\n")
-
-                if elset_id2 != -1:
-                    f.write("elset_name = '{}'\n".format(elset2))
-                    f.write("domain_optimized={{elset_name:{}}}\n".format(optimized2))
-                    f.write("domain_density={{elset_name:[{}, {}]}}\n".format(density2 * 1e-6, density2))
-                    if thickness2:
-                        f.write("domain_thickness={{elset_name:[{}, {}]}}\n".format(thickness2, thickness2))
-                    if von_mises2:
-                        f.write("domain_FI={{elset_name:[[('stress_von_Mises', {:.6})],\n".format(von_mises2 * 1e6))
-                        f.write("                         [('stress_von_Mises', {:.6})]]}}\n".format(von_mises2))
-                    f.write("domain_material = {{elset_name:['*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY"
-                            "\\n{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n',\n".format(modulus2 * 1e-6,
-                                                                                                   poisson2, density2 * 1e-6, conductivity2 * 1e-6, expansion2 * 1e-6, specific_heat2 * 1e-6))
-                    f.write("                               '*ELASTIC\\n{:.6}, {:.6}\\n*DENSITY\\n{:.6}\\n*CONDUCTIVITY\\n"
-                            "{:.6}\\n*EXPANSION\\n{:.6}\\n*SPECIFIC HEAT\\n{:.6}\\n']}}\n".format(modulus2, poisson2,
-                                                                                                  density2, conductivity2, expansion2, specific_heat2))
-                    f.write("\n")
-            f.write("mass_goal_ratio = " + self.form.massGoalRatio.text())
-            f.write("\n")
-
-            f.write("filter_list = [")
-            filter = self.form.selectFilter_1.currentText()
-            if self.form.filterRange_1.currentText() == "auto":
-                range = '"auto"'
-            elif self.form.filterRange_1.currentText() == "manual":
-                range = self.form.range_1.text()
-            direction = self.form.directionVector_1.text()
-            selection = [item.text() for item in self.form.domainList_1.selectedItems()]
-
-            filter_domains = []
-            if "All defined" not in selection:
-                if "Domain 0" in selection:
-                    filter_domains.append(elset)
-                if "Domain 1" in selection:
-                    filter_domains.append(elset1)
-                if "Domain 2" in selection:
-                    filter_domains.append(elset2)
-            if filter == "simple":
-                f.write("['simple', {}".format(range))
-                for dn in filter_domains:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-            elif filter == "casting":
-                f.write("['casting', {}, ({})".format(range, direction))
-                for dn in filter_domains:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-
-            filter1 = self.form.selectFilter_2.currentText()
-            if self.form.filterRange_2.currentText() == "auto":
-                range1 = '"auto"'
-            elif self.form.filterRange_2.currentText() == "manual":
-                range1 = self.form.range_2.text()
-            direction1 = self.form.directionVector_2.text()
-            selection = [item.text() for item in self.form.domainList_2.selectedItems()]
-            filter_domains1 = []
-            if "All defined" not in selection:
-                if "Domain 0" in selection:
-                    filter_domains1.append(elset)
-                if "Domain 1" in selection:
-                    filter_domains1.append(elset1)
-                if "Domain 2" in selection:
-                    filter_domains1.append(elset2)
-            if filter1 == "simple":
-                f.write("               ['simple', {}".format(range1))
-                for dn in filter_domains1:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-            elif filter1 == "casting":
-                f.write("               ['casting', {}, ({})".format(range1, direction1))
-                for dn in filter_domains1:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-
-            filter2 = self.form.selectFilter_3.currentText()
-            if self.form.filterRange_3.currentText() == "auto":
-                range2 = '"auto"'
-            elif self.form.filterRange_3.currentText() == "manual":
-                range2 = self.form.range_3.text()
-            direction2 = self.form.directionVector_3.text()
-            selection = [item.text() for item in self.form.domainList_3.selectedItems()]
-
-            filter_domains2 = []
-            if "All defined" not in selection:
-                if "Domain 0" in selection:
-                    filter_domains2.append(elset)
-                if "Domain 1" in selection:
-                    filter_domains2.append(elset1)
-                if "Domain 2" in selection:
-                    filter_domains2.append(elset2)
-            if filter2 == "simple":
-                f.write("               ['simple', {}".format(range2))
-                for dn in filter_domains2:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-            elif filter2 == "casting":
-                f.write("               ['casting', {}, ({})".format(range2, direction2))
-                for dn in filter_domains2:
-                    f.write(", '{}'".format(dn))
-                f.write("],\n")
-            f.write("               ]\n")
-            f.write("\n")
-
-            f.write("optimization_base = '{}'\n".format(optimization_base))
-            f.write("\n")
-            
-
-            f.write("ratio_type = 'relative'\n")
-            f.write("\n")
+        self.doc.Topology.domain_material[elset_name] = [modulus, poisson, density, conductivity, expansion, specific_heat]
+        self.doc.Topology.mass_goal_ratio = float(self.form.massGoalRatio.text())
+        self.doc.Topology.domain_optimized[elset_name]=optimized
+        if thickness:
+            self.doc.Topology.domain_thickness[elset_name]=[thickness, thickness]
+        if von_mises:
+            self.doc.Topology.domain_FI[elset_name]=[['stress_von_Mises', von_mises * 1e6],
+                                    ['stress_von_Mises', von_mises]]
         App.Console.PrintMessage("Config file created\n")
 
     def massratio(self, slider_position):
@@ -1196,34 +896,29 @@ class TopologyPanel(QtGui.QWidget):
             self.doc.Topology.mass_addition_ratio = 0.03
             self.doc.Topology.mass_removal_ratio = 0.06
 
-    def editConfig(self):
-        """Open beso_conf.py in FreeCAD editor"""
-        Gui.insert(os.path.join(self.path, "beso_conf.py"))
+ 
 
     def runOptimization(self):
         # Run optimization
-        # run in own thread (not freezing FreeCAD):      needs also to comment "plt.show()" on the end of beso_main.py
-        #self.optimization_thread = RunOptimization("beso_main")
-        # self.optimization_thread.start()
-
-        # read configuration file to fill variables listed above
-        exec(open(os.path.join(self.path, "beso_conf.py")).read())
-        # run in foreground (freeze FreeCAD)
-        exec(open(os.path.join(self.beso_dir, "topology", "beso_main.py")).read())
-        self.doc.Topology.Path = os.path.split(self.form.fileName.text())[0]
+        self.setConfig()
+        beso_main.main()
         Gui.runCommand('Std_ActivatePrevWindow')
         self.get_case("last")
 
     def get_case(self, numberofcase):
         lastcase = self.doc.Topology.LastState
+        print(numberofcase)
         if not numberofcase:
-            FreeCAD.Console.PrintError("The simulations are not completed\n")
+            App.Console.PrintError("The simulations are not completed\n")
             return
         elif numberofcase == "last":
             numberofcase = lastcase
         mw = Gui.getMainWindow()
-        evaluation_bar = QtGui.QToolBar("Evaluation")
-        mw.addToolBar(QtCore.Qt.ToolBarArea.BottomToolBarArea, evaluation_bar)
+        evaluation_bar = QtGui.QToolBar()
+        try:
+            mw.removeToolBar(mw.findChild(QtGui.QToolBar,"Evaluation"))
+        except:
+            pass
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setGeometry(10, mw.height()-50, mw.width()-50, 50)
         slider.setMinimum(1)
@@ -1241,6 +936,8 @@ class TopologyPanel(QtGui.QWidget):
         closebutton.clicked.connect(evaluation_bar.close)
         evaluation_bar.addWidget(slider)
         evaluation_bar.addWidget(closebutton)
+        evaluation_bar.setObjectName("Evaluation")
+        mw.addToolBar(QtCore.Qt.ToolBarArea.BottomToolBarArea, evaluation_bar)
         Common.get_results_fc(numberofcase)
 
     def openExample(self):
@@ -1252,7 +949,7 @@ class TopologyPanel(QtGui.QWidget):
     def openLog(self):
         """Open log file"""
         if self.form.fileName.text() in ["None analysis file selected", ""]:
-            print("None analysis file selected")
+            App.Console.PrintMessage("None analysis file selected")
         else:
             log_file = os.path.normpath(self.form.fileName.text()[:-4] + ".log")
             webbrowser.open(log_file)
