@@ -15,14 +15,13 @@ def makeTopology():
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
-
+ 
+    obj = App.ActiveDocument.addObject(
+        "App::DocumentObjectGroupPython", "Topology")
     try:
-        obj = App.ActiveDocument.Topology
-        obj.isValid()
-    except:
-        obj = App.ActiveDocument.addObject(
-            "App::DocumentObjectGroupPython", "Topology")
         App.ActiveDocument.Generative_Design.addObject(obj)
+    except:
+        print("continue only for topology analysis")
     Topology(obj)
     if App.GuiUp:
         ViewProviderGen(obj.ViewObject)
@@ -183,7 +182,7 @@ class TopologyPanel(QtGui.QWidget):
         self.doc = object.Object.Document
 
         numGens = Common.checkGenerations(self.workingDir)
-        self.resetViewControls(numGens)
+        self.getGenerations(numGens)
 
         self.inp_file = ""
         self.beso_dir = os.path.dirname(__file__)
@@ -621,14 +620,19 @@ class TopologyPanel(QtGui.QWidget):
         self.form.domainList_1.addItem("Domain 1")
 
     def selectFile(self):
-        self.path = self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
-        file_names = os.listdir(self.path)
-        inp_file = [file for file in file_names if file.endswith("inp")][0]
+        try:
+            self.path = self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
+            file_names = os.listdir(self.path)
+            inp_file = [file for file in file_names if file.endswith("inp")][0]
+        except:
+            self.path = self.workingDir + f"/TopologyCase_{self.form.selectGen.currentIndex()+1}"
+            file_names = os.listdir(self.path)
+            inp_file = [file for file in file_names if file.endswith("inp")][0]
 
         self.form.fileName.setText(self.path+inp_file)
         self.inp_file = self.path+inp_file
 
-    def resetViewControls(self, numGens):
+    def getGenerations(self, numGens):
         comboBoxItems = []
         if numGens > 0:
             self.form.selectGen.setEnabled(True)
@@ -642,6 +646,40 @@ class TopologyPanel(QtGui.QWidget):
             self.form.selectGen.clear()
             self.form.selectGen.addItems(comboBoxItems)
             self.form.fileName.setText(self.path+inp_file)
+        else:
+            import FemGui
+            import glob
+            self.form.selectGen.setEnabled(True)
+            lc=0
+            for obj in self.doc.Objects:
+               # try:
+                    if obj.TypeId == "Fem::FemAnalysis":  # to choose analysis objects
+                        lc += 1
+                        FemGui.setActiveAnalysis(obj)
+                        analysisfolder = os.path.join(
+                            self.workingDir + f"/TopologyCase_{lc}")
+                        try:
+                            os.mkdir(analysisfolder)
+                        except:
+                            pass
+                        fea = ccxtools.FemToolsCcx(analysis=obj)
+                        fea.setup_working_dir(analysisfolder)
+                        fea.update_objects()
+                        fea.setup_ccx()
+                        message = fea.check_prerequisites()
+                        if not message:
+                            fea.purge_results()
+                            fea.write_inp_file()
+                            comboBoxItems.append("Analysis " + str(lc))
+            self.form.selectGen.clear()
+            self.form.selectGen.addItems(comboBoxItems)
+            name = glob.glob(analysisfolder+"/*.inp")
+            self.form.fileName.setText(name[0])
+
+          
+               #except:
+                    # It counts for deleted objects and gives error.
+               #     pass
 
     
 

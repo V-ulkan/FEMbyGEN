@@ -50,6 +50,7 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
         ax2.tick_params(axis='y', colors="orange")
         ax2.set_ylabel("Energy density mean")
         ax2.yaxis.label.set_color("orange")
+        ax2.yaxis.set_label_position("right")
         l2 = ax2.plot(range(i_plot+1),energy_density_mean,label ="energy density",color = "orange")
         if ax3 == 0:
             ax1.legend( handles=l1+l2 )
