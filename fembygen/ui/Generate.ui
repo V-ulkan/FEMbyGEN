@@ -62,6 +62,29 @@
       </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="more">
+       <property name="minimumSize">
+        <size>
+         <width>30</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>30</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/svg/FEMbyGEN/fembygen/icons/setting.svg</normaloff>:/svg/FEMbyGEN/fembygen/icons/setting.svg</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="generateButton">
        <property name="minimumSize">
         <size>
@@ -188,6 +211,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../../aa.qrc"/>
+ </resources>
  <connections/>
 </ui>

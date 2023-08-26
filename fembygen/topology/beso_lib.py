@@ -3,7 +3,6 @@ import operator
 from math import *
 import os
 
-
 # function to print ongoing messages to the log file
 def write_to_log(file_name, msg):
     f_log = open(file_name[:-4] + ".log", "a")
@@ -532,9 +531,14 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
             fW.write("** (redefines elements properties defined above):\n")
             for dn in domains_from_config:
                 if domain_optimized[dn]:
+                    print(elsets_used)
                     for sn in elsets_used[dn]:
+                        print(sn)
+
                         fW.write("*MATERIAL, NAME=" + dn + str(sn) + "\n")
-                        fW.write(domain_material[dn][sn] + "\n")
+                        fW.write(f'*ELASTIC\n{domain_material[dn][0]:.6}, {domain_material[dn][1]:.6}\n*DENSITY\n{domain_material[dn][2]:.6}\n*CONDUCTIVITY')
+                        fW.write(f'\n{domain_material[dn][3]:.6}\n*EXPANSION\n{domain_material[dn][4]:.6}\n*SPECIFIC HEAT\\n{domain_material[dn][5]:.6}\n')
+
                         if domain_volumes[dn]:
                             fW.write("*SOLID SECTION, ELSET=" + dn + str(sn) + ", MATERIAL=" + dn + str(sn))
                             add_orientation()

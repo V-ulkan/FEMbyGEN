@@ -79,7 +79,7 @@ def bbdesign(n, center=None):
             H[max([0, (Index - 1)*H_fact.shape[0]]):Index*H_fact.shape[0], i] = H_fact[:, 0]
             H[max([0, (Index - 1)*H_fact.shape[0]]):Index*H_fact.shape[0], j] = H_fact[:, 1]
 
-    if center is None:
+    if center is None or center == -1:
         if n<=16:
             points= [0, 0, 0, 3, 3, 6, 6, 6, 8, 9, 10, 12, 12, 13, 14, 15, 16]
             center = points[n]

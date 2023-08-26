@@ -4,6 +4,8 @@ import os.path
 import numpy as np
 import operator
 import glob
+import Fem
+import FreeCADGui as Gui
 
 
 def checkGenerations(workingDir):
@@ -108,6 +110,37 @@ def showGen(table, master, item):
     FreeCAD.setActiveDocument(docName)
 
 
+def get_results_fc(case):
+    doc= FreeCAD.ActiveDocument
+    file_path=doc.Topology.path
+    file=os.path.join(file_path,"topology_iterations", "file" + str(case).zfill(3))
+    result_state0 = f"{file}_state0"
+    result_state1 = f"{file}_state1"
+
+    # hide all previous mesh objects
+    for obj in doc.Topology.Group:
+            obj.Visibility = False
+    # if the file already imported open it
+    if doc.getObject(os.path.split(file)[1]):
+        doc.getObject(os.path.split(file)[1]).Visibility = True
+    else:
+        state = FreeCAD.ActiveDocument.addObject(
+            "App::DocumentObjectGroupPython",  os.path.split(file)[1])
+        Fem.insert(f"{result_state0}.inp",doc.Name)
+        Fem.insert(f"{result_state1}.inp",doc.Name)
+        Gui.getDocument(doc).getObject(os.path.split(result_state0)[1]).ShapeColor = (1.,0.,0.)
+        Gui.getDocument(doc).getObject(os.path.split(result_state0)[1]).Transparency = 80
+        Gui.getDocument(doc).getObject(os.path.split(result_state0)[1]).LineWidth = 0.1
+        Gui.getDocument(doc).getObject(os.path.split(result_state1)[1]).ShapeColor = (0.,1.,0.)
+        state.addObject(doc.getObject(os.path.split(result_state0)[1]))
+        state.addObject(doc.getObject(os.path.split(result_state1)[1]))
+        doc.Topology.addObject(state)
+    
+
+
+
+
+
 class GenTableModel(PySide.QtCore.QAbstractTableModel):
     def __init__(self, parent, itemList, header, colours=None, score=None, *args):
 
@@ -175,3 +208,5 @@ class GenTableModel(PySide.QtCore.QAbstractTableModel):
         if order != PySide.QtCore.Qt.DescendingOrder:
             self.itemList.reverse()
         self.layoutChanged.emit()
+
+

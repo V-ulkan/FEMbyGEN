@@ -35,10 +35,20 @@ class Generate:
 
     def initProperties(self, obj):
         try:
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Generations",
+            obj.addProperty("App::PropertyEnumeration", "GenerationMethod", "Base",
+                            "Generation Method")
+            obj.GenerationMethod = ["Full Factorial Design", "Taguchi Optimization Design",
+                                    "Plackett Burman Design", "Box Behnken Design",
+                                    "Latin Hyper Cube Design", "Central Composite Design"]
+            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Base",
                             "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Generations",
+            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Base",
                             "Generated parameter matrix")
+            
+            obj.addProperty("App::PropertyInteger", "Number_of_CPU", "Base",
+                            "Number of CPU's to use ")
+            
+            obj.Number_of_CPU = cpu_count()-1
         except:
             pass
 
@@ -83,8 +93,12 @@ class GeneratePanel():
         (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
         self.doc.Generate.Parameters_Name = paramNames
         self.doc.Generate.Generated_Parameters = parameterValues
+        index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide2.QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            self.form.selectDesign.setCurrentIndex(index)
         # Check if any generations have been made already, and up to what number
-
+        close = partial(Common.showGen,"close", self.doc)
+        self.form.selectDesign.currentTextChanged.connect(close)
         numGens = Common.checkGenerations(self.workingDir)
         self.resetViewControls(numGens)
 
@@ -99,7 +113,117 @@ class GeneratePanel():
         self.form.nextGen.clicked.connect(lambda: self.nextG(numGens))
         self.form.previousGen.clicked.connect(
             lambda: self.previousG(numGens))
+
+        pix = PySide2.QtWidgets.QStyle.SP_FileDialogDetailedView
+        icon = self.form.more.style().standardIcon(pix)
+        self.form.more.setIcon(icon)
+        self.form.more.clicked.connect(self.more)
         self.updateParametersTable()
+
+    def more(self):
+        """I will write here a detailed inputs screens for methods"""
+        path = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/"
+        method = self.form.selectDesign.currentText()
+        if method == "Full Factorial Design":
+            pass
+        elif method == "Plackett Burman Design":
+            pass
+        elif method == "Box Behnken Design":
+            def save():
+                self.doc.Generate.Center_Points = int(settings.center.text())
+                settings.close()
+
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui")
+            try:
+                settings.center.setText(str(self.doc.Generate.Center_Points))
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyInteger", "Center_Points", "Box Behnken",
+                                              "The number of center points to include")
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)
+
+        elif method == "Central Composite Design":
+            def save():
+                import ast
+                self.doc.Generate.Center = ast.literal_eval(settings.center.text())
+                self.doc.Generate.Alpha = settings.alpha.currentText()
+                self.doc.Generate.Face = settings.face.currentText()
+                settings.close()
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_composite.ui")
+            settings.show()
+            try:
+                settings.center.setText(str(self.doc.Generate.Center))
+                index_alpha = settings.alpha.findText(self.doc.Generate.Alpha, PySide2.QtCore.Qt.MatchFixedString)
+                if index_alpha >= 0:
+                    settings.alpha.setCurrentIndex(index_alpha)
+                index_face = settings.face.findText(self.doc.Generate.Face, PySide2.QtCore.Qt.MatchFixedString)
+                if index_face >= 0:
+                    settings.face.setCurrentIndex(index_face)
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "Center", "Central Composite",
+                                              "Number of center array")
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Alpha", "Central Composite",
+                                              "The effect of alpha has on the variance")
+                self.doc.Generate.Alpha = ["orthogonal", "rotatable"]
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Face", "Central Composite",
+                                              "The relation between the start points and the corner (factorial) points.")
+                self.doc.Generate.Face = ["circumscribed", "inscribed", "faced"]
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)
+
+        elif method == "Latin Hyper Cube Design":
+            def save():
+                import ast
+                self.doc.Generate.Samples = int(settings.samples.text())
+                self.doc.Generate.Criterion = settings.criterion.currentText()
+                self.doc.Generate.Iterations = int(settings.iterations.text())
+                self.doc.Generate.Random_State = int(settings.randomstate.text())
+                corrmat=settings.correlationmatrix.text()
+                if corrmat != "None":
+                    self.doc.Generate.Correlation_Matrix=ast.literal_eval(corrmat)
+                settings.close()
+            settings = FreeCADGui.PySideUic.loadUi(path+"more_lhs.ui")
+            settings.samples.setText(str(len(self.doc.Generate.Parameters_Name)))
+            settings.show()
+            try:
+                settings.samples.setText(str(self.doc.Generate.Samples))
+                index = settings.criterion.findText(self.doc.Generate.Criterion, PySide2.QtCore.Qt.MatchFixedString)
+                if index >= 0:
+                    settings.criterion.setCurrentIndex(index)
+                settings.iterations.setText(str(self.doc.Generate.Iterations))
+                settings.randomstate.setText(str(self.doc.Generate.Random_State))
+                settings.correlationmatrix.setText(str(self.doc.Generate.Correlation_Matrix))
+            except:
+                pass
+
+            try:
+                self.doc.Generate.addProperty("App::PropertyInteger", "Samples", "Latin Hyper Cube",
+                                              "The number of samples to generate for each factor (Default: number of parameters)")
+                self.doc.Generate.addProperty("App::PropertyEnumeration", "Criterion", "Latin Hyper Cube",
+                                              "Criterion")
+                self.doc.Generate.Criterion = ["center", "maxmin","centermaximin","correlation","lhsmu"]
+                self.doc.Generate.addProperty("App::PropertyInteger", "Iterations", "Latin Hyper Cube",
+                                              "The number of iterations in the maximin and correlations algorithms.")
+                self.doc.Generate.addProperty("App::PropertyInteger", "Random_State", "Latin Hyper Cube",
+                                              "Random state (or seed-number) which controls the seed and random draws")
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "Correlation_Matrix", "Latin Hyper Cube",
+                                              "Enforce correlation between factors (only used in lhsmu)")
+            except:
+                pass
+            settings.show()
+            settings.save.clicked.connect(save)            
+        elif method == "Taguchi Optimization Design":
+            pass
 
     def meshing(self, mesh, type):
         # Remeshing new generation
@@ -213,45 +337,39 @@ class GeneratePanel():
         self.form.progressBar.setStyleSheet(
             'QProgressBar {text-align: center; } QProgressBar::chunk {background-color: #009688;}')
         # Combination of all parameters
-
         selectedModule = self.form.selectDesign.currentText()
+        self.doc.Generate.GenerationMethod = selectedModule
 
-        try:
+        numgenerations = self.design(selectedModule, param, numberofgen)
 
-            numgenerations = self.design(selectedModule, param, numberofgen)
+        numGens = Common.checkGenerations(self.workingDir)  # delete earlier generations files before
+        if numGens > 0:
+            self.deleteGenerations()
 
-            numGens = Common.checkGenerations(self.workingDir)  # delete earlier generations files before
-            print(numGens)
-            if numGens > 0:
-                self.deleteGenerations()
+        func = partial(self.copy_mesh, numgenerations)
+        iterationnumber = len(numgenerations)
+        p = mp.Pool(self.doc.Generate.Number_of_CPU)
+        for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
+            # Update progress bar
+            progress = ((i+1)/iterationnumber) * 100
+            self.form.progressBar.setValue(progress)
+        p.close()
+        p.join()
 
-            func = partial(self.copy_mesh, numgenerations)
-            iterationnumber = len(numgenerations)
-            p = mp.Pool(cpu_count()-1)
-            for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
-                # Update progress bar
-                progress = ((i+1)/iterationnumber) * 100
-                self.form.progressBar.setValue(progress)
-            p.close()
-            p.join()
+        # ReActivate document again once finished
+        FreeCAD.setActiveDocument(master.Name)
+        master.Generate.Generated_Parameters = numgenerations
+        master.Generate.Parameters_Name = paramNames
+        self.updateParametersTable()
 
-            # ReActivate document again once finished
-            FreeCAD.setActiveDocument(master.Name)
-            master.Generate.Generated_Parameters = numgenerations
-            master.Generate.Parameters_Name = paramNames
-            self.updateParametersTable()
-
-            # Update number of generations produced in window
-            numGens = Common.checkGenerations(self.workingDir)
-            self.form.numGensLabel.setText(
-                str(numGens) + " generations produced")
-            self.resetViewControls(numGens)
-            self.updateParametersTable()
-            master.save()  # too store generated values in generate object
-            FreeCAD.Console.PrintMessage("Generation done successfully!\n")
-
-        except TypeError:
-            print("Please install pyDOE2 module\n")
+        # Update number of generations produced in window
+        numGens = Common.checkGenerations(self.workingDir)
+        self.form.numGensLabel.setText(
+            str(numGens) + " generations produced")
+        self.resetViewControls(numGens)
+        self.updateParametersTable()
+        master.save()  # too store generated values in generate object
+        FreeCAD.Console.PrintMessage("Generation done successfully!\n")
 
     def deleteGenerations(self):
         qm = PySide2.QtWidgets.QMessageBox
@@ -388,11 +506,35 @@ class GeneratePanel():
         elif method == "Plackett Burman Design":
             return Design.designpb(parameters)
         elif method == "Box Behnken Design":
-            return Design.designboxBen(parameters)
+            try:
+                center = self.doc.Generate.Center_Points
+            except:
+                center = None
+            return Design.designboxBen(parameters, center)
         elif method == "Central Composite Design":
-            return Design.designcentalcom(parameters)
+            try:
+                center = self.doc.Generate.Center
+                face = self.doc.Generate.Face
+                alpha = self.doc.Generate.Alpha
+            except:
+                center = (4, 4)
+                alpha = "orthogonal"
+                face = "circumscribed"
+            return Design.designcentalcom(parameters, center, alpha, face)
         elif method == "Latin Hyper Cube Design":
-            return Design.designlhc(parameters)
+            try:
+                samples = self.doc.Generate.Samples
+                criterion = self.doc.Generate.Criterion
+                iterations = self.doc.Generate.Iterations
+                random_state = self.doc.Generate.Random_State
+                correlation_matrix = self.doc.Generate.Correlation_Matrix
+            except:
+                samples = None
+                criterion = None
+                iterations = None
+                random_state = None
+                correlation_matrix = None
+            return Design.designlhc(parameters,samples,criterion, iterations, random_state, correlation_matrix)
         elif method == "Taguchi Optimization Design":
             result = Taguchi.Taguchipy(parameters, numberofgen)
             res = result.selection()
@@ -405,7 +547,7 @@ class ViewProviderGen:
 
     def getIcon(self):
         icon_path = os.path.join(
-            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/Generate.svg')
+            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Generate.svg')
         return icon_path
 
     def attach(self, vobj):

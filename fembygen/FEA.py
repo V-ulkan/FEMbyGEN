@@ -247,8 +247,6 @@ class FEAPanel:
         else:
             FreeCAD.Console.PrintError(
                 "Houston, we have a problem! {}\n".format(message))  # in report view
-            print("Houston, we have a problem! {}\n".format(
-                message))  # in python console
 
         # save FEA results
         doc.save()
@@ -273,7 +271,7 @@ class ViewProviderFEA:
 
     def getIcon(self):
         icon_path = os.path.join(
-            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/FEA.svg')
+            FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/FEA.svg')
         return icon_path
 
     def attach(self, vobj):
