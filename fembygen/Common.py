@@ -51,10 +51,12 @@ def searchAnalysed(master):
             if obj.TypeId == "Fem::FemAnalysis":  # to choose analysis objects
                 lc += 1
                 analysisfolder = os.path.join(
-                    workingDir + f"/Gen{i}/loadCase{lc}/")
+                    workingDir + f"/Gen{i}/loadCase_{lc}/")
+                print("analysisfolder",analysisfolder)
                 try:
                     # This returns an exception if analysis failed for this .frd file, because there is no results data
                     FRDPath = glob.glob(analysisfolder + "*.frd")[0]
+                    print("frdpadh",FRDPath)
                     try:
                         with open(FRDPath, "r") as file:
                             file.readline().decode().strip()
@@ -75,14 +77,14 @@ def searchAnalysed(master):
 
 def checkAnalyses(master):
     statuses = master.FEA.Status
-    numAnalysed = master.FEA.NumberofAnalysis
+    numAnalysed = master.FEA.NumberOfAnalysis
 
     return (statuses, numAnalysed)
 
 
 def checkGenParameters(master):
-    header = master.Generate.Parameters_Name
-    parameters = master.Generate.Generated_Parameters
+    header = master.Generate.ParametersName
+    parameters = master.Generate.GeneratedParameters
     if parameters == None:
         header = [""]
         parameters = []
@@ -110,8 +112,7 @@ def showGen(table, master, item):
     FreeCAD.setActiveDocument(docName)
 
 
-def get_results_fc(case):
-    doc= FreeCAD.ActiveDocument
+def get_results_fc(doc, case):
     file_path=doc.Topology.path
     file=os.path.join(file_path,"topology_iterations", "file" + str(case).zfill(3))
     result_state0 = f"{file}_state0"

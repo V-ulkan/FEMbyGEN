@@ -5,7 +5,7 @@ import os
 
 # function to print ongoing messages to the log file
 def write_to_log(file_name, msg):
-    f_log = open(file_name[:-4] + ".log", "a")
+    f_log = open(file_name[:-4] + ".log.fcmacro", "a")
     f_log.write(msg)
     f_log.close()
 

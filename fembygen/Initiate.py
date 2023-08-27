@@ -4,12 +4,12 @@ import FreeCADGui
 
 def makeInitiate():
     try:
-        group = FreeCAD.ActiveDocument.Generative_Design
+        group = FreeCAD.ActiveDocument.GenerativeDesign
         group.isValid()
     except:
         doc = FreeCAD.ActiveDocument
         group = FreeCAD.ActiveDocument.addObject(
-            "App::DocumentObjectGroupPython", "Generative Design")
+            "App::DocumentObjectGroupPython", "GenerativeDesign")
         parameter = doc.addObject('Spreadsheet::Sheet', 'Parameters')
         group.addObject(parameter)
     Initiate(group)

@@ -1,7 +1,7 @@
 # optimization program using CalculiX solver
 # BESO (Bi-directional Evolutionary Structural Optimization Method)
 
-import FreeCADGui as Gui
+import FreeCADGui
 import FreeCAD
 import numpy as np
 import os
@@ -9,20 +9,23 @@ import subprocess
 import sys
 import time
 import Fem
+import shutil
+from fembygen.topology import beso_lib
 # import importlib
 # importlib.reload(beso_plots)  # reloads without FreeCAD restart
-def main():
-    from fembygen.topology import beso_lib, beso_filters, beso_plots, beso_separate
+
+
+def main(analysis):
+    from fembygen.topology import beso_filters, beso_plots, beso_separate
     start_time = time.time()
     doc = FreeCAD.ActiveDocument
-    path=doc.Topology.path
-    path_calculix=doc.Topology.path_calculix
-    file_name=doc.Topology.file_name
+    path = doc.Topology.path
+    path_calculix = doc.Topology.path_calculix
+    file_name = doc.Topology.file_name
     mass_removal_ratio = doc.Topology.mass_removal_ratio
     mass_addition_ratio = doc.Topology.mass_addition_ratio
-    domain_optimized = doc.Topology.domain_optimized
+    domain_optimized = doc.Topology.domain_optimized[analysis]
     domains_from_config = domain_optimized.keys()
-    domain_FI = doc.Topology.domain_FI
     mass_goal_ratio = doc.Topology.mass_goal_ratio
     continue_from = doc.Topology.continue_from
     filter_list = doc.Topology.filter_list
@@ -47,42 +50,44 @@ def main():
     save_resulting_format = doc.Topology.save_resulting_format
 
     criteria = []
-    domain_thickness={}
-    domain_offset={}
-    domain_orientation={}
-    domain_same_state ={}
+    domain_thickness = {}
+    domain_offset = {}
+    domain_orientation = {}
+    domain_same_state = {}
     domain_FI_filled = False
 
-    domain_optimized = doc.Topology.domain_optimized
-    domain_density= doc.Topology.domain_density
-    domain_material= doc.Topology.domain_material
-
-    for dn in domain_FI:  # extracting each type of criteria
-        if domain_FI[dn]:
-            domain_FI_filled = True
-        for state in range(len(domain_FI[dn])):
-            for dn_crit in domain_FI[dn][state]:
-                if dn_crit not in criteria:
-                    criteria.append(dn_crit)
-
-
+    
+    domain_density = doc.Topology.domain_density[analysis]
+    domain_material = doc.Topology.domain_material[analysis]
+    
+    try:
+        domain_FI = doc.Topology.domain_FI[analysis]
+        for dn in domain_FI:  # extracting each type of criteria
+            if domain_FI[dn]:
+                domain_FI_filled = True
+            for state in range(len(domain_FI[dn])):
+                for dn_crit in domain_FI[dn][state]:
+                    if dn_crit not in criteria:
+                        criteria.append(dn_crit)
+    except:
+        domain_FI={}
     # default values if not defined by user
     for dn in domain_optimized:
 
         try:
-            domain_thickness[dn] = doc.Topology.domain_thickness[dn]
+            domain_thickness[dn] = doc.Topology.domain_thickness[analysis][dn]
         except KeyError:
             domain_thickness[dn] = []
         try:
-            domain_offset[dn] = doc.Topology.domain_offset[dn]
+            domain_offset[dn] = doc.Topology.domain_offset[analysis][dn]
         except KeyError:
             domain_offset[dn] = 0.0
         try:
-            domain_orientation[dn] = doc.Topology.domain_orientation[dn]
+            domain_orientation[dn] = doc.Topology.domain_orientation[analysis][dn]
         except KeyError:
             domain_orientation[dn] = []
         try:
-            domain_same_state[dn] = doc.Topology.domain_same_state[dn]
+            domain_same_state[dn] = doc.Topology.domain_same_state[analysis][dn]
         except KeyError:
             domain_same_state[dn] = False
 
@@ -137,7 +142,6 @@ def main():
     msg += "\n"
     file_name = os.path.join(path, file_name)
     beso_lib.write_to_log(file_name, msg)
-
 
     # mesh and domains importing
     [nodes, Elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry] = beso_lib.import_inp(
@@ -268,7 +272,8 @@ def main():
             if f_range == "auto":
                 size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                 f_range = size_avg * 2
-                msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg, f_range)
+                msg = "Filtered average element size is {}, filter range set automatically to {}".format(
+                    size_avg, f_range)
                 print(msg)
                 beso_lib.write_to_log(file_name, msg)
             if ft[0] == "over points":
@@ -333,7 +338,7 @@ def main():
     file_name_resulting_states = os.path.join(path, "resulting_states")
     [en_all_vtk, associated_nodes] = beso_lib.vtk_mesh(file_name_resulting_states, nodes, Elements)
     # prepare for plotting
-    #beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
+    # beso_plots.plotshow(domain_FI_filled, optimization_base, displacement_graph)
 
     # ITERATION CYCLE
     sensitivity_number = {}
@@ -355,11 +360,10 @@ def main():
     elm_states_last = elm_states
     oscillations = False
 
-    if not os.path.exists(os.path.join(path, "topology_iterations")):
-        os.makedirs(os.path.join(path, "topology_iterations"))
+    createFolder(path,file_name)
 
     while True:
-        if Gui.activeDocument() == None:
+        if FreeCADGui.activeDocument() == None:
             doc.Topology.LastState = 0
             break
         # creating the new .inp file for CalculiX
@@ -459,7 +463,7 @@ def main():
         # buckling sensitivities
         if optimization_base == "buckling":
             # eigen energy density normalization
-            #energy_density_eigen[eigen_number][en_last] = np.average(ener_int_pt)
+            # energy_density_eigen[eigen_number][en_last] = np.average(ener_int_pt)
             denominator = []  # normalization denominator for each buckling factor with numbering from 0
             for eigen_number in energy_density_eigen:  # numbering from 1
                 denominator.append(max(energy_density_eigen[eigen_number].values()))
@@ -629,7 +633,13 @@ def main():
         if len(energy_density_mean) > 5:
             difference_last = []
             for last in range(1, 6):
-                difference_last.append(abs(energy_density_mean[i] - energy_density_mean[i - last]) / energy_density_mean[i])
+                try:
+                    difference_last.append(
+                    abs(energy_density_mean[i] - energy_density_mean[i - last]) / energy_density_mean[i])
+                    
+                except:
+                    print("energy_density_mean is 0")
+                    difference_last.append(0)
             difference = max(difference_last)
             if check_tolerance is True:
                 print("maximum relative difference in energy_density_mean for the last 5 iterations = {}".format(difference))
@@ -747,12 +757,11 @@ def main():
 
         # check for oscillation state
         if elm_states_before_last == elm_states:  # oscillating state
-            print("before_last",elm_states_before_last,"elm_states", elm_states)
             msg = "\nOSCILLATION: model turns back to " + str(i - 2) + "th iteration.\n"
             beso_lib.write_to_log(file_name, msg)
             print(msg)
             oscillations = True
-            if i>2:
+            if i > 2:
                 doc.Topology.LastState = i-2
             else:
                 doc.Topology.LastState = i
@@ -761,18 +770,9 @@ def main():
         elm_states_last = elm_states.copy()
 
         # removing solver files
-        if save_iteration_results and np.mod(float(i - 1), save_iteration_results) == 0:
-            if "inp" not in save_solver_files:
-                os.remove(file_nameW + ".inp")
-            if "dat" not in save_solver_files:
-                os.remove(file_nameW + ".dat")
-            if "frd" not in save_solver_files:
-                os.remove(file_nameW + ".frd")
-            if "sta" not in save_solver_files:
-                os.remove(file_nameW + ".sta")
-            if "cvg" not in save_solver_files:
-                os.remove(file_nameW + ".cvg")
-            
+        if save_iteration_results and (i - 1) % save_iteration_results == 0:
+            deleteFiles(file_nameW, save_solver_files, reference_points)
+
         else:
             os.remove(file_nameW + ".inp")
             os.remove(file_nameW + ".dat")
@@ -789,6 +789,36 @@ def main():
             beso_lib.export_inp(file_nameW, nodes, Elements, elm_states, number_of_states)
 
     # removing solver files
+    deleteFiles(file_nameW, save_solver_files, reference_points)
+
+    # plot and save figures
+    beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
+                    FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
+                    displacement_graph, disp_max, buckling_factors_all, savefig = True)
+    # print total time
+    total_time=time.time() - start_time
+    total_time_h=int(total_time / 3600.0)
+    total_time_min=int((total_time % 3600) / 60.0)
+    total_time_s=int(round(total_time % 60))
+    msg="\n"
+    msg += ("Finished at  " + time.ctime() + "\n")
+    showMsg= ("Total time   " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s\n")
+    msg += showMsg+ "\n"
+    beso_lib.write_to_log(file_name, msg)
+    print(showMsg)
+
+def createFolder(path,file_name):
+    try:
+        os.mkdir(os.path.join(path, "topology_iterations"))
+    except:
+        shutil.rmtree(os.path.join(path, "topology_iterations"))
+        msg="Earlier topology simulations deleted"
+        FreeCAD.Console.PrintMessage(msg)
+        beso_lib.write_to_log(file_name, msg)
+        os.mkdir(os.path.join(path, "topology_iterations"))
+
+
+def deleteFiles(file_nameW, save_solver_files, reference_points):
     if "inp" not in save_solver_files:
         os.remove(file_nameW + ".inp")
         if reference_points == "nodes":
@@ -802,20 +832,4 @@ def main():
     if "cvg" not in save_solver_files:
         os.remove(file_nameW + ".cvg")
     if "12d" not in save_solver_files:
-                os.remove(file_nameW + ".12d")
-
-    # plot and save figures
-    beso_plots.replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean,
-                    FI_mean_without_state0, FI_max, optimization_base, energy_density_mean, heat_flux_mean,
-                    displacement_graph, disp_max, buckling_factors_all, savefig=True)
-    # print total time
-    total_time = time.time() - start_time
-    total_time_h = int(total_time / 3600.0)
-    total_time_min = int((total_time % 3600) / 60.0)
-    total_time_s = int(round(total_time % 60))
-    msg = "\n"
-    msg += ("Finished at  " + time.ctime() + "\n")
-    msg += ("Total time   " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s\n")
-    msg += "\n"
-    beso_lib.write_to_log(file_name, msg)
-    print("total time: " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s")
+        os.remove(file_nameW + ".12d")

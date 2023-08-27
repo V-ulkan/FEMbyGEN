@@ -17,7 +17,7 @@ def makeResult():
         try:
             obj = FreeCAD.ActiveDocument.addObject(
                 "App::DocumentObjectGroupPython", "Results")
-            FreeCAD.ActiveDocument.Generative_Design.addObject(obj)
+            FreeCAD.ActiveDocument.GenerativeDesign.addObject(obj)
         except:
             return None
     Result(obj)
@@ -341,6 +341,7 @@ class ResultsPanel:
     def getResultsToMaster(self, doc, GenNo):
         master = self.doc
         try:
+            #TODO not get all results
             doc.CCX_Results.Label = f"Gen{GenNo}_Results"
             doc.ResultMesh.Label = f"Gen{GenNo}_Mesh"
             master.copyObject(doc.CCX_Results, False)

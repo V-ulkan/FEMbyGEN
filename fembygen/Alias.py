@@ -28,7 +28,7 @@ class AliasPanel:
                 FreeCAD.ActiveDocument.Parameters.setAlias(
                     f'C{i+2}', FreeCAD.ActiveDocument.Parameters.get(f'B{i+2}'))
                 FreeCAD.ActiveDocument.Parameters.recompute()
-                FreeCAD.Console.PrintError("Parameters names and sizes are aliased")
+                FreeCAD.Console.PritMessage("Parameters names and sizes are aliased")
             except:
                 pass
 

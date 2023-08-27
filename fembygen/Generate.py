@@ -18,7 +18,7 @@ def makeGenerate():
     except:
         obj = FreeCAD.ActiveDocument.addObject(
             "Part::FeaturePython", "Generate")
-        FreeCAD.ActiveDocument.Generative_Design.addObject(obj)
+        FreeCAD.ActiveDocument.GenerativeDesign.addObject(obj)
     Generate(obj)
     if FreeCAD.GuiUp:
         ViewProviderGen(obj.ViewObject)
@@ -40,15 +40,15 @@ class Generate:
             obj.GenerationMethod = ["Full Factorial Design", "Taguchi Optimization Design",
                                     "Plackett Burman Design", "Box Behnken Design",
                                     "Latin Hyper Cube Design", "Central Composite Design"]
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Base",
+            obj.addProperty("App::PropertyStringList", "ParametersName", "Base",
                             "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Base",
+            obj.addProperty("App::PropertyPythonObject", "GeneratedParameters", "Base",
                             "Generated parameter matrix")
             
-            obj.addProperty("App::PropertyInteger", "Number_of_CPU", "Base",
+            obj.addProperty("App::PropertyInteger", "NumberOfCPU", "Base",
                             "Number of CPU's to use ")
             
-            obj.Number_of_CPU = cpu_count()-1
+            obj.NumberOfCPU = cpu_count()-1
         except:
             pass
 
@@ -91,8 +91,8 @@ class GeneratePanel():
 
         self.doc = object.Object.Document
         (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
-        self.doc.Generate.Parameters_Name = paramNames
-        self.doc.Generate.Generated_Parameters = parameterValues
+        self.doc.Generate.ParametersName = paramNames
+        self.doc.Generate.GeneratedParameters = parameterValues
         index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide2.QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.form.selectDesign.setCurrentIndex(index)
@@ -130,17 +130,17 @@ class GeneratePanel():
             pass
         elif method == "Box Behnken Design":
             def save():
-                self.doc.Generate.Center_Points = int(settings.center.text())
+                self.doc.Generate.CenterPoints = int(settings.center.text())
                 settings.close()
 
             settings = FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui")
             try:
-                settings.center.setText(str(self.doc.Generate.Center_Points))
+                settings.center.setText(str(self.doc.Generate.CenterPoints))
             except:
                 pass
 
             try:
-                self.doc.Generate.addProperty("App::PropertyInteger", "Center_Points", "Box Behnken",
+                self.doc.Generate.addProperty("App::PropertyInteger", "CenterPoints", "Box Behnken",
                                               "The number of center points to include")
             except:
                 pass
@@ -187,13 +187,13 @@ class GeneratePanel():
                 self.doc.Generate.Samples = int(settings.samples.text())
                 self.doc.Generate.Criterion = settings.criterion.currentText()
                 self.doc.Generate.Iterations = int(settings.iterations.text())
-                self.doc.Generate.Random_State = int(settings.randomstate.text())
+                self.doc.Generate.RandomState = int(settings.randomstate.text())
                 corrmat=settings.correlationmatrix.text()
                 if corrmat != "None":
-                    self.doc.Generate.Correlation_Matrix=ast.literal_eval(corrmat)
+                    self.doc.Generate.CorrelationMatrix=ast.literal_eval(corrmat)
                 settings.close()
             settings = FreeCADGui.PySideUic.loadUi(path+"more_lhs.ui")
-            settings.samples.setText(str(len(self.doc.Generate.Parameters_Name)))
+            settings.samples.setText(str(len(self.doc.Generate.ParametersName)))
             settings.show()
             try:
                 settings.samples.setText(str(self.doc.Generate.Samples))
@@ -201,8 +201,8 @@ class GeneratePanel():
                 if index >= 0:
                     settings.criterion.setCurrentIndex(index)
                 settings.iterations.setText(str(self.doc.Generate.Iterations))
-                settings.randomstate.setText(str(self.doc.Generate.Random_State))
-                settings.correlationmatrix.setText(str(self.doc.Generate.Correlation_Matrix))
+                settings.randomstate.setText(str(self.doc.Generate.RandomState))
+                settings.correlationmatrix.setText(str(self.doc.Generate.CorrelationMatrix))
             except:
                 pass
 
@@ -214,9 +214,9 @@ class GeneratePanel():
                 self.doc.Generate.Criterion = ["center", "maxmin","centermaximin","correlation","lhsmu"]
                 self.doc.Generate.addProperty("App::PropertyInteger", "Iterations", "Latin Hyper Cube",
                                               "The number of iterations in the maximin and correlations algorithms.")
-                self.doc.Generate.addProperty("App::PropertyInteger", "Random_State", "Latin Hyper Cube",
+                self.doc.Generate.addProperty("App::PropertyInteger", "RandomState", "Latin Hyper Cube",
                                               "Random state (or seed-number) which controls the seed and random draws")
-                self.doc.Generate.addProperty("App::PropertyIntegerList", "Correlation_Matrix", "Latin Hyper Cube",
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "CorrelationMatrix", "Latin Hyper Cube",
                                               "Enforce correlation between factors (only used in lhsmu)")
             except:
                 pass
@@ -262,12 +262,12 @@ class GeneratePanel():
             doc.Parameters.clear(f'E1:E{k+2}')
 
         # Removing generative design container in the file
-        for l in doc.Generative_Design.Group:
+        for l in doc.GenerativeDesign.Group:
             if l.Name == "Parameters":
                 pass
             else:
                 doc.removeObject(l.Name)
-        doc.removeObject(doc.Generative_Design.Name)
+        doc.removeObject(doc.GenerativeDesign.Name)
         doc.recompute()
 
         # getting first analysis meshing object and copy it other loadcases
@@ -348,7 +348,7 @@ class GeneratePanel():
 
         func = partial(self.copy_mesh, numgenerations)
         iterationnumber = len(numgenerations)
-        p = mp.Pool(self.doc.Generate.Number_of_CPU)
+        p = mp.Pool(self.doc.Generate.NumberOfCPU)
         for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
             # Update progress bar
             progress = ((i+1)/iterationnumber) * 100
@@ -358,8 +358,8 @@ class GeneratePanel():
 
         # ReActivate document again once finished
         FreeCAD.setActiveDocument(master.Name)
-        master.Generate.Generated_Parameters = numgenerations
-        master.Generate.Parameters_Name = paramNames
+        master.Generate.GeneratedParameters = numgenerations
+        master.Generate.ParametersName = paramNames
         self.updateParametersTable()
 
         # Update number of generations produced in window
@@ -396,7 +396,7 @@ class GeneratePanel():
 
             # Delete if earlier generative objects exist
             try:
-                for l in self.doc.Generative_Design.Group:
+                for l in self.doc.GenerativeDesign.Group:
                     if l.Name == "Parameters" or l.Name == "Generate":
                         pass
                     elif l.Name == "Results":
@@ -406,7 +406,7 @@ class GeneratePanel():
             except:
                 pass
 
-            self.doc.Generate.Generated_Parameters = None
+            self.doc.Generate.GeneratedParameters = None
             # refreshing the table
             self.resetViewControls(numGens)
             self.updateParametersTable()
@@ -507,7 +507,7 @@ class GeneratePanel():
             return Design.designpb(parameters)
         elif method == "Box Behnken Design":
             try:
-                center = self.doc.Generate.Center_Points
+                center = self.doc.Generate.CenterPoints
             except:
                 center = None
             return Design.designboxBen(parameters, center)
@@ -526,8 +526,8 @@ class GeneratePanel():
                 samples = self.doc.Generate.Samples
                 criterion = self.doc.Generate.Criterion
                 iterations = self.doc.Generate.Iterations
-                random_state = self.doc.Generate.Random_State
-                correlation_matrix = self.doc.Generate.Correlation_Matrix
+                random_state = self.doc.Generate.RandomState
+                correlation_matrix = self.doc.Generate.CorrelationMatrix
             except:
                 samples = None
                 criterion = None
