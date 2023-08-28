@@ -229,7 +229,7 @@ class TopologyMasterPanel(QtGui.QWidget):
 
         #hide all mesh files to show results at the end of the topology
         for mesh in Gen_Doc.Objects:
-            if mesh.TypeId == 'Fem::FemMeshObjectPython' or mesh.TypeId == 'Fem::FemMeshShapeNetgenObject':
+            if mesh.TypeId == 'Fem::FemMeshObjectPython' or mesh.TypeId == 'Fem::FemMeshShapeNetgenObject' or 'Fem::FemPostPipeline':
                 mesh.Visibility=False
         
         Gen_Doc.Topology.ViewObject.doubleClicked()
@@ -498,7 +498,7 @@ class TopologyPanel(QtGui.QWidget):
                     lc += 1
                     FemGui.setActiveAnalysis(obj)
                     analysisfolder = os.path.join(
-                        self.workingDir + f"/loadCase_{lc}")
+                        self.workingDir + f"/TopologyCase_{lc}")
                     try:
                         os.mkdir(analysisfolder)
                         try:
@@ -527,7 +527,7 @@ class TopologyPanel(QtGui.QWidget):
                             return
                         except:
                             FreeCAD.Console.PrintMessage("Target path has previous files. Old files are deleted.")
-                            folders = glob.glob(self.workingDir + "/loadCase*")
+                            folders = glob.glob(self.workingDir + "/TopologyCase*")
 
                             for i in folders:
                                 shutil.rmtree(i)
@@ -812,6 +812,7 @@ class TopologyPanel(QtGui.QWidget):
         analysis = self.form.selectLC.currentText()
         beso_main.main(analysis)
         FreeCADGui.runCommand('Std_ActivatePrevWindow')
+        FreeCAD.setActiveDocument(self.doc.Name)
         self.get_case("last")
 
     def get_case(self, numberofcase):

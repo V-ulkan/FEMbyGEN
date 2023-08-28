@@ -287,7 +287,7 @@ class GeneratePanel():
                     # copying first loadcase mesh to other loadcases
                     if lc > 1:
                         for femobj in obj.Group:
-                            # delete old mesh of loadcase
+                            # delete old mesh of second or later analysis
                             if femobj.TypeId == 'Fem::FemMeshObjectPython' or femobj.TypeId == 'Fem::FemMeshShapeNetgenObject':
                                 doc.removeObject(femobj.Name)
 
