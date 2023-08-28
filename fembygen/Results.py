@@ -219,13 +219,14 @@ class ResultsPanel:
             doc = FreeCAD.open(filePath, hidden=True)
 
             # for each loadcases it's read the results
+            results = doc.findObjects('Fem::FemResultObjectPython')
             for j, value in enumerate(row):
                 if value == "Analysed":
                     try:
-                        resultPath = self.workingDir + f"/Gen{i+1}/loadCase{j+1}/"
-                        mean = np.mean(doc.CCX_Results.vonMises)
-                        max = np.max(doc.CCX_Results.vonMises)
-                        maxDisp = np.max(doc.CCX_Results.DisplacementLengths)
+                        resultPath = self.workingDir + f"/Gen{i+1}/loadCase_{j+1}/"
+                        mean = np.mean(results[j].vonMises)
+                        max = np.max(results[j].vonMises)
+                        maxDisp = np.max(results[j].DisplacementLengths)
 
                         intData, totalInt, volData, totalVol, denData = self.IntEnergyandVolume(
                             resultPath)
@@ -233,16 +234,17 @@ class ResultsPanel:
                         deviation.append(denData)
                         result.append([f"{totalVol:.2e}", f"{max:.2e}", f"{maxDisp:.2e}",
                                        f"{mean:.2e}", f"{totalInt:.2e}", f"{energyDenStd:.2e}"])
-                        FreeCAD.Console.PrintMessage(f"Generation {i+1} Analysis {j+1} results imported\n")
+                        FreeCAD.Console.PrintMessage(f"Generation {i+1} Analysis {j+1} result values imported\n")
                     except:
                         FreeCAD.Console.PrintError(
-                            f"During getting results of Generation {i+1} Analysis {j+1} problem occured. Please check the generation results by opening Gen{i+1} folder in master file directory.\n")
+                            f"During getting result values of Generation {i+1} Analysis {j+1} problem occured. Please check the generation results by opening Gen{i+1} folder in master file directory.\n")
                         result.append([None]*6)
                 else:
                     FreeCAD.Console.PrintError(f"Generation {i+1} Loadcase {j+1} couldn't imported\n")
                     result.append([None]*6)
 
-            self.getResultsToMaster(doc, i+1)
+            self.getResultsToMaster(doc, i+1, results[0])
+            
             FreeCAD.closeDocument(filename)
         result_sum = []
         res = np.array(result, dtype=np.dtype("float"))
@@ -338,14 +340,15 @@ class ResultsPanel:
         total.vonMises = vonMises.tolist()
         fill_femresult_stats(total)
 
-    def getResultsToMaster(self, doc, GenNo):
+    def getResultsToMaster(self, doc, GenNo, object):
         master = self.doc
+
         try:
-            #TODO not get all results
-            doc.CCX_Results.Label = f"Gen{GenNo}_Results"
-            doc.ResultMesh.Label = f"Gen{GenNo}_Mesh"
-            master.copyObject(doc.CCX_Results, False)
-            master.copyObject(doc.ResultMesh, False)
+            #copy one of the analysis results to clear all values then calculate sum of all results
+            object.Label = f"Gen{GenNo}_Results"
+            object.Mesh.Label = f"Gen{GenNo}_Mesh"
+            master.copyObject(object, False)
+            master.copyObject(object.Mesh, False)
         except:
             FreeCAD.Console.PrintError(
                 f"Results of Gen{GenNo} is not found in the file. Please check the results by opening the file directly.\n")

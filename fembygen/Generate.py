@@ -279,7 +279,6 @@ class GeneratePanel():
                 self.meshing(mesh, "Netgen")
                 break
 
-        # define analysis working directory
         lc = 0
         for obj in doc.Objects:
             try:
@@ -292,10 +291,6 @@ class GeneratePanel():
                             if femobj.TypeId == 'Fem::FemMeshObjectPython' or femobj.TypeId == 'Fem::FemMeshShapeNetgenObject':
                                 doc.removeObject(femobj.Name)
 
-                            # setting working directory of loadcase to subfolder of generation folder
-                            elif femobj.TypeId == 'Fem::FemSolverObjectPython':
-                                femobj.WorkingDir = os.path.join(
-                                    directory+f"loadCase{lc}")
                         # copying same mesh to other loadcases
                         obj.addObject(doc.copyObject(mesh, False))
             except:
