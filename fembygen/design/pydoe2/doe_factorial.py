@@ -19,7 +19,6 @@ import re
 import string
 
 import numpy as np
-from scipy.special import binom
 
 
 __all__ = ['np', 'fullfact', 'ff2n', 'fracfact', 'fracfact_by_res', 'fracfact_opt',
@@ -347,7 +346,14 @@ def _n_fac_at_res(n, res):
     """ Calculate number of possible factors for fractional factorial
     design with `n` base factors at resolution `res`.
     """
-    return sum(binom(n, r) for r in range(res - 1, n)) + n
+    try:
+
+        from scipy.special import binom
+        return sum(binom(n, r) for r in range(res - 1, n)) + n
+    except:
+        print("you need to install scipy library to use it")
+        return None
+    
 
 ################################################################################
 

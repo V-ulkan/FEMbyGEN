@@ -611,9 +611,9 @@ class TopologyPanel(QtGui.QWidget):
                 except KeyError:
                     specific_heat = 0.
                 if thickness_id > -1:
-                    thickness = float(str(self.thicknesses[thickness_id].Thickness).split()[0])  # mm
-                    if str(self.thicknesses[thickness_id].Thickness).split()[1] != "mm":
-                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id].Name)
+                    thickness = float(str(self.doc.Topology.combobox[case][3][elset_id].Thickness).split()[0])  # mm
+                    if str(self.doc.Topology.combobox[case][3][elset_id].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " + self.doc.Topology.combobox[case][3][elset_id].Name)
                 else:
                     thickness = 0
                 optimized = self.form.asDesign_checkbox_1.isChecked()
