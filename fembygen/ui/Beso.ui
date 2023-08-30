@@ -253,8 +253,11 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="currentText">
+           <string>None</string>
+          </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <item>
            <property name="text">
@@ -757,8 +760,11 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="currentText">
+           <string>None</string>
+          </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <item>
            <property name="text">

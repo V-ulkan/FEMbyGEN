@@ -90,7 +90,8 @@ class Topology:
         obj.continue_from = ''
 
         obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
-        obj.filter_list = [['simple', 0]]
+        obj.filter_list = []
+
         obj.addProperty("App::PropertyPythonObject", "Gen_filled")
         obj.Gen_filled = False
 
@@ -156,13 +157,10 @@ class Topology:
 
         obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Mass", "Mass Goal Ratio")
 
-        obj.addProperty("App::PropertyPythonObject", "filter_list2", "Base", "Filter List 2")
-        obj.filter_list2 = [['simple', 'auto']]
-
         obj.addProperty("App::PropertyString", "optimization_base", "Base", "Optimization Base")
 
-        obj.addProperty("App::PropertyString", "ratio_type", "Base", "Ratio Type")
-        obj.ratio_type = 'relative'
+        obj.addProperty("App::PropertyEnumeration", "ratio_type", "Base", "Ratio Type")
+        obj.ratio_type = ['relative', 'absolute']
         obj.addProperty("App::PropertyPythonObject", "Generations")
         obj.Generations = []
 
@@ -542,6 +540,84 @@ class TopologyPanel(QtGui.QWidget):
         self.doc.Topology.combobox = comboBoxItems
         self.selectFile()
 
+    def setFilter(self):
+            filter = self.form.selectFilter_1.currentText()
+            if self.form.filterRange_1.currentText() == "auto":
+                range = "auto"
+            elif self.form.filterRange_1.currentText() == "manual":
+                range = float(self.form.range_1.text())
+            direction = self.form.directionVector_1.text()
+            selection = [item.text() for item in self.form.domainList_1.selectedItems()]
+
+            filter_domains = []
+            if "All defined" not in selection:
+                if "Domain 0" in selection:
+                    filter_domains.append(elset)
+                if "Domain 1" in selection:
+                    filter_domains.append(elset1)
+                if "Domain 2" in selection:
+                    filter_domains.append(elset2)
+            if filter == "simple":
+                self.doc.Topology.filter_list.append(['simple', range])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[0].append(dn)
+            elif filter == "casting":
+                self.doc.Topology.filter_list.append(['casting', range, f"({direction})"])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[0].append(dn)
+    
+
+            filter1 = self.form.selectFilter_2.currentText()
+            if self.form.filterRange_2.currentText() == "auto":
+                range1 = "auto"
+            elif self.form.filterRange_2.currentText() == "manual":
+                range1 = float(self.form.range_2.text())
+            direction1 = self.form.directionVector_2.text()
+            selection = [item.text() for item in self.form.domainList_2.selectedItems()]
+            filter_domains1 = []
+            if "All defined" not in selection:
+                if "Domain 0" in selection:
+                    filter_domains1.append(elset)
+                if "Domain 1" in selection:
+                    filter_domains1.append(elset1)
+                if "Domain 2" in selection:
+                    filter_domains1.append(elset2)
+            if filter1 == "simple":
+                self.doc.Topology.filter_list.append(['simple', range1])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[1].append(dn)
+            elif filter1 == "casting":
+                self.doc.Topology.filter_list.append(['casting', range1, f"({direction1})"])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[1].append(dn)
+    
+
+            filter2 = self.form.selectFilter_3.currentText()
+            if self.form.filterRange_3.currentText() == "auto":
+                range2 = "auto"
+            elif self.form.filterRange_3.currentText() == "manual":
+                range2 = float(self.form.range_3.text())
+            direction2 = self.form.directionVector_3.text()
+            selection = [item.text() for item in self.form.domainList_3.selectedItems()]
+
+            filter_domains2 = []
+            if "All defined" not in selection:
+                if "Domain 0" in selection:
+                    filter_domains2.append(elset)
+                if "Domain 1" in selection:
+                    filter_domains2.append(elset1)
+                if "Domain 2" in selection:
+                    filter_domains2.append(elset2)
+            if filter2 == "simple":
+                self.doc.Topology.filter_list.append(['simple', range2])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[2].append(dn)
+            elif filter2 == "casting":
+                self.doc.Topology.filter_list.append(['casting', range2, f"({direction2})"])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[2].append(dn)
+    
+
     def setConfig(self):
         self.doc.Topology.file_name = os.path.split(self.form.fileName.text())[1]
         self.doc.Topology.path = os.path.split(self.form.fileName.text())[0]
@@ -621,6 +697,7 @@ class TopologyPanel(QtGui.QWidget):
                     von_mises = float(self.form.stressLimit_1.text())
                 else:
                     von_mises = 0.
+        
         #         if self.doc.Topology.Number_of_Domains == 2:
         #             elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         #             thickness_id1 = self.form.thicknessObject_2.currentIndex() - 1
@@ -809,6 +886,7 @@ class TopologyPanel(QtGui.QWidget):
     def runOptimization(self):
         # Run optimization
         self.setConfig()
+        self.setFilter()
         analysis = self.form.selectLC.currentText()
         beso_main.main(analysis)
         FreeCADGui.runCommand('Std_ActivatePrevWindow')

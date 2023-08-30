@@ -22,8 +22,6 @@ def main(analysis):
     path = doc.Topology.path
     path_calculix = doc.Topology.path_calculix
     file_name = doc.Topology.file_name
-    mass_removal_ratio = doc.Topology.mass_removal_ratio
-    mass_addition_ratio = doc.Topology.mass_addition_ratio
     domain_optimized = doc.Topology.domain_optimized[analysis]
     domains_from_config = domain_optimized.keys()
     mass_goal_ratio = doc.Topology.mass_goal_ratio

@@ -15,7 +15,7 @@ ax5 = 0
 ax6 = 0
 ax7 = 0
 
-def replot(path, i, oscillatdomain_FIions, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean, FI_mean_without_state0,
+def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean, FI_mean_without_state0,
            FI_max, optimization_base, energy_density_mean, heat_flux_mean, displacement_graph, disp_max,
            buckling_factors_all,savefig=False):
     global ax1
