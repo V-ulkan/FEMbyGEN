@@ -790,8 +790,8 @@ class TopologyPanel(QtGui.QWidget):
             if thickness:
                 self.doc.Topology.domain_thickness[analysis] = {elset_name: [thickness, thickness]}
             if von_mises:
-                self.doc.Topology.domain_FI[analysis] = {elset_name: [['stress_von_Mises', von_mises * 1e6],
-                                                                      ['stress_von_Mises', von_mises]]}
+                self.doc.Topology.domain_FI[analysis] = {elset_name: [[('stress_von_Mises', von_mises * 1e6)],
+                                                                      [('stress_von_Mises', von_mises)]]}
         self.doc.Topology.mass_goal_ratio = float(self.form.massGoalRatio.text())
         FreeCAD.Console.PrintMessage("Config file created\n")
 

@@ -15,7 +15,7 @@ ax5 = 0
 ax6 = 0
 ax7 = 0
 
-def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean, FI_mean_without_state0,
+def replot(path, i, oscillatdomain_FIions, mass, domain_FI_filled, domains_from_config, FI_violated, FI_mean, FI_mean_without_state0,
            FI_max, optimization_base, energy_density_mean, heat_flux_mean, displacement_graph, disp_max,
            buckling_factors_all,savefig=False):
     global ax1
@@ -176,6 +176,7 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
             ax7.set_ylabel("FI_max_dn")
             ax7.tick_params(axis='y', colors="black")
             ax7.yaxis.label.set_color("black")
+            ax7.yaxis.set_label_position("right")
             l7 = ax7.plot(range(i_plot + 1), FI_max_dn, label="FI_max_dn",color ="black")
             
             if ax7 != 0:
