@@ -82,15 +82,6 @@ def checkAnalyses(master):
     return (statuses, numAnalysed)
 
 
-def checkGenParameters(master):
-    header = master.Generate.ParametersName
-    parameters = master.Generate.GeneratedParameters
-    if parameters == None:
-        header = [""]
-        parameters = []
-
-    return (header, parameters)
-
 
 def showGen(table, master, item):
     global old

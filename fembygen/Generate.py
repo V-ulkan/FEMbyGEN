@@ -90,9 +90,9 @@ class GeneratePanel():
         # Data variables for parameter table
 
         self.doc = object.Object.Document
-        (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
-        self.doc.Generate.ParametersName = paramNames
-        self.doc.Generate.GeneratedParameters = parameterValues
+        # (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
+        # self.doc.Generate.ParametersName = paramNames
+        # self.doc.Generate.GeneratedParameters = parameterValues
         index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide2.QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.form.selectDesign.setCurrentIndex(index)
@@ -463,7 +463,11 @@ class GeneratePanel():
             self.form.selectGenBox.clear()
 
     def updateParametersTable(self):
-        paramNames, parameterValues = Common.checkGenParameters(self.doc)
+        paramNames = self.doc.Generate.ParametersName
+        parameterValues = self.doc.Generate.GeneratedParameters
+        if parameterValues == None:
+            paramNames = [""]
+            parameterValues = []
         # Insert generation number column into table
 
         paramNames.insert(0, "Gen")

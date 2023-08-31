@@ -1,7 +1,7 @@
 import FreeCAD
 import FreeCADGui
 import os
-from PySide import QtGui, QtCore, QtWidgets
+from PySide import QtGui, QtCore
 from femtools import ccxtools
 import datetime
 import webbrowser
@@ -11,7 +11,7 @@ import FemGui
 import glob
 import shutil
 from multiprocessing import cpu_count
-from PySide2.QtWidgets import QPushButton, QComboBox, QSplitter, QCheckBox, QLineEdit, QListWidget, QLabel, QVBoxLayout, QAbstractItemView
+
 
 
 def makeTopology():
@@ -65,12 +65,12 @@ class Topology:
         obj.addProperty("App::PropertyInteger", "LastState", "Results",
                         "Last state")
 
-        obj.addProperty("App::PropertyString", "path_calculix", "Base", "Path to CalculiX")
+        obj.addProperty("App::PropertyFile", "path_calculix", "Base", "Path to CalculiX")
 
         obj.addProperty("App::PropertyPythonObject", "combobox", "Base", "List of fem analysis")
         obj.combobox = []
 
-        obj.addProperty("App::PropertyString", "path", "Base", "Path")
+        obj.addProperty("App::PropertyPath", "path", "Base", "Path")
 
         obj.addProperty("App::PropertyString", "file_name", "Base", "File Name")
 
@@ -86,7 +86,7 @@ class Topology:
         obj.addProperty("App::PropertyPythonObject", "domain_same_state", "Domain", "Domain Same State")
         obj.domain_same_state = {}
 
-        obj.addProperty("App::PropertyString", "continue_from", "Base", "Continue From")
+        obj.addProperty("App::PropertyFile", "continue_from", "Base", "Continue From")
         obj.continue_from = ''
 
         obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
@@ -225,11 +225,11 @@ class TopologyMasterPanel(QtGui.QWidget):
         FreeCAD.setActiveDocument(partName)
         obj = makeTopology()
 
-        #hide all mesh files to show results at the end of the topology
+        # hide all mesh files to show results at the end of the topology
         for mesh in Gen_Doc.Objects:
             if mesh.TypeId == 'Fem::FemMeshObjectPython' or mesh.TypeId == 'Fem::FemMeshShapeNetgenObject' or 'Fem::FemPostPipeline':
-                mesh.Visibility=False
-        
+                mesh.Visibility = False
+
         Gen_Doc.Topology.ViewObject.doubleClicked()
 
     def accept(self):
@@ -468,8 +468,11 @@ class TopologyPanel(QtGui.QWidget):
         path = self.doc.Topology.combobox[case_number][1]
         self.form.fileName.setText(path)
 
-        self.form.selectMaterial_1.clear()
-        self.form.thicknessObject_1.clear()
+        #clear old definitions
+        for k in range(1, 3):
+                getattr(self.form, f"selectMaterial_{k}").clear()
+                getattr(self.form, f"thicknessObject_{k}").clear()
+
         for i in self.doc.Topology.combobox[case_number][2]:
             for j in range(1, 3):
                 getattr(self.form, f"selectMaterial_{j}").addItem(i.Name)
@@ -534,20 +537,21 @@ class TopologyPanel(QtGui.QWidget):
 
                             return
             except:
-                #it counts deleted objects and gives error.
+                # it counts deleted objects and gives error.
                 pass
 
         self.doc.Topology.combobox = comboBoxItems
         self.selectFile()
 
     def setFilter(self):
-            filter = self.form.selectFilter_1.currentText()
-            if self.form.filterRange_1.currentText() == "auto":
-                range = "auto"
-            elif self.form.filterRange_1.currentText() == "manual":
-                range = float(self.form.range_1.text())
-            direction = self.form.directionVector_1.text()
-            selection = [item.text() for item in self.form.domainList_1.selectedItems()]
+        for i in range(1, 4):
+            filter = getattr(self.form, f"selectFilter_{i}").currentText()
+            if getattr(self.form, f"filterRange_{i}").currentText() == "auto":
+                Range = "auto"
+            elif getattr(self.form, f"filterRange_{i}").currentText() == "manual":
+                Range = float(getattr(self.form, f"range_{i}").text())
+            direction = getattr(self.form, f"directionVector_{i}").text()
+            selection = [item.text() for item in getattr(self.form, f"domainList_{i}").selectedItems()]
 
             filter_domains = []
             if "All defined" not in selection:
@@ -558,65 +562,13 @@ class TopologyPanel(QtGui.QWidget):
                 if "Domain 2" in selection:
                     filter_domains.append(elset2)
             if filter == "simple":
-                self.doc.Topology.filter_list.append(['simple', range])
+                self.doc.Topology.filter_list.append(['simple', Range])
                 for dn in filter_domains:
-                    self.doc.Topology.filter_list[0].append(dn)
+                    self.doc.Topology.filter_list[-1].append(dn)
             elif filter == "casting":
-                self.doc.Topology.filter_list.append(['casting', range, f"({direction})"])
+                self.doc.Topology.filter_list.append(['casting', Range, f"({direction})"])
                 for dn in filter_domains:
-                    self.doc.Topology.filter_list[0].append(dn)
-    
-
-            filter1 = self.form.selectFilter_2.currentText()
-            if self.form.filterRange_2.currentText() == "auto":
-                range1 = "auto"
-            elif self.form.filterRange_2.currentText() == "manual":
-                range1 = float(self.form.range_2.text())
-            direction1 = self.form.directionVector_2.text()
-            selection = [item.text() for item in self.form.domainList_2.selectedItems()]
-            filter_domains1 = []
-            if "All defined" not in selection:
-                if "Domain 0" in selection:
-                    filter_domains1.append(elset)
-                if "Domain 1" in selection:
-                    filter_domains1.append(elset1)
-                if "Domain 2" in selection:
-                    filter_domains1.append(elset2)
-            if filter1 == "simple":
-                self.doc.Topology.filter_list.append(['simple', range1])
-                for dn in filter_domains:
-                    self.doc.Topology.filter_list[1].append(dn)
-            elif filter1 == "casting":
-                self.doc.Topology.filter_list.append(['casting', range1, f"({direction1})"])
-                for dn in filter_domains:
-                    self.doc.Topology.filter_list[1].append(dn)
-    
-
-            filter2 = self.form.selectFilter_3.currentText()
-            if self.form.filterRange_3.currentText() == "auto":
-                range2 = "auto"
-            elif self.form.filterRange_3.currentText() == "manual":
-                range2 = float(self.form.range_3.text())
-            direction2 = self.form.directionVector_3.text()
-            selection = [item.text() for item in self.form.domainList_3.selectedItems()]
-
-            filter_domains2 = []
-            if "All defined" not in selection:
-                if "Domain 0" in selection:
-                    filter_domains2.append(elset)
-                if "Domain 1" in selection:
-                    filter_domains2.append(elset1)
-                if "Domain 2" in selection:
-                    filter_domains2.append(elset2)
-            if filter2 == "simple":
-                self.doc.Topology.filter_list.append(['simple', range2])
-                for dn in filter_domains:
-                    self.doc.Topology.filter_list[2].append(dn)
-            elif filter2 == "casting":
-                self.doc.Topology.filter_list.append(['casting', range2, f"({direction2})"])
-                for dn in filter_domains:
-                    self.doc.Topology.filter_list[2].append(dn)
-    
+                    self.doc.Topology.filter_list[-1].append(dn)
 
     def setConfig(self):
         self.doc.Topology.file_name = os.path.split(self.form.fileName.text())[1]
@@ -640,6 +592,10 @@ class TopologyPanel(QtGui.QWidget):
                 elset_id = getattr(self.form, f"selectMaterial_{i+1}").currentIndex()
                 thickness_id = getattr(self.form, f"thicknessObject_{i+1}").currentIndex()
 
+                #except first domain there is a None option in combobox.So, index is one more
+                # if i>0:
+                #     elset_id -=1
+                #     thickness_id -=1
                 if thickness_id > -1:
                     elset_name = self.doc.Topology.combobox[case][2][elset_id].Name + \
                         self.doc.Topology.combobox[case][3][thickness_id].Name
@@ -687,9 +643,10 @@ class TopologyPanel(QtGui.QWidget):
                 except KeyError:
                     specific_heat = 0.
                 if thickness_id > -1:
-                    thickness = float(str(self.doc.Topology.combobox[case][3][elset_id].Thickness).split()[0])  # mm
-                    if str(self.doc.Topology.combobox[case][3][elset_id].Thickness).split()[1] != "mm":
-                        raise Exception(" units not recognised in " + self.doc.Topology.combobox[case][3][elset_id].Name)
+                    thickness = float(str(self.doc.Topology.combobox[case][3][thickness_id].Thickness).split()[0])  # mm
+                    if str(self.doc.Topology.combobox[case][3][thickness_id].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " +
+                                        self.doc.Topology.combobox[case][3][thickness_id].Name)
                 else:
                     thickness = 0
                 optimized = self.form.asDesign_checkbox_1.isChecked()
@@ -697,7 +654,7 @@ class TopologyPanel(QtGui.QWidget):
                     von_mises = float(self.form.stressLimit_1.text())
                 else:
                     von_mises = 0.
-        
+
         #         if self.doc.Topology.Number_of_Domains == 2:
         #             elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         #             thickness_id1 = self.form.thicknessObject_2.currentIndex() - 1
@@ -907,7 +864,7 @@ class TopologyPanel(QtGui.QWidget):
         except:
             pass
         from functools import partial
-        get_result=partial(Common.get_results_fc, self.doc)
+        get_result = partial(Common.get_results_fc, self.doc)
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setGeometry(10, mw.height()-50, mw.width()-50, 50)
         slider.setMinimum(1)
