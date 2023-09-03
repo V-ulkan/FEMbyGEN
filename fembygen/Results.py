@@ -243,7 +243,7 @@ class ResultsPanel:
                     FreeCAD.Console.PrintError(f"Generation {i+1} Loadcase {j+1} couldn't imported\n")
                     result.append([None]*6)
 
-            self.getResultsToMaster(doc, i+1, results[0])
+            self.getResultsToMaster(doc, results[0])
             
             FreeCAD.closeDocument(filename)
         result_sum = []
@@ -340,21 +340,21 @@ class ResultsPanel:
         total.vonMises = vonMises.tolist()
         fill_femresult_stats(total)
 
-    def getResultsToMaster(self, doc, GenNo, object):
+    def getResultsToMaster(self, doc, object):
         master = self.doc
 
         try:
             #copy one of the analysis results to clear all values then calculate sum of all results
-            object.Label = f"Gen{GenNo}_Results"
-            object.Mesh.Label = f"Gen{GenNo}_Mesh"
+            object.Label = f"{doc.Name}_Results"
+            object.Mesh.Label = f"{doc.Name}_Mesh"
             master.copyObject(object, False)
             master.copyObject(object.Mesh, False)
         except:
             FreeCAD.Console.PrintError(
-                f"Results of Gen{GenNo} is not found in the file. Please check the results by opening the file directly.\n")
+                f"Results of {doc.Name} is not found in the file. Please check the results by opening the file directly.\n")
             return
-        totalResult = master.getObjectsByLabel(f"Gen{GenNo}_Results")[0]
-        resultMesh = master.getObjectsByLabel(f"Gen{GenNo}_Mesh")[0]
+        totalResult = master.getObjectsByLabel(f"{doc.Name}_Results")[0]
+        resultMesh = master.getObjectsByLabel(f"{doc.Name}_Mesh")[0]
 
         # to sum up all loadcases result
         self.sumResults(totalResult, doc)

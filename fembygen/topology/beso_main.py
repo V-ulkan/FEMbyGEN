@@ -401,7 +401,7 @@ def main(analysis):
         elif domain_FI_filled and (not FI_step):
             missing_ccx_results = True
         if missing_ccx_results:
-            msg = "CalculiX results not found, check CalculiX for errors."
+            msg = "CalculiX results not found, check CalculiX for errors. Ensure you choose the right optimization base"
             beso_lib.write_to_log(file_name, "\nERROR: " + msg + "\n")
             assert False, msg
 
