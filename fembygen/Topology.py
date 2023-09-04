@@ -90,7 +90,6 @@ class Topology:
         obj.continue_from = ''
 
         obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
-        obj.filter_list = []
 
         obj.addProperty("App::PropertyPythonObject", "Gen_filled")
         obj.Gen_filled = False
@@ -469,12 +468,12 @@ class TopologyPanel(QtGui.QWidget):
         self.form.fileName.setText(path)
 
         #clear old definitions
-        for k in range(1, 3):
+        for k in range(1, 4):
                 getattr(self.form, f"selectMaterial_{k}").clear()
                 getattr(self.form, f"thicknessObject_{k}").clear()
 
         for i in self.doc.Topology.combobox[case_number][2]:
-            for j in range(1, 3):
+            for j in range(1, 4):
                 getattr(self.form, f"selectMaterial_{j}").addItem(i.Name)
 
         for i in self.doc.Topology.combobox[case_number][3]:
@@ -544,7 +543,8 @@ class TopologyPanel(QtGui.QWidget):
         self.selectFile()
 
     def setFilter(self):
-        for i in range(1, 4):
+        self.doc.Topology.filter_list=[]
+        for i in range(1, self.doc.Topology.Number_of_Domains+1):
             filter = getattr(self.form, f"selectFilter_{i}").currentText()
             if getattr(self.form, f"filterRange_{i}").currentText() == "auto":
                 Range = "auto"
