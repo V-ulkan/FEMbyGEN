@@ -3,6 +3,34 @@ import operator
 from math import *
 import os
 
+
+class Elements:
+    def __init__(self):
+        self.tria3 = {}
+        self.tria6 = {}
+        self.quad4 = {}
+        self.quad8 = {}
+        self.tetra4 = {}
+        self.tetra10 = {}
+        self.hexa8 = {}
+        self.hexa20 = {}
+        self.penta6 = {}
+        self.penta15 = {}
+
+    def __iter__(self):
+        self.elements = [self.tria3, self.tria6, self.quad4, self.quad8, self.tetra4, self.tetra10, self.hexa8, self.hexa20, self.penta6, self.penta15]
+        self.current_index = 0
+        return self
+
+    def __next__(self):
+        if self.current_index < len(self.elements):
+            current_element = self.elements[self.current_index]
+            self.current_index += 1
+            return current_element
+        else:
+            raise StopIteration
+        
+
 # function to print ongoing messages to the log file
 def write_to_log(file_name, msg):
     f_log = open(file_name[:-4] + ".log.fcmacro", "a")
@@ -13,19 +41,7 @@ def write_to_log(file_name, msg):
 # function importing a mesh consisting of nodes, volume and shell elements
 def import_inp(file_name, domains_from_config, domain_optimized, shells_as_composite):
     nodes = {}  # dict with nodes position
-
-    class Elements():
-        tria3 = {}
-        tria6 = {}
-        quad4 = {}
-        quad8 = {}
-        tetra4 = {}
-        tetra10 = {}
-        hexa8 = {}
-        hexa20 = {}
-        penta6 = {}
-        penta15 = {}
-
+    
     all_tria3 = {}
     all_tria6 = {}
     all_quad4 = {}
@@ -311,7 +327,7 @@ def elm_volume_cg(file_name, nodes, Elements):
         for i in [0, 1, 2]:  # denote x, y, z directions
             u[i] = nodes[nod[2]][i] - nodes[nod[1]][i]
             v[i] = nodes[nod[0]][i] - nodes[nod[1]][i]
-        area_tria = np.linalg.linalg.norm(np.cross(u, v)) / 2.0
+        area_tria = np.linalg.norm(np.cross(u, v)) / 2.0
         # compute centre of gravity
         x_cg = (nodes[nod[0]][0] + nodes[nod[1]][0] + nodes[nod[2]][0]) / 3.0
         y_cg = (nodes[nod[0]][1] + nodes[nod[1]][1] + nodes[nod[2]][1]) / 3.0
@@ -449,12 +465,10 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
         fR = open(file_name[:-4] + "_separated.inp", "r")
     else:
         fR = open(file_name, "r")
-    check_line_endings = False
-    try:
-        fW =  open(file_nameW + ".inp", "w", newline="\n")
-    except TypeError:  # python 2.x do not have newline argument
-        fW = open(file_nameW + ".inp", "w")
-        check_line_endings = True
+
+
+    fW =  open(file_nameW + ".inp", "w", newline="\n")
+
 
     # function for writing ELSETs of each state
     def write_elset():
@@ -621,13 +635,6 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
         fW.write(line)
     fR.close()
     fW.close()
-    if check_line_endings:
-        fW = open(file_nameW + ".inp", "rb")
-        content = fW.read().replace("\r\n", "\n")
-        fW.close()
-        fW = open(file_nameW + ".inp", "wb")
-        fW.write(content)
-        fW.close()
 
 
 # function for importing results from .dat file

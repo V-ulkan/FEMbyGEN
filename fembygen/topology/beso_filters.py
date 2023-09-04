@@ -109,14 +109,10 @@ def get_filter_range(size_elm, domains, filtered_dn):
 
 
 def sround(x, s):
-    """round float number x to s significant digits"""
-    if x > 0:
-        result = round(x, -int(np.floor(np.log10(x))) + s - 1)
-    elif x < 0:
-        result = round(x, -int(np.floor(np.log10(-x))) + s - 1)
-    elif x == 0:
-        result = 0
-    return result
+    """round float number x to s significant digits
+    https://stackoverflow.com/a/58491045/9582881 fastest way"""
+    result=np.format_float_positional(x, precision=s, unique=False, fractional=False, trim='k')
+    return float(result)
 
 
 # function to check if filtering is to be used on domains with prescribed same state
@@ -231,8 +227,14 @@ def prepare1(nodes, Elements, cg, r_min, opt_domains):
 def prepare1s(nodes, Elements, cg, r_min, opt_domains):
     # searching for elements neighbouring to every node
     node_neighbours = {}
-
-    def fce():
+    for meshType in Elements:
+        for en in meshType:  # element cg computed also out of opt_domains due to neighbours counted also there
+            for nn in meshType[en]:
+                if nn not in node_neighbours:
+                    node_neighbours[nn] = [en]
+                elif en not in node_neighbours[nn]:
+                    node_neighbours[nn].append(en)
+    """def fce():
         if nn not in node_neighbours:
             node_neighbours[nn] = [en]
         elif en not in node_neighbours[nn]:
@@ -267,7 +269,7 @@ def prepare1s(nodes, Elements, cg, r_min, opt_domains):
             fce()
     for en in Elements.penta15:
         for nn in Elements.penta15[en]:
-            fce()
+            fce()"""
     # computing weight factors for sensitivity number of nodes according to distance to adjacent elements
     M = {}  # element numbers en adjacent to each node nn
     weight_factor_node = {}
