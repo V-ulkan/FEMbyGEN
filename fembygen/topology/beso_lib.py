@@ -18,7 +18,8 @@ class Elements:
         self.penta15 = {}
 
     def __iter__(self):
-        self.elements = [self.tria3, self.tria6, self.quad4, self.quad8, self.tetra4, self.tetra10, self.hexa8, self.hexa20, self.penta6, self.penta15]
+        self.elements = [self.tria3, self.tria6, self.quad4, self.quad8, self.tetra4,
+                         self.tetra10, self.hexa8, self.hexa20, self.penta6, self.penta15]
         self.current_index = 0
         return self
 
@@ -79,7 +80,7 @@ def types(elm_type):
     elif elm_type == ["B32", "B32R", "T3D3"]:
         number_of_nodes = 3
         only_translations = False
-        elm_category = "line3"     
+        elm_category = "line3"
     elif elm_type in ["CPE3", "CPE6", "CPE4", "CPE4R", "CPE8", "CPE8R"]:
         number_of_nodes = None
         only_translations = False
@@ -99,10 +100,12 @@ def types(elm_type):
                                             "composite\n")
             print(msg)
             write_to_log(file_name, msg)
-        return 
+        return
     return number_of_nodes, only_translations, elm_category
 
 # function to print ongoing messages to the log file
+
+
 def write_to_log(file_name, msg):
     f_log = open(file_name[:-4] + ".log.fcmacro", "a")
     f_log.write(msg)
@@ -112,7 +115,7 @@ def write_to_log(file_name, msg):
 # function importing a mesh consisting of nodes, volume and shell elements
 def import_inp(file_name, domains_from_config, domain_optimized, shells_as_composite):
     nodes = {}  # dict with nodes position
-    all_elements=Elements()
+    all_elements = Elements()
     model_definition = True
     domains = {}
     read_domain = False
@@ -150,7 +153,7 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
             if line[:8].upper() == "*INCLUDE":
                 start = 1 + line.index("=")
                 include = line[start:].strip().strip('"')
-                f_include = open(os.path.join(os.path.split(file_name)[0]+ f"/{include}"), "r")
+                f_include = open(os.path.join(os.path.split(file_name)[0] + f"/{include}"), "r")
                 continue
             read_node = False
             elm_category = []
@@ -179,8 +182,6 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
                 elif line_part.split('=')[0].strip().upper() == "ELSET":
                     current_elset = line_part.split('=')[1].strip()
             number_of_nodes, only_translations, elm_category = types(elm_type)
-            
-
 
         elif elm_category != []:
             line_list = line.split(',')
@@ -197,12 +198,12 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
                     plane_stress.add(en)
                 elif elm_category == "axisymmetry":
                     axisymmetry.add(en)
-                getattr(all_elements, elm_category)[en]=[int(x) for x in line_list[1:]]
-                if len(getattr(all_elements, elm_category)[en])!=number_of_nodes:
-                    elm_2nd_line = True           
+                getattr(all_elements, elm_category)[en] = [int(x) for x in line_list[1:]]
+                if len(getattr(all_elements, elm_category)[en]) != number_of_nodes:
+                    elm_2nd_line = True
             else:
                 elm_2nd_line = False
-                getattr(all_elements, elm_category)[en]+=[int(x) for x in line_list]
+                getattr(all_elements, elm_category)[en] += [int(x) for x in line_list]
 
         # reading domains from elset
         elif line[:6].upper() == "*ELSET":
@@ -271,42 +272,45 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
         en_all2 = en_all2.union(all_elements.tria3.keys(), all_elements.tria6.keys(), all_elements.quad4.keys(), all_elements.quad8.keys(),
                                 all_elements.tetra4.keys(), all_elements.tetra10.keys(), all_elements.hexa8.keys(), all_elements.hexa20.keys(),
                                 all_elements.penta6.keys(), all_elements.penta15.keys())
-       
+
+        domain_elements = all_elements
         domains["all_available"] = en_all2 - set(en_all)
         opt_domains.extend(domains["all_available"])
         en_all = list(en_all2)
     else:
+        domain_elements = Elements()
         # only elements in domains_from_config are stored, the rest is discarded
         keys = set(en_all).intersection(set(all_elements.tria3.keys()))
-        all_elements.tria3 = {k: all_elements.tria3[k] for k in keys}
+        domain_elements.tria3 = {k: all_elements.tria3[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.tria6.keys()))
-        all_elements.tria6 = {k: all_elements.tria6[k] for k in keys}
+        domain_elements.tria6 = {k: all_elements.tria6[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.quad4.keys()))
-        all_elements.quad4 = {k: all_elements.quad4[k] for k in keys}
+        domain_elements.quad4 = {k: all_elements.quad4[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.quad8.keys()))
-        all_elements.quad8 = {k: all_elements.quad8[k] for k in keys}
+        domain_elements.quad8 = {k: all_elements.quad8[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.tetra4.keys()))
-        all_elements.tetra4 = {k: all_elements.tetra4[k] for k in keys}
+        domain_elements.tetra4 = {k: all_elements.tetra4[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.tetra10.keys()))
-        all_elements.tetra10 = {k: all_elements.tetra10[k] for k in keys}
+        domain_elements.tetra10 = {k: all_elements.tetra10[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.hexa8.keys()))
-        all_elements.hexa8 = {k: all_elements.hexa8[k] for k in keys}
+        domain_elements.hexa8 = {k: all_elements.hexa8[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.hexa20.keys()))
-        all_elements.hexa20 = {k: all_elements.hexa20[k] for k in keys}
+        domain_elements.hexa20 = {k: all_elements.hexa20[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.penta6.keys()))
-        all_elements.penta6 = {k: all_elements.penta6[k] for k in keys}
+        domain_elements.penta6 = {k: all_elements.penta6[k] for k in keys}
         keys = set(en_all).intersection(set(all_elements.penta15.keys()))
-        all_elements.penta15 = {k: all_elements.penta15[k] for k in keys}
-        en_all = list(all_elements.tria3.keys()) + list(all_elements.tria6.keys()) + list(all_elements.quad4.keys()) + \
-                 list(all_elements.quad8.keys()) + list(all_elements.tetra4.keys()) + list(all_elements.tetra10.keys()) + \
-                 list(all_elements.hexa8.keys()) + list(all_elements.hexa20.keys()) + list(all_elements.penta6.keys()) + \
-                 list(all_elements.penta15.keys())
+        domain_elements.penta15 = {k: all_elements.penta15[k] for k in keys}
+        en_all = list(domain_elements.tria3.keys()) + list(domain_elements.tria6.keys()) + list(domain_elements.quad4.keys()) + \
+            list(domain_elements.quad8.keys()) + list(domain_elements.tetra4.keys()) + list(domain_elements.tetra10.keys()) + \
+            list(domain_elements.hexa8.keys()) + list(domain_elements.hexa20.keys()) + list(domain_elements.penta6.keys()) + \
+            list(domain_elements.penta15.keys())
 
     msg += ("nodes  : %.f\nTRIA3  : %.f\nTRIA6  : %.f\nQUAD4  : %.f\nQUAD8  : %.f\nTETRA4 : %.f\nTETRA10: %.f\n"
-           "HEXA8  : %.f\nHEXA20 : %.f\nPENTA6 : %.f\nPENTA15: %.f\n"
-           % (len(nodes), len(all_elements.tria3), len(all_elements.tria6), len(all_elements.quad4), len(all_elements.quad8),
-              len(all_elements.tetra4), len(all_elements.tetra10), len(all_elements.hexa8), len(all_elements.hexa20),
-              len(all_elements.penta6), len(all_elements.penta15)))
+            "HEXA8  : %.f\nHEXA20 : %.f\nPENTA6 : %.f\nPENTA15: %.f\n"
+            % (len(nodes), len(domain_elements.tria3), len(domain_elements.tria6), len(domain_elements.quad4), len(domain_elements.quad8),
+               len(domain_elements.tetra4), len(domain_elements.tetra10), len(
+                domain_elements.hexa8), len(domain_elements.hexa20),
+               len(domain_elements.penta6), len(domain_elements.penta15)))
     print(msg)
     write_to_log(file_name, msg)
 
@@ -316,7 +320,7 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
         write_to_log(file_name, msg)
         assert False, row
 
-    return nodes, all_elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry
+    return nodes, domain_elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry
 
 
 # function for computing volumes or area (shell elements) and centres of gravity
@@ -470,11 +474,10 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
     else:
         fR = open(file_name, "r")
 
-
-    fW =  open(file_nameW + ".inp", "w", newline="\n")
-
+    fW = open(file_nameW + ".inp", "w", newline="\n")
 
     # function for writing ELSETs of each state
+
     def write_elset():
         fW.write(" \n")
         fW.write("** Added ELSETs by optimization:\n")
@@ -554,8 +557,10 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
                         print(sn)
 
                         fW.write("*MATERIAL, NAME=" + dn + str(sn) + "\n")
-                        fW.write(f'*ELASTIC\n{domain_material[dn][0]:.6}, {domain_material[dn][1]:.6}\n*DENSITY\n{domain_material[dn][2]:.6}\n*CONDUCTIVITY')
-                        fW.write(f'\n{domain_material[dn][3]:.6}\n*EXPANSION\n{domain_material[dn][4]:.6}\n*SPECIFIC HEAT\\n{domain_material[dn][5]:.6}\n')
+                        fW.write(
+                            f'*ELASTIC\n{domain_material[dn][0]:.6}, {domain_material[dn][1]:.6}\n*DENSITY\n{domain_material[dn][2]:.6}\n*CONDUCTIVITY')
+                        fW.write(
+                            f'\n{domain_material[dn][3]:.6}\n*EXPANSION\n{domain_material[dn][4]:.6}\n*SPECIFIC HEAT\\n{domain_material[dn][5]:.6}\n')
 
                         if domain_volumes[dn]:
                             fW.write("*SOLID SECTION, ELSET=" + dn + str(sn) + ", MATERIAL=" + dn + str(sn))
@@ -601,8 +606,8 @@ def write_inp(file_name, file_nameW, elm_states, number_of_states, domains, doma
 
         # output request only for element stresses in .dat file:
         if line[0:10].upper() == "*NODE FILE" or line[0:8].upper() == "*EL FILE" or \
-                        line[0:13].upper() == "*CONTACT FILE" or line[0:11].upper() == "*NODE PRINT" or \
-                        line[0:9].upper() == "*EL PRINT" or line[0:14].upper() == "*CONTACT PRINT":
+                line[0:13].upper() == "*CONTACT FILE" or line[0:11].upper() == "*NODE PRINT" or \
+                line[0:9].upper() == "*EL PRINT" or line[0:14].upper() == "*CONTACT PRINT":
             if outputs_done < 1:
                 fW.write(" \n")
                 if optimization_base in ["stiffness", "buckling"]:
@@ -661,7 +666,8 @@ def import_FI_int_pt(reference_value, file_nameW, domains, criteria, domain_FI, 
 
     memorized_steps = set()  # steps to use in superposition
     if steps_superposition:
-        step_stress = {}  # {sn: {en: [sxx, syy, szz, sxy, sxz, syz], next element with int. pt. stresses}, next step, ...}
+        # {sn: {en: [sxx, syy, szz, sxy, sxz, syz], next element with int. pt. stresses}, next step, ...}
+        step_stress = {}
         step_ener = {}  # energy density {sn: {en: ener, next element with int. pt. stresses}, next step, ...}
         for LCn in range(len(steps_superposition)):
             for (scale, sn) in steps_superposition[LCn]:
@@ -1080,7 +1086,8 @@ def import_FI_node(reference_value, file_nameW, domains, criteria, domain_FI, fi
 
     memorized_steps = set()  # steps to use in superposition
     if steps_superposition:
-        step_stress = {}  #{sn: {en: [sxx, syy, szz, sxy, sxz, syz], next element with int. pt. stresses}, next step, ...}
+        # {sn: {en: [sxx, syy, szz, sxy, sxz, syz], next element with int. pt. stresses}, next step, ...}
+        step_stress = {}
         for LCn in range(len(steps_superposition)):
             for (scale, sn) in steps_superposition[LCn]:
                 sn -= 1  # step numbering in CalculiX is from 1, but we have it 0 based
@@ -1314,11 +1321,11 @@ def switching(elm_states, domains_from_config, domain_optimized, domains, FI_ste
                     elm_states_en = elm_states[en]
                     compute_difference(failing)
                     if (failing is True) and (new_state != highest_state):
-                            elm_states[en] = new_state
-                            elm_states_en = elm_states[en]
-                            mass[i] += mass_increase[en]
-                            mass_overloaded += mass_increase[en]
-                            mass_goal_i += mass_increase[en]
+                        elm_states[en] = new_state
+                        elm_states_en = elm_states[en]
+                        mass[i] += mass_increase[en]
+                        mass_overloaded += mass_increase[en]
+                        mass_goal_i += mass_increase[en]
                     elif failing is False:  # use domain name dn instead of element number for future switching
                         sensitivity_number_opt[dn] = sensitivity_number_of_domain
                         try:
@@ -1330,7 +1337,7 @@ def switching(elm_states, domains_from_config, domain_optimized, domains, FI_ste
                         except KeyError:
                             pass
 
-            else: # domain_same_state is False
+            else:  # domain_same_state is False
                 for en in domains[dn]:
                     if FI_step_max[en] >= 1:  # increase state if it is not the highest
                         en_added = False
@@ -1366,10 +1373,10 @@ def switching(elm_states, domains_from_config, domain_optimized, domains, FI_ste
             mass_to_add = mass_addition_ratio * mass_referential * np.exp(decay_coefficient * (i - i_violated))
             if sum(FI_violated[i - 1]):
                 mass_to_remove = mass_addition_ratio * mass_referential * np.exp(decay_coefficient * (i - i_violated)) \
-                                 - mass_overloaded
+                    - mass_overloaded
             else:
                 mass_to_remove = mass_removal_ratio * mass_referential * np.exp(decay_coefficient * (i - i_violated)) \
-                                 - mass_overloaded
+                    - mass_overloaded
         else:  # adding to initial mass  TODO include stress limit
             mass_to_add = mass_removal_ratio * mass_referential * np.exp(decay_coefficient * (i - i_violated))
             mass_to_remove = mass_to_add
@@ -1633,17 +1640,17 @@ def vtk_mesh(file_nameW, nodes, Elements):
 
     # elements
     number_of_elements = len(Elements.tria3) + len(Elements.tria6) + len(Elements.quad4) + len(Elements.quad8) + \
-                         len(Elements.tetra4) + len(Elements.tetra10) + len(Elements.penta6) + len(Elements.penta15) + \
-                         len(Elements.hexa8) + len(Elements.hexa20)
+        len(Elements.tetra4) + len(Elements.tetra10) + len(Elements.penta6) + len(Elements.penta15) + \
+        len(Elements.hexa8) + len(Elements.hexa20)
     en_all = list(Elements.tria3.keys()) + list(Elements.tria6.keys()) + list(Elements.quad4.keys()) + \
-             list(Elements.quad8.keys()) + list(Elements.tetra4.keys()) + list(Elements.tetra10.keys()) + \
-             list(Elements.penta6.keys()) + list(Elements.penta15.keys()) + list(Elements.hexa8.keys()) + \
-             list(Elements.hexa20.keys())  # defines vtk element numbering from 0
+        list(Elements.quad8.keys()) + list(Elements.tetra4.keys()) + list(Elements.tetra10.keys()) + \
+        list(Elements.penta6.keys()) + list(Elements.penta15.keys()) + list(Elements.hexa8.keys()) + \
+        list(Elements.hexa20.keys())  # defines vtk element numbering from 0
 
     size_of_cells = 4 * len(Elements.tria3) + 7 * len(Elements.tria6) + 5 * len(Elements.quad4) + \
-                    9 * len(Elements.quad8) + 5 * len(Elements.tetra4) + 11 * len(Elements.tetra10) + \
-                    7 * len(Elements.penta6) + 16 * len(Elements.penta15) + 9 * len(Elements.hexa8) + \
-                    21 * len(Elements.hexa20)
+        9 * len(Elements.quad8) + 5 * len(Elements.tetra4) + 11 * len(Elements.tetra10) + \
+        7 * len(Elements.penta6) + 16 * len(Elements.penta15) + 9 * len(Elements.hexa8) + \
+        21 * len(Elements.hexa20)
     f.write("\nCELLS " + str(number_of_elements) + " " + str(size_of_cells) + "\n")
 
     def write_elm(elm_category, node_length):
@@ -1701,6 +1708,8 @@ def append_vtk_states(file_nameW, i, en_all, elm_states):
 
 # function for exporting result in the legacy vtk format
 # nodes and elements are renumbered from 0 not to jump over values
+
+
 def export_vtk(file_nameW, nodes, Elements, elm_states, sensitivity_number, criteria, FI_step, FI_step_max):
     [en_all, associated_nodes] = vtk_mesh(file_nameW, nodes, Elements)
     f = open(file_nameW + ".vtk", "a")
@@ -1842,7 +1851,7 @@ def export_csv(domains_from_config, domains, criteria, FI_step, FI_step_max, fil
     for dn in domains_from_config:
         for en in domains[dn]:
             line = str(en) + ", " + str(cg[en][0]) + ", " + str(cg[en][1]) + ", " + str(cg[en][2]) + ", " + \
-                   str(elm_states[en]) + ", " + str(sensitivity_number[en]) + ", "
+                str(elm_states[en]) + ", " + str(sensitivity_number[en]) + ", "
             for FIn in range(len(criteria)):
                 if FI_criteria[en][FIn]:
                     value = FI_criteria[en][FIn]
