@@ -1,6 +1,6 @@
 # The aim of this script is to read .inp file and separate adjacend elements, so that every element has its own nodes,
 # thus nodal results from CalculiX are not averaged between neighbouring elements.
-
+from fembygen.topology import beso_lib
 
 def separating(file_name, nodes={}):
 
@@ -126,7 +126,8 @@ def separating(file_name, nodes={}):
             for line_part in line_list:
                 if line_part.split('=')[0].strip() == "TYPE":
                     elm_type = line_part.split('=')[1].strip()
-                    if elm_type in ["S3", "CPS3", "CPE3", "CAX3"]:
+                    number_of_nodes, only_translations, category = beso_lib.types(elm_type)
+                    """if elm_type in ["S3", "CPS3", "CPE3", "CAX3"]:
                         number_of_nodes = 3
                         only_translations = False
                     elif elm_type in ["S6", "CPS6", "CPE6", "CAX6"]:
@@ -161,7 +162,7 @@ def separating(file_name, nodes={}):
                         only_translations = False
                     elif elm_type == ["B32", "B32R", "T3D3"]:
                         number_of_nodes = 3
-                        only_translations = False
+                        only_translations = False"""
                     coincident_nodes = []
                     break
             if number_of_nodes:

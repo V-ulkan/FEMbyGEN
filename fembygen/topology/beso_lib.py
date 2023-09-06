@@ -29,7 +29,78 @@ class Elements:
             return current_element
         else:
             raise StopIteration
-        
+
+
+def types(elm_type):
+    if elm_type in ["S3", "CPS3", "CPE3", "CAX3", "M3D3"]:
+        number_of_nodes = 3
+        only_translations = False
+        elm_category = "tria3"
+    elif elm_type in ["S6", "CPS6", "CPE6", "CAX6", "M3D6"]:
+        number_of_nodes = 6
+        only_translations = False
+        elm_category = "tria6"
+    elif elm_type in ["S4", "S4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R", "M3D4", "M3D4R"]:
+        number_of_nodes = 4
+        only_translations = False
+        elm_category = "quad4"
+    elif elm_type in ["S8", "S8R", "CPS8", "CPS8R", "CPE8", "CPE8R", "CAX8", "CAX8R", "M3D8", "M3D8R"]:
+        number_of_nodes = 8
+        only_translations = False
+        elm_category = "quad8"
+    elif elm_type == "C3D4":
+        number_of_nodes = 4
+        only_translations = True
+        elm_category = "tetra4"
+    elif elm_type == "C3D10":
+        number_of_nodes = 10
+        only_translations = True
+        elm_category = "tetra10"
+    elif elm_type in ["C3D8", "C3D8R", "C3D8I"]:
+        number_of_nodes = 8
+        only_translations = True
+        elm_category = "hexa8"
+    elif elm_type in ["C3D20", "C3D20R", "C3D20RI"]:
+        number_of_nodes = 20
+        only_translations = True
+        elm_category = "hexa20"
+    elif elm_type == "C3D6":
+        number_of_nodes = 6
+        only_translations = True
+        elm_category = "penta6"
+    elif elm_type == "C3D15":
+        number_of_nodes = 15
+        only_translations = True
+        elm_category = "penta15"
+    elif elm_type == ["B31", "B31R", "T3D2"]:
+        number_of_nodes = 2
+        only_translations = False
+        elm_category = "line2"
+    elif elm_type == ["B32", "B32R", "T3D3"]:
+        number_of_nodes = 3
+        only_translations = False
+        elm_category = "line3"     
+    elif elm_type in ["CPE3", "CPE6", "CPE4", "CPE4R", "CPE8", "CPE8R"]:
+        number_of_nodes = None
+        only_translations = False
+        elm_category = "plane strain"
+    elif elm_type in ["CPS3", "CPS6", "CPS4", "CPS4R", "CPS8", "CPS8R"]:
+        number_of_nodes = None
+        only_translations = False
+        elm_category = "plane stress"
+    elif elm_type in ["CAX3", "CAX6", "CAX4", "CAX4R", "CAX8", "CAX8R"]:
+        number_of_nodes = None
+        only_translations = False
+        elm_category = "axisymmetry"
+    else:
+        elm_category = ""
+        if (shells_as_composite is True) and (elm_type in ["S3", "S4", "S4R", "S8"]):
+            msg = ("\nERROR: " + elm_type + "element type found. CalculiX might need S6 or S8R elements for "
+                                            "composite\n")
+            print(msg)
+            write_to_log(file_name, msg)
+        return 
+    return number_of_nodes, only_translations, elm_category
 
 # function to print ongoing messages to the log file
 def write_to_log(file_name, msg):
@@ -41,18 +112,7 @@ def write_to_log(file_name, msg):
 # function importing a mesh consisting of nodes, volume and shell elements
 def import_inp(file_name, domains_from_config, domain_optimized, shells_as_composite):
     nodes = {}  # dict with nodes position
-    
-    all_tria3 = {}
-    all_tria6 = {}
-    all_quad4 = {}
-    all_quad8 = {}
-    all_tetra4 = {}
-    all_tetra10 = {}
-    all_hexa8 = {}
-    all_hexa20 = {}
-    all_penta6 = {}
-    all_penta15 = {}
-
+    all_elements=Elements()
     model_definition = True
     domains = {}
     read_domain = False
@@ -118,78 +178,31 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
                     elm_type = line_part.split('=')[1].strip().upper()
                 elif line_part.split('=')[0].strip().upper() == "ELSET":
                     current_elset = line_part.split('=')[1].strip()
+            number_of_nodes, only_translations, elm_category = types(elm_type)
+            
 
-            if elm_type in ["S3", "CPS3", "CPE3", "CAX3", "M3D3"]:
-                elm_category = all_tria3
-                number_of_nodes = 3
-            elif elm_type in ["S6", "CPS6", "CPE6", "CAX6", "M3D6"]:
-                elm_category = all_tria6
-                number_of_nodes = 6
-            elif elm_type in ["S4", "S4R", "CPS4", "CPS4R", "CPE4", "CPE4R", "CAX4", "CAX4R", "M3D4", "M3D4R"]:
-                elm_category = all_quad4
-                number_of_nodes = 4
-            elif elm_type in ["S8", "S8R", "CPS8", "CPS8R", "CPE8", "CPE8R", "CAX8", "CAX8R", "M3D8", "M3D8R"]:
-                elm_category = all_quad8
-                number_of_nodes = 8
-            elif elm_type == "C3D4":
-                elm_category = all_tetra4
-                number_of_nodes = 4
-            elif elm_type == "C3D10":
-                elm_category = all_tetra10
-                number_of_nodes = 10
-            elif elm_type in ["C3D8", "C3D8R", "C3D8I"]:
-                elm_category = all_hexa8
-                number_of_nodes = 8
-            elif elm_type in ["C3D20", "C3D20R", "C3D20RI"]:
-                elm_category = all_hexa20
-                number_of_nodes = 20
-            elif elm_type == "C3D6":
-                elm_category = all_penta6
-                number_of_nodes = 6
-            elif elm_type == "C3D15":
-                elm_category = all_penta15
-                number_of_nodes = 15
-            if elm_type in ["CPE3", "CPE6", "CPE4", "CPE4R", "CPE8", "CPE8R"]:
-                special_type = "plane strain"
-            elif elm_type in ["CPS3", "CPS6", "CPS4", "CPS4R", "CPS8", "CPS8R"]:
-                special_type = "plane stress"
-            elif elm_type in ["CAX3", "CAX6", "CAX4", "CAX4R", "CAX8", "CAX8R"]:
-                special_type = "axisymmetry"
-            else:
-                special_type = ""
-                if (shells_as_composite is True) and (elm_type in ["S3", "S4", "S4R", "S8"]):
-                    msg = ("\nERROR: " + elm_type + "element type found. CalculiX might need S6 or S8R elements for "
-                                                  "composite\n")
-                    print(msg)
-                    write_to_log(file_name, msg)
 
         elif elm_category != []:
             line_list = line.split(',')
             if elm_2nd_line is False:
                 en = int(line_list[0])  # element number
-                elm_category[en] = []
-                pos = 1
                 if current_elset:  # save en to the domain
                     try:
                         domains[current_elset].add(en)
                     except KeyError:
                         domains[current_elset] = {en}
-                if special_type == "plane strain":
+                if elm_category == "plane strain":
                     plane_strain.add(en)
-                elif special_type == "plane stress":
+                elif elm_category == "plane stress":
                     plane_stress.add(en)
-                elif special_type == "axisymmetry":
+                elif elm_category == "axisymmetry":
                     axisymmetry.add(en)
+                getattr(all_elements, elm_category)[en]=[int(x) for x in line_list[1:]]
+                if len(getattr(all_elements, elm_category)[en])!=number_of_nodes:
+                    elm_2nd_line = True           
             else:
-                pos = 0
                 elm_2nd_line = False
-            for nn in range(pos, pos + number_of_nodes - len(elm_category[en])):
-                try:
-                    enode = int(line_list[nn])
-                    elm_category[en].append(enode)
-                except(IndexError, ValueError):
-                    elm_2nd_line = True
-                    break
+                getattr(all_elements, elm_category)[en]+=[int(x) for x in line_list]
 
         # reading domains from elset
         elif line[:6].upper() == "*ELSET":
@@ -255,54 +268,45 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
 
     if all_available:  # domain called all_available will contain rest of the elements
         en_all2 = set()
-        en_all2 = en_all2.union(all_tria3.keys(), all_tria6.keys(), all_quad4.keys(), all_quad8.keys(),
-                                all_tetra4.keys(), all_tetra10.keys(), all_hexa8.keys(), all_hexa20.keys(),
-                                all_penta6.keys(), all_penta15.keys())
-        Elements.tria3 = all_tria3
-        Elements.tria6 = all_tria6
-        Elements.quad4 = all_quad4
-        Elements.quad8 = all_quad8
-        Elements.tetra4 = all_tetra4
-        Elements.tetra10 = all_tetra10
-        Elements.hexa8 = all_hexa8
-        Elements.hexa20 = all_hexa20
-        Elements.penta6 = all_penta6
-        Elements.penta15 = all_penta15
+        en_all2 = en_all2.union(all_elements.tria3.keys(), all_elements.tria6.keys(), all_elements.quad4.keys(), all_elements.quad8.keys(),
+                                all_elements.tetra4.keys(), all_elements.tetra10.keys(), all_elements.hexa8.keys(), all_elements.hexa20.keys(),
+                                all_elements.penta6.keys(), all_elements.penta15.keys())
+       
         domains["all_available"] = en_all2 - set(en_all)
         opt_domains.extend(domains["all_available"])
         en_all = list(en_all2)
     else:
         # only elements in domains_from_config are stored, the rest is discarded
-        keys = set(en_all).intersection(set(all_tria3.keys()))
-        Elements.tria3 = {k: all_tria3[k] for k in keys}
-        keys = set(en_all).intersection(set(all_tria6.keys()))
-        Elements.tria6 = {k: all_tria6[k] for k in keys}
-        keys = set(en_all).intersection(set(all_quad4.keys()))
-        Elements.quad4 = {k: all_quad4[k] for k in keys}
-        keys = set(en_all).intersection(set(all_quad8.keys()))
-        Elements.quad8 = {k: all_quad8[k] for k in keys}
-        keys = set(en_all).intersection(set(all_tetra4.keys()))
-        Elements.tetra4 = {k: all_tetra4[k] for k in keys}
-        keys = set(en_all).intersection(set(all_tetra10.keys()))
-        Elements.tetra10 = {k: all_tetra10[k] for k in keys}
-        keys = set(en_all).intersection(set(all_hexa8.keys()))
-        Elements.hexa8 = {k: all_hexa8[k] for k in keys}
-        keys = set(en_all).intersection(set(all_hexa20.keys()))
-        Elements.hexa20 = {k: all_hexa20[k] for k in keys}
-        keys = set(en_all).intersection(set(all_penta6.keys()))
-        Elements.penta6 = {k: all_penta6[k] for k in keys}
-        keys = set(en_all).intersection(set(all_penta15.keys()))
-        Elements.penta15 = {k: all_penta15[k] for k in keys}
-        en_all = list(Elements.tria3.keys()) + list(Elements.tria6.keys()) + list(Elements.quad4.keys()) + \
-                 list(Elements.quad8.keys()) + list(Elements.tetra4.keys()) + list(Elements.tetra10.keys()) + \
-                 list(Elements.hexa8.keys()) + list(Elements.hexa20.keys()) + list(Elements.penta6.keys()) + \
-                 list(Elements.penta15.keys())
+        keys = set(en_all).intersection(set(all_elements.tria3.keys()))
+        all_elements.tria3 = {k: all_elements.tria3[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.tria6.keys()))
+        all_elements.tria6 = {k: all_elements.tria6[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.quad4.keys()))
+        all_elements.quad4 = {k: all_elements.quad4[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.quad8.keys()))
+        all_elements.quad8 = {k: all_elements.quad8[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.tetra4.keys()))
+        all_elements.tetra4 = {k: all_elements.tetra4[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.tetra10.keys()))
+        all_elements.tetra10 = {k: all_elements.tetra10[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.hexa8.keys()))
+        all_elements.hexa8 = {k: all_elements.hexa8[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.hexa20.keys()))
+        all_elements.hexa20 = {k: all_elements.hexa20[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.penta6.keys()))
+        all_elements.penta6 = {k: all_elements.penta6[k] for k in keys}
+        keys = set(en_all).intersection(set(all_elements.penta15.keys()))
+        all_elements.penta15 = {k: all_elements.penta15[k] for k in keys}
+        en_all = list(all_elements.tria3.keys()) + list(all_elements.tria6.keys()) + list(all_elements.quad4.keys()) + \
+                 list(all_elements.quad8.keys()) + list(all_elements.tetra4.keys()) + list(all_elements.tetra10.keys()) + \
+                 list(all_elements.hexa8.keys()) + list(all_elements.hexa20.keys()) + list(all_elements.penta6.keys()) + \
+                 list(all_elements.penta15.keys())
 
     msg += ("nodes  : %.f\nTRIA3  : %.f\nTRIA6  : %.f\nQUAD4  : %.f\nQUAD8  : %.f\nTETRA4 : %.f\nTETRA10: %.f\n"
            "HEXA8  : %.f\nHEXA20 : %.f\nPENTA6 : %.f\nPENTA15: %.f\n"
-           % (len(nodes), len(Elements.tria3), len(Elements.tria6), len(Elements.quad4), len(Elements.quad8),
-              len(Elements.tetra4), len(Elements.tetra10), len(Elements.hexa8), len(Elements.hexa20),
-              len(Elements.penta6), len(Elements.penta15)))
+           % (len(nodes), len(all_elements.tria3), len(all_elements.tria6), len(all_elements.quad4), len(all_elements.quad8),
+              len(all_elements.tetra4), len(all_elements.tetra10), len(all_elements.hexa8), len(all_elements.hexa20),
+              len(all_elements.penta6), len(all_elements.penta15)))
     print(msg)
     write_to_log(file_name, msg)
 
@@ -312,7 +316,7 @@ def import_inp(file_name, domains_from_config, domain_optimized, shells_as_compo
         write_to_log(file_name, msg)
         assert False, row
 
-    return nodes, Elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry
+    return nodes, all_elements, domains, opt_domains, en_all, plane_strain, plane_stress, axisymmetry
 
 
 # function for computing volumes or area (shell elements) and centres of gravity
