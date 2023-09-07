@@ -14,8 +14,6 @@ Abraham Lee.
 """
 
 import numpy as np
-from scipy import spatial
-from scipy import stats
 from numpy import ma, linalg
 
 __all__ = ['lhs']
@@ -183,21 +181,27 @@ def _lhscentered(n, samples, randomstate):
 ################################################################################
 
 def _lhsmaximin(n, samples, iterations, lhstype, randomstate):
-    maxdist = 0
-    
-    # Maximize the minimum distance between points
-    for i in range(iterations):
-        if lhstype=='maximin':
-            Hcandidate = _lhsclassic(n, samples, randomstate)
-        else:
-            Hcandidate = _lhscentered(n, samples, randomstate)
+    try:
+        from scipy import spatial
+
+        maxdist = 0
         
-        d = spatial.distance.pdist(Hcandidate, 'euclidean')
-        if maxdist<np.min(d):
-            maxdist = np.min(d)
-            H = Hcandidate.copy()
-    
-    return H
+        # Maximize the minimum distance between points
+        for i in range(iterations):
+            if lhstype=='maximin':
+                Hcandidate = _lhsclassic(n, samples, randomstate)
+            else:
+                Hcandidate = _lhscentered(n, samples, randomstate)
+            
+            d = spatial.distance.pdist(Hcandidate, 'euclidean')
+            if maxdist<np.min(d):
+                maxdist = np.min(d)
+                H = Hcandidate.copy()
+        
+        return H
+    except:
+        print("You need to install scipy to use it")
+        return None
 
 ################################################################################
 
@@ -218,59 +222,63 @@ def _lhscorrelate(n, samples, iterations, randomstate):
  ################################################################################
 
 def _lhsmu(N, samples=None, corr=None, random_state=None, M=5):
+    try:
+        from scipy import spatial,stats
+        if random_state is None:
+            random_state = np.random.RandomState()
+        elif not isinstance(random_state, np.random.RandomState):
+            random_state = np.random.RandomState(random_state)
 
-    if random_state is None:
-        random_state = np.random.RandomState()
-    elif not isinstance(random_state, np.random.RandomState):
-        random_state = np.random.RandomState(random_state)
+        if samples is None:
+            samples = N
 
-    if samples is None:
-        samples = N
+        I = M*samples
 
-    I = M*samples
+        rdpoints = random_state.uniform(size=(I, N))
 
-    rdpoints = random_state.uniform(size=(I, N))
+        dist = spatial.distance.cdist(rdpoints, rdpoints, metric='euclidean')
+        D_ij = ma.masked_array(dist, mask=np.identity(I))
 
-    dist = spatial.distance.cdist(rdpoints, rdpoints, metric='euclidean')
-    D_ij = ma.masked_array(dist, mask=np.identity(I))
+        index_rm = np.zeros(I-samples, dtype=int)
+        i = 0
+        while i < I-samples:
+            order = ma.sort(D_ij, axis=1)
 
-    index_rm = np.zeros(I-samples, dtype=int)
-    i = 0
-    while i < I-samples:
-        order = ma.sort(D_ij, axis=1)
+            avg_dist = ma.mean(order[:, 0:2], axis=1)
+            min_l = ma.argmin(avg_dist)
 
-        avg_dist = ma.mean(order[:, 0:2], axis=1)
-        min_l = ma.argmin(avg_dist)
+            D_ij[min_l, :] = ma.masked
+            D_ij[:, min_l] = ma.masked
 
-        D_ij[min_l, :] = ma.masked
-        D_ij[:, min_l] = ma.masked
+            index_rm[i] = min_l
+            i += 1
 
-        index_rm[i] = min_l
-        i += 1
+        rdpoints = np.delete(rdpoints, index_rm, axis=0)
 
-    rdpoints = np.delete(rdpoints, index_rm, axis=0)
+        if(corr is not None):
+            #check if covariance matrix is valid
+            assert type(corr) == np.ndarray
+            assert corr.ndim == 2
+            assert corr.shape[0] == corr.shape[1]
+            assert corr.shape[0] == N
 
-    if(corr is not None):
-        #check if covariance matrix is valid
-        assert type(corr) == np.ndarray
-        assert corr.ndim == 2
-        assert corr.shape[0] == corr.shape[1]
-        assert corr.shape[0] == N
+            norm_u = stats.norm().ppf(rdpoints)
+            L = linalg.cholesky(corr, lower=True)
 
-        norm_u = stats.norm().ppf(rdpoints)
-        L = linalg.cholesky(corr, lower=True)
+            norm_u = np.matmul(norm_u, L)
 
-        norm_u = np.matmul(norm_u, L)
+            H = stats.norm().cdf(norm_u)
+        else:
+            H = np.zeros_like(rdpoints, dtype=float)
+            rank = np.argsort(rdpoints, axis=0)
 
-        H = stats.norm().cdf(norm_u)
-    else:
-        H = np.zeros_like(rdpoints, dtype=float)
-        rank = np.argsort(rdpoints, axis=0)
+            for l in range(samples):
+                low = float(l)/samples
+                high = float(l+1)/samples
 
-        for l in range(samples):
-            low = float(l)/samples
-            high = float(l+1)/samples
-
-            l_pos = rank == l
-            H[l_pos] = random_state.uniform(low, high, size=N)
-    return H
+                l_pos = rank == l
+                H[l_pos] = random_state.uniform(low, high, size=N)
+        return H
+    except:
+        print("You need to install scipy to use it")
+        return None

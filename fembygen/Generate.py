@@ -5,7 +5,7 @@ import os.path
 import shutil
 from fembygen import Common
 import numpy as np
-import PySide2
+import PySide
 import multiprocessing.dummy as mp
 from multiprocessing import cpu_count
 from functools import partial
@@ -18,7 +18,7 @@ def makeGenerate():
     except:
         obj = FreeCAD.ActiveDocument.addObject(
             "Part::FeaturePython", "Generate")
-        FreeCAD.ActiveDocument.Generative_Design.addObject(obj)
+        FreeCAD.ActiveDocument.GenerativeDesign.addObject(obj)
     Generate(obj)
     if FreeCAD.GuiUp:
         ViewProviderGen(obj.ViewObject)
@@ -40,15 +40,15 @@ class Generate:
             obj.GenerationMethod = ["Full Factorial Design", "Taguchi Optimization Design",
                                     "Plackett Burman Design", "Box Behnken Design",
                                     "Latin Hyper Cube Design", "Central Composite Design"]
-            obj.addProperty("App::PropertyStringList", "Parameters_Name", "Base",
+            obj.addProperty("App::PropertyStringList", "ParametersName", "Base",
                             "Generated parameter matrix")
-            obj.addProperty("App::PropertyPythonObject", "Generated_Parameters", "Base",
+            obj.addProperty("App::PropertyPythonObject", "GeneratedParameters", "Base",
                             "Generated parameter matrix")
             
-            obj.addProperty("App::PropertyInteger", "Number_of_CPU", "Base",
+            obj.addProperty("App::PropertyInteger", "NumberOfCPU", "Base",
                             "Number of CPU's to use ")
             
-            obj.Number_of_CPU = cpu_count()-1
+            obj.NumberOfCPU = cpu_count()-1
         except:
             pass
 
@@ -90,10 +90,10 @@ class GeneratePanel():
         # Data variables for parameter table
 
         self.doc = object.Object.Document
-        (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
-        self.doc.Generate.Parameters_Name = paramNames
-        self.doc.Generate.Generated_Parameters = parameterValues
-        index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide2.QtCore.Qt.MatchFixedString)
+        # (paramNames, parameterValues) = Common.checkGenParameters(self.doc)
+        # self.doc.Generate.ParametersName = paramNames
+        # self.doc.Generate.GeneratedParameters = parameterValues
+        index = self.form.selectDesign.findText(self.doc.Generate.GenerationMethod, PySide.QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.form.selectDesign.setCurrentIndex(index)
         # Check if any generations have been made already, and up to what number
@@ -114,7 +114,7 @@ class GeneratePanel():
         self.form.previousGen.clicked.connect(
             lambda: self.previousG(numGens))
 
-        pix = PySide2.QtWidgets.QStyle.SP_FileDialogDetailedView
+        pix = PySide.QtWidgets.QStyle.SP_FileDialogDetailedView
         icon = self.form.more.style().standardIcon(pix)
         self.form.more.setIcon(icon)
         self.form.more.clicked.connect(self.more)
@@ -130,17 +130,17 @@ class GeneratePanel():
             pass
         elif method == "Box Behnken Design":
             def save():
-                self.doc.Generate.Center_Points = int(settings.center.text())
+                self.doc.Generate.CenterPoints = int(settings.center.text())
                 settings.close()
 
             settings = FreeCADGui.PySideUic.loadUi(path+"more_box_behnken.ui")
             try:
-                settings.center.setText(str(self.doc.Generate.Center_Points))
+                settings.center.setText(str(self.doc.Generate.CenterPoints))
             except:
                 pass
 
             try:
-                self.doc.Generate.addProperty("App::PropertyInteger", "Center_Points", "Box Behnken",
+                self.doc.Generate.addProperty("App::PropertyInteger", "CenterPoints", "Box Behnken",
                                               "The number of center points to include")
             except:
                 pass
@@ -158,10 +158,10 @@ class GeneratePanel():
             settings.show()
             try:
                 settings.center.setText(str(self.doc.Generate.Center))
-                index_alpha = settings.alpha.findText(self.doc.Generate.Alpha, PySide2.QtCore.Qt.MatchFixedString)
+                index_alpha = settings.alpha.findText(self.doc.Generate.Alpha, PySide.QtCore.Qt.MatchFixedString)
                 if index_alpha >= 0:
                     settings.alpha.setCurrentIndex(index_alpha)
-                index_face = settings.face.findText(self.doc.Generate.Face, PySide2.QtCore.Qt.MatchFixedString)
+                index_face = settings.face.findText(self.doc.Generate.Face, PySide.QtCore.Qt.MatchFixedString)
                 if index_face >= 0:
                     settings.face.setCurrentIndex(index_face)
             except:
@@ -187,22 +187,22 @@ class GeneratePanel():
                 self.doc.Generate.Samples = int(settings.samples.text())
                 self.doc.Generate.Criterion = settings.criterion.currentText()
                 self.doc.Generate.Iterations = int(settings.iterations.text())
-                self.doc.Generate.Random_State = int(settings.randomstate.text())
+                self.doc.Generate.RandomState = int(settings.randomstate.text())
                 corrmat=settings.correlationmatrix.text()
                 if corrmat != "None":
-                    self.doc.Generate.Correlation_Matrix=ast.literal_eval(corrmat)
+                    self.doc.Generate.CorrelationMatrix=ast.literal_eval(corrmat)
                 settings.close()
             settings = FreeCADGui.PySideUic.loadUi(path+"more_lhs.ui")
-            settings.samples.setText(str(len(self.doc.Generate.Parameters_Name)))
+            settings.samples.setText(str(len(self.doc.Generate.ParametersName)))
             settings.show()
             try:
                 settings.samples.setText(str(self.doc.Generate.Samples))
-                index = settings.criterion.findText(self.doc.Generate.Criterion, PySide2.QtCore.Qt.MatchFixedString)
+                index = settings.criterion.findText(self.doc.Generate.Criterion, PySide.QtCore.Qt.MatchFixedString)
                 if index >= 0:
                     settings.criterion.setCurrentIndex(index)
                 settings.iterations.setText(str(self.doc.Generate.Iterations))
-                settings.randomstate.setText(str(self.doc.Generate.Random_State))
-                settings.correlationmatrix.setText(str(self.doc.Generate.Correlation_Matrix))
+                settings.randomstate.setText(str(self.doc.Generate.RandomState))
+                settings.correlationmatrix.setText(str(self.doc.Generate.CorrelationMatrix))
             except:
                 pass
 
@@ -214,9 +214,9 @@ class GeneratePanel():
                 self.doc.Generate.Criterion = ["center", "maxmin","centermaximin","correlation","lhsmu"]
                 self.doc.Generate.addProperty("App::PropertyInteger", "Iterations", "Latin Hyper Cube",
                                               "The number of iterations in the maximin and correlations algorithms.")
-                self.doc.Generate.addProperty("App::PropertyInteger", "Random_State", "Latin Hyper Cube",
+                self.doc.Generate.addProperty("App::PropertyInteger", "RandomState", "Latin Hyper Cube",
                                               "Random state (or seed-number) which controls the seed and random draws")
-                self.doc.Generate.addProperty("App::PropertyIntegerList", "Correlation_Matrix", "Latin Hyper Cube",
+                self.doc.Generate.addProperty("App::PropertyIntegerList", "CorrelationMatrix", "Latin Hyper Cube",
                                               "Enforce correlation between factors (only used in lhsmu)")
             except:
                 pass
@@ -262,12 +262,12 @@ class GeneratePanel():
             doc.Parameters.clear(f'E1:E{k+2}')
 
         # Removing generative design container in the file
-        for l in doc.Generative_Design.Group:
+        for l in doc.GenerativeDesign.Group:
             if l.Name == "Parameters":
                 pass
             else:
                 doc.removeObject(l.Name)
-        doc.removeObject(doc.Generative_Design.Name)
+        doc.removeObject(doc.GenerativeDesign.Name)
         doc.recompute()
 
         # getting first analysis meshing object and copy it other loadcases
@@ -279,7 +279,6 @@ class GeneratePanel():
                 self.meshing(mesh, "Netgen")
                 break
 
-        # define analysis working directory
         lc = 0
         for obj in doc.Objects:
             try:
@@ -288,14 +287,10 @@ class GeneratePanel():
                     # copying first loadcase mesh to other loadcases
                     if lc > 1:
                         for femobj in obj.Group:
-                            # delete old mesh of loadcase
+                            # delete old mesh of second or later analysis
                             if femobj.TypeId == 'Fem::FemMeshObjectPython' or femobj.TypeId == 'Fem::FemMeshShapeNetgenObject':
                                 doc.removeObject(femobj.Name)
 
-                            # setting working directory of loadcase to subfolder of generation folder
-                            elif femobj.TypeId == 'Fem::FemSolverObjectPython':
-                                femobj.WorkingDir = os.path.join(
-                                    directory+f"loadCase{lc}")
                         # copying same mesh to other loadcases
                         obj.addObject(doc.copyObject(mesh, False))
             except:
@@ -348,7 +343,7 @@ class GeneratePanel():
 
         func = partial(self.copy_mesh, numgenerations)
         iterationnumber = len(numgenerations)
-        p = mp.Pool(self.doc.Generate.Number_of_CPU)
+        p = mp.Pool(self.doc.Generate.NumberOfCPU)
         for i, _ in enumerate(p.imap_unordered(func, range(iterationnumber))):
             # Update progress bar
             progress = ((i+1)/iterationnumber) * 100
@@ -358,8 +353,8 @@ class GeneratePanel():
 
         # ReActivate document again once finished
         FreeCAD.setActiveDocument(master.Name)
-        master.Generate.Generated_Parameters = numgenerations
-        master.Generate.Parameters_Name = paramNames
+        master.Generate.GeneratedParameters = numgenerations
+        master.Generate.ParametersName = paramNames
         self.updateParametersTable()
 
         # Update number of generations produced in window
@@ -372,7 +367,7 @@ class GeneratePanel():
         FreeCAD.Console.PrintMessage("Generation done successfully!\n")
 
     def deleteGenerations(self):
-        qm = PySide2.QtWidgets.QMessageBox
+        qm = PySide.QtWidgets.QMessageBox
         ret = qm.question(None, '', "Are you sure to delete all the earlier generation files?", qm.Yes | qm.No)
 
         if ret == qm.Yes:
@@ -396,7 +391,7 @@ class GeneratePanel():
 
             # Delete if earlier generative objects exist
             try:
-                for l in self.doc.Generative_Design.Group:
+                for l in self.doc.GenerativeDesign.Group:
                     if l.Name == "Parameters" or l.Name == "Generate":
                         pass
                     elif l.Name == "Results":
@@ -406,7 +401,7 @@ class GeneratePanel():
             except:
                 pass
 
-            self.doc.Generate.Generated_Parameters = None
+            self.doc.Generate.GeneratedParameters = None
             # refreshing the table
             self.resetViewControls(numGens)
             self.updateParametersTable()
@@ -468,7 +463,11 @@ class GeneratePanel():
             self.form.selectGenBox.clear()
 
     def updateParametersTable(self):
-        paramNames, parameterValues = Common.checkGenParameters(self.doc)
+        paramNames = self.doc.Generate.ParametersName
+        parameterValues = self.doc.Generate.GeneratedParameters
+        if parameterValues == None:
+            paramNames = [""]
+            parameterValues = []
         # Insert generation number column into table
 
         paramNames.insert(0, "Gen")
@@ -481,7 +480,7 @@ class GeneratePanel():
         tableModel.layoutChanged.emit()
         self.form.parametersTable.setModel(tableModel)
         self.form.parametersTable.horizontalHeader().setResizeMode(
-            PySide2.QtWidgets.QHeaderView.ResizeToContents)
+            PySide.QtWidgets.QHeaderView.ResizeToContents)
         self.form.parametersTable.clicked.connect(partial(
             Common.showGen, self.form.parametersTable, self.doc))
         self.form.parametersTable.setMinimumHeight(22+len(parameterValues)*30)
@@ -507,7 +506,7 @@ class GeneratePanel():
             return Design.designpb(parameters)
         elif method == "Box Behnken Design":
             try:
-                center = self.doc.Generate.Center_Points
+                center = self.doc.Generate.CenterPoints
             except:
                 center = None
             return Design.designboxBen(parameters, center)
@@ -526,8 +525,8 @@ class GeneratePanel():
                 samples = self.doc.Generate.Samples
                 criterion = self.doc.Generate.Criterion
                 iterations = self.doc.Generate.Iterations
-                random_state = self.doc.Generate.Random_State
-                correlation_matrix = self.doc.Generate.Correlation_Matrix
+                random_state = self.doc.Generate.RandomState
+                correlation_matrix = self.doc.Generate.CorrelationMatrix
             except:
                 samples = None
                 criterion = None

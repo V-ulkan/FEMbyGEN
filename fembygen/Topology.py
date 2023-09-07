@@ -1,5 +1,5 @@
-import FreeCAD as App
-import FreeCADGui as Gui
+import FreeCAD
+import FreeCADGui
 import os
 from PySide import QtGui, QtCore
 from femtools import ccxtools
@@ -7,29 +7,45 @@ import datetime
 import webbrowser
 from fembygen.topology import beso_main
 from fembygen import Common
+import FemGui
+import glob
+import shutil
 from multiprocessing import cpu_count
-from PySide2.QtWidgets import QPushButton, QComboBox, QSplitter, QCheckBox, QLineEdit, QListWidget, QLabel, QVBoxLayout, QAbstractItemView
+
 
 
 def makeTopology():
     def attach(self, vobj):
         self.ViewObject = vobj
         self.Object = vobj.Object
- 
-    obj = App.ActiveDocument.addObject(
-        "App::DocumentObjectGroupPython", "Topology")
+
     try:
-        App.ActiveDocument.Generative_Design.addObject(obj)
+        FreeCAD.ActiveDocument.Generate
+        obj = FreeCAD.ActiveDocument.addObject(
+            "App::DocumentObjectGroupPython", "Topology")
+        FreeCAD.ActiveDocument.GenerativeDesign.addObject(obj)
+        TopologyLink(obj)
+        if FreeCAD.GuiUp:
+            ViewProviderLink(obj.ViewObject)
+        return obj
     except:
-        print("continue only for topology analysis")
-    Topology(obj)
-    if App.GuiUp:
-        ViewProviderGen(obj.ViewObject)
-    return obj
+        obj = FreeCAD.ActiveDocument.addObject(
+            "App::DocumentObjectGroupPython", "Topology")
+        Topology(obj)
+        if FreeCAD.GuiUp:
+            ViewProviderGen(obj.ViewObject)
+        return obj
 
 
-def returnPath():
-    path = os.path.split(self.form.fileName.text())[0]  # fileName contains full path not only file name
+class TopologyLink:
+    def __init__(self, obj):
+        obj.Proxy = self
+        self.Type = "Topology_Link"
+        self.initProperties(obj)
+
+    def initProperties(self, obj):
+        obj.addProperty("App::PropertyString", "Path", "Base",
+                        "Path of the file")
 
 
 class Topology:
@@ -39,119 +55,119 @@ class Topology:
         self.initProperties(obj)
 
     def initProperties(self, obj):
-        try:
-            obj.addProperty("App::PropertyFloat", "mass_addition_ratio", "Mass",
-                            "The ratio to add mass between iterations ")
-            obj.mass_addition_ratio = 0.015
-            obj.addProperty("App::PropertyFloat", "mass_removal_ratio", "Mass",
-                            "The ratio to add mass between iterations ")
-            obj.mass_removal_ratio = 0.03
-            obj.addProperty("App::PropertyInteger", "LastState", "Results",
-                            "Last state")
-            
-            obj.addProperty("App::PropertyString", "path_calculix", "Base", "Path to CalculiX")
-       
 
-            obj.addProperty("App::PropertyString", "path", "Base", "Path")
+        obj.addProperty("App::PropertyFloat", "mass_addition_ratio", "Mass",
+                        "The ratio to add mass between iterations ")
+        obj.mass_addition_ratio = 0.015
+        obj.addProperty("App::PropertyFloat", "mass_removal_ratio", "Mass",
+                        "The ratio to add mass between iterations ")
+        obj.mass_removal_ratio = 0.03
+        obj.addProperty("App::PropertyInteger", "LastState", "Results",
+                        "Last state")
 
-            obj.addProperty("App::PropertyString", "file_name", "Base", "File Name")
+        obj.addProperty("App::PropertyFile", "path_calculix", "Base", "Path to CalculiX")
 
-            obj.addProperty("App::PropertyPythonObject", "domain_offset", "Domain", "Domain Offset")
-            obj.domain_offset={}
+        obj.addProperty("App::PropertyPythonObject", "combobox", "Base", "List of fem analysis")
+        obj.combobox = []
 
-            obj.addProperty("App::PropertyPythonObject", "domain_orientation", "Domain", "Domain Orientation")
-            obj.domain_orientation={}
+        obj.addProperty("App::PropertyPath", "path", "Base", "Path")
 
-            obj.addProperty("App::PropertyPythonObject", "domain_FI", "Domain", "Domain FI")
-            obj.domain_FI={}
+        obj.addProperty("App::PropertyString", "file_name", "Base", "File Name")
 
-            obj.addProperty("App::PropertyPythonObject", "domain_same_state", "Domain", "Domain Same State")
-            obj.domain_same_state={}
+        obj.addProperty("App::PropertyPythonObject", "domain_offset", "Domain", "Domain Offset")
+        obj.domain_offset = {}
 
-            obj.addProperty("App::PropertyString", "continue_from", "Base", "Continue From")
-            obj.continue_from = ''
+        obj.addProperty("App::PropertyPythonObject", "domain_orientation", "Domain", "Domain Orientation")
+        obj.domain_orientation = {}
 
-            obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
-            obj.filter_list = [['simple', 0]]
+        obj.addProperty("App::PropertyPythonObject", "domain_FI", "Domain", "Domain FI")
+        obj.domain_FI = {}
 
-            obj.addProperty("App::PropertyInteger", "cpu_cores", "Base", "CPU Cores")
-            obj.cpu_cores = cpu_count()
+        obj.addProperty("App::PropertyPythonObject", "domain_same_state", "Domain", "Domain Same State")
+        obj.domain_same_state = {}
 
-            obj.addProperty("App::PropertyFloat", "FI_violated_tolerance", "Base", "FI Violated Tolerance")
-            obj.FI_violated_tolerance = 1.0
+        obj.addProperty("App::PropertyFile", "continue_from", "Base", "Continue From")
+        obj.continue_from = ''
 
-            obj.addProperty("App::PropertyFloat", "decay_coefficient", "Base", "Decay Coefficient")
-            obj.decay_coefficient = -0.2
+        obj.addProperty("App::PropertyPythonObject", "filter_list", "Base", "Filter List")
 
-            obj.addProperty("App::PropertyBool", "shells_as_composite", "Base", "Shells as Composite")
-            obj.shells_as_composite = False
+        obj.addProperty("App::PropertyPythonObject", "Gen_filled")
+        obj.Gen_filled = False
 
-            obj.addProperty("App::PropertyString", "reference_points", "Base", "Reference Points")
-            obj.reference_points = 'integration points'
+        obj.addProperty("App::PropertyInteger", "cpu_cores", "Base", "CPU Cores")
+        obj.cpu_cores = cpu_count()
 
-            obj.addProperty("App::PropertyString", "reference_value", "Base", "Reference Value")
-            obj.reference_value = 'max'
+        obj.addProperty("App::PropertyFloat", "FI_violated_tolerance", "Base", "FI Violated Tolerance")
+        obj.FI_violated_tolerance = 1.0
 
-            obj.addProperty("App::PropertyBool", "sensitivity_averaging", "Base", "Sensitivity Averaging")
-            obj.sensitivity_averaging = False
+        obj.addProperty("App::PropertyFloat", "decay_coefficient", "Base", "Decay Coefficient")
+        obj.decay_coefficient = -0.2
 
-            obj.addProperty("App::PropertyBool", "compensate_state_filter", "Base", "Compensate State Filter")
-            obj.compensate_state_filter = False
+        obj.addProperty("App::PropertyBool", "shells_as_composite", "Base", "Shells as Composite")
+        obj.shells_as_composite = False
 
-            obj.addProperty("App::PropertyIntegerList", "steps_superposition", "Base", "Steps Superposition")
-            obj.steps_superposition = []
+        obj.addProperty("App::PropertyEnumeration", "reference_points", "Base", "Reference Points")
+        obj.reference_points = ["integration points", "nodes"]
 
-            obj.addProperty("App::PropertyString", "iterations_limit", "Base", "Iterations Limit")
-            obj.iterations_limit = 'auto'
+        obj.addProperty("App::PropertyEnumeration", "reference_value", "Base", "Reference Value")
+        obj.reference_value = ['max', 'average']
 
-            obj.addProperty("App::PropertyFloat", "tolerance", "Base", "Tolerance")
-            obj.tolerance = 1e-3
+        obj.addProperty("App::PropertyBool", "sensitivity_averaging", "Base", "Sensitivity Averaging")
+        obj.sensitivity_averaging = False
 
-            obj.addProperty("App::PropertyStringList", "displacement_graph", "Base", "Displacement Graph")
-            obj.displacement_graph = []
+        obj.addProperty("App::PropertyBool", "compensate_state_filter", "Base", "Compensate State Filter")
+        obj.compensate_state_filter = False
 
-            obj.addProperty("App::PropertyInteger", "save_iteration_results", "Base", "Save Iteration Results")
-            obj.save_iteration_results = 1
+        obj.addProperty("App::PropertyIntegerList", "steps_superposition", "Base", "Steps Superposition")
+        obj.steps_superposition = []
 
-            obj.addProperty("App::PropertyString", "save_solver_files", "Base", "Save Solver Files")
-            obj.save_solver_files = ''
+        obj.addProperty("App::PropertyString", "iterations_limit", "Base", "Iterations Limit")
+        obj.iterations_limit = 'auto'
 
-            obj.addProperty("App::PropertyString", "save_resulting_format", "Base", "Save Resulting Format")
-            obj.save_resulting_format = 'inp'
+        obj.addProperty("App::PropertyFloat", "tolerance", "Base", "Tolerance")
+        obj.tolerance = 1e-3
 
+        obj.addProperty("App::PropertyStringList", "displacement_graph", "Base", "Displacement Graph")
+        obj.displacement_graph = []
 
-            obj.addProperty("App::PropertyPythonObject", "domain_optimized", "Domain", "Domain Optimized")
-            obj.domain_optimized={}
-         
+        obj.addProperty("App::PropertyInteger", "save_iteration_results", "Base", "Save Iteration Results")
+        obj.save_iteration_results = 1
 
-            obj.addProperty("App::PropertyPythonObject", "domain_density", "Domain", "Domain Density")
-            obj.domain_density={}
-            obj.addProperty("App::PropertyPythonObject", "domain_thickness", "Domain", "Domain Density")
-            obj.domain_thickness={}
-            obj.addProperty("App::PropertyFloat", "stress_limit", "Base", "Stress Limit")
+        obj.addProperty("App::PropertyString", "save_solver_files", "Base", "Save Solver Files")
+        obj.save_solver_files = ''
 
-            
-            obj.addProperty("App::PropertyPythonObject", "domain_material", "Domain", "Domain Material")
-            obj.domain_material={}
-            
-            obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Mass", "Mass Goal Ratio")
-         
+        obj.addProperty("App::PropertyEnumeration", "save_resulting_format", "Base", "Save Resulting Format")
+        obj.save_resulting_format = [["inp"], ["vtk"], ["inp", "vtk"]]
 
-            obj.addProperty("App::PropertyPythonObject", "filter_list2", "Base", "Filter List 2")
-            obj.filter_list2 = [['simple', 'auto']]
+        obj.addProperty("App::PropertyPythonObject", "domain_optimized", "Domain", "Domain Optimized")
+        obj.domain_optimized = {}
 
-            obj.addProperty("App::PropertyString", "optimization_base", "Base", "Optimization Base")
-            
-            obj.addProperty("App::PropertyString", "ratio_type", "Base", "Ratio Type")
-            obj.ratio_type = 'relative'
-        except:
-            pass
+        obj.addProperty("App::PropertyPythonObject", "domain_density", "Domain", "Domain Density")
+        obj.domain_density = {}
+        obj.addProperty("App::PropertyPythonObject", "domain_thickness", "Domain", "Domain Density")
+        obj.domain_thickness = {}
+        obj.addProperty("App::PropertyFloat", "stress_limit", "Base", "Stress Limit")
+
+        obj.addProperty("App::PropertyPythonObject", "domain_material", "Domain", "Domain Material")
+        obj.domain_material = {}
+
+        obj.addProperty("App::PropertyInteger", "Number_of_Domains", "Domain", "Number of domains")
+        obj.Number_of_Domains = 1
+
+        obj.addProperty("App::PropertyFloat", "mass_goal_ratio", "Mass", "Mass Goal Ratio")
+
+        obj.addProperty("App::PropertyString", "optimization_base", "Base", "Optimization Base")
+
+        obj.addProperty("App::PropertyEnumeration", "ratio_type", "Base", "Ratio Type")
+        obj.ratio_type = ['relative', 'absolute']
+        obj.addProperty("App::PropertyPythonObject", "Generations")
+        obj.Generations = []
 
 
 class TopologyCommand():
 
     def GetResources(self):
-        return {'Pixmap': os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg'),  # the name of a svg file available in the resources
+        return {'Pixmap': os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg'),  # the name of a svg file available in the resources
                 'Accel': "Shift+T",  # a default shortcut (optional)
                 'MenuText': "Topology",
                 'ToolTip': "Opens Topology gui"}
@@ -159,272 +175,110 @@ class TopologyCommand():
     def Activated(self):
 
         obj = makeTopology()
-        doc = Gui.ActiveDocument
-        if not doc.getInEdit():
+        doc = FreeCADGui.ActiveDocument
+        if not doc.getInEdit() and obj is not None:
             doc.setEdit(obj.ViewObject.Object.Name)
         else:
-            App.Console.PrintError('Existing task dialog already open\n')
+            FreeCAD.Console.PrintError('Existing task dialog already open\n')
         return
 
     def IsActive(self):
         """Here you can define if the command must be active or not (greyed) if certain conditions
         are met or not. This function is optional."""
-        return App.ActiveDocument is not None
+        return FreeCAD.ActiveDocument is not None
+
+
+class TopologyMasterPanel(QtGui.QWidget):
+    def __init__(self, object):
+        self.obj = object
+
+        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Beso_GenSelect.ui"
+        self.form = FreeCADGui.PySideUic.loadUi(guiPath)
+        self.workingDir = '/'.join(
+            object.Document.FileName.split('/')[0:-1])
+        self.doc = object.Document
+        self.form.getGen.clicked.connect(self.openGeneration)
+
+        numAnalysis = self.doc.FEA.NumberOfAnalysis
+        LC = self.doc.FEA.NumberOfLoadCase
+        numGens = numAnalysis//LC
+        self.form.selectGen.clear()
+        for i in range(1, numGens+1):
+            self.form.selectGen.addItem(f"Gen{i}")
+
+    def openGeneration(self):
+        # ose old opened generations
+        # Common.showGen("close",self.doc,1)
+
+        # get selected generations
+        gen = self.form.selectGen.currentIndex()+1
+
+        # open selected generation file to make topology optimizations
+        partName = f"Gen{gen}"
+        filePath = self.workingDir + f"/Gen{gen}/Gen{gen}.FCStd"
+        self.obj.Label = partName+"_Topology"
+        self.obj.Path = filePath
+        self.accept()
+
+        Gen_Doc = FreeCAD.open(filePath)
+        FreeCAD.setActiveDocument(partName)
+        obj = makeTopology()
+
+        # hide all mesh files to show results at the end of the topology
+        for mesh in Gen_Doc.Objects:
+            if mesh.TypeId == 'Fem::FemMeshObjectPython' or mesh.TypeId == 'Fem::FemMeshShapeNetgenObject' or 'Fem::FemPostPipeline':
+                mesh.Visibility = False
+
+        Gen_Doc.Topology.ViewObject.doubleClicked()
+
+    def accept(self):
+        doc = FreeCADGui.getDocument(self.doc)
+        doc.resetEdit()
+        doc.Document.recompute()
+        FreeCADGui.Control.closeDialog()
+
+    def reject(self):
+        doc = FreeCADGui.getDocument(self.doc)
+        doc.resetEdit()
 
 
 class TopologyPanel(QtGui.QWidget):
     def __init__(self, object):
         self.obj = object
-        guiPath = App.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Beso.ui"
-        self.form = Gui.PySideUic.loadUi(guiPath)
+        guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/Beso.ui"
+        self.form = FreeCADGui.PySideUic.loadUi(guiPath)
         self.workingDir = '/'.join(
-            object.Object.Document.FileName.split('/')[0:-1])
-        self.doc = object.Object.Document
+            object.Document.FileName.split('/')[0:-1])
+        self.doc = object.Document
 
-        numGens = Common.checkGenerations(self.workingDir)
-        self.getGenerations(numGens)
-
-        self.inp_file = ""
-        self.beso_dir = os.path.dirname(__file__)
-        # self.form.Faces.setReadOnly(True)
-
-        self.materials = []
-        self.thicknesses = []
+        self.getAnalysis()
         self.form.iterationSlider.sliderMoved.connect(self.massratio)
 
-        for obj in App.ActiveDocument.Objects:
-            if obj.Name[:23] == "MechanicalSolidMaterial":
-                self.materials.append(obj)
-            elif obj.Name[:13] == "MaterialSolid":
-                self.materials.append(obj)
-            elif obj.Name[:13] == "SolidMaterial":
-                self.materials.append(obj)
-            elif obj.Name[:17] == "ElementGeometry2D":
-                self.thicknesses.append(obj)
+        if self.doc.Topology.Number_of_Domains == 1:
+            self.domains1()
+        elif self.doc.Topology.Number_of_Domains == 2:
+            self.domains2()
+        elif self.doc.Topology.Number_of_Domains == 3:
+            self.domains3()
 
-        # necessary layouts to add new domain widgets
-        self.form.layout = self.form.horizontalLayout_13
-        self.form.layout2 = self.form.horizontalLayout_12
-        self.form.layout3 = self.form.horizontalLayout_11
-        self.form.layout4 = self.form.horizontalLayout_10
-        self.form.layout5 = self.form.horizontalLayout_9
-        self.form.layout6 = self.form.horizontalLayout_7
-        self.form.layout7 = self.form.horizontalLayout_6
-        self.form.layout8 = self.form.horizontalLayout_5
-        self.form.layout9 = self.form.horizontalLayout_4
-        self.form.layout10 = self.form.horizontalLayout_3
-        self.form.verticalLayout2 = QVBoxLayout()
-        self.form.verticalLayout3 = QVBoxLayout()
-
-        # new Domain labels
-        self.form.label1 = QLabel("Domain 1")
-        self.form.label2 = QLabel("Domain 2")
-        self.form.label3 = QLabel("Filter 1")
-        self.form.label4 = QLabel("Filter 2")
-
-        # Creating widgets for new domains
-        self.form.horizontal1 = QSplitter()  # creating horizantal sliders to set placement
-        self.form.horizontal2 = QSplitter()
-        self.form.horizontal3 = QSplitter()
-        self.form.horizontal4 = QSplitter()
-        self.form.horizontal5 = QSplitter()
-        self.form.horizontal6 = QSplitter()
-        self.form.horizontal7 = QSplitter()
-        self.form.horizontal8 = QSplitter()
-        self.form.horizontal9 = QSplitter()
-        self.form.horizontal10 = QSplitter()
-        self.form.horizontal11 = QSplitter()
-        self.form.horizontal12 = QSplitter()
-        self.form.horizontal13 = QSplitter()
-        self.form.horizontal14 = QSplitter()
-        self.form.horizontal15 = QSplitter()
-        """self.form.vertical1 = QSplitter()
-        self.form.vertical2 = QSplitter()"""
-
-        self.form.selectMaterial_2 = QComboBox()
-        self.form.selectMaterial_3 = QComboBox()
-        self.form.thicknessObject2 = QComboBox()
-        self.form.thicknessObject3 = QComboBox()
-        self.form.asDesign_checkbox2 = QCheckBox()
-        self.form.asDesign_checkbox2.setChecked(True)
-        self.form.asDesign_checkbox3 = QCheckBox()
-        self.form.asDesign_checkbox3.setChecked(True)
-        self.form.stressLimit_2 = QLineEdit()
-        self.form.stressLimit_3 = QLineEdit()
-        self.form.selectFilter_2 = QComboBox()
-        self.form.selectFilter_2.addItems(["None", "simple", "casting"])
-        self.form.selectFilter_3 = QComboBox()
-        self.form.selectFilter_3.addItems(["None", "simple", "casting"])
-        self.form.filterRange_2 = QComboBox()
-        self.form.filterRange_2.addItems(["auto", "manual"])
-        self.form.filterRange_2.setEnabled(False)
-        self.form.filterRange_3 = QComboBox()
-        self.form.filterRange_3.addItems(["auto", "manual"])
-        self.form.filterRange_3.setEnabled(False)
-        self.form.filterRange_2.setMaximumSize(50, 20)
-        self.form.filterRange_3.setMaximumSize(50, 20)
-        self.form.range_2 = QLineEdit()
-        self.form.range_3 = QLineEdit()
-        self.form.range_2.setMaximumSize(50, 20)
-        self.form.range_2.setText("0.")
-        self.form.range_2.setEnabled(False)
-        self.form.range_3.setMaximumSize(50, 20)
-        self.form.range_3.setText("0.")
-        self.form.range_3.setEnabled(False)
-        self.form.directionVector_2 = QLineEdit()
-        self.form.directionVector_2.setText("0,0,1")
-        self.form.directionVector_2.setEnabled(False)
-        self.form.directionVector_3 = QLineEdit()
-        self.form.directionVector_3.setText("0,0,1")
-        self.form.directionVector_3.setEnabled(False)
-        self.form.domainList_2 = QListWidget()
-        self.form.domainList_2.setSelectionMode(QAbstractItemView.MultiSelection)
-        self.form.domainList_3 = QListWidget()
-        self.form.domainList_3.setSelectionMode(QAbstractItemView.MultiSelection)
-        self.form.addButton.setFixedSize(30, 23)
-        self.form.deleteDomainButton = QPushButton("-")
-        self.form.deleteDomainButton.setFixedSize(30, 23)
-        self.form.deleteDomainButton2 = QPushButton("-")
-        self.form.deleteDomainButton2.setFixedSize(30, 23)
-        self.form.newAddButton = QPushButton("+")
-        self.form.newAddButton.setFixedSize(30, 23)
+        self.form.addButton_1.clicked.connect(self.addDomain)
+        self.form.remButton_1.clicked.connect(self.remDomain)
+        self.form.addButton_2.clicked.connect(self.addDomain)
+        self.form.remButton_2.clicked.connect(self.remDomain)
 
         # adding constraint for mass goal ratio between 0.0 - 1.0
-        self.form.validator = QtGui.QDoubleValidator(0.0,1.0, 2) 
+        self.form.validator = QtGui.QDoubleValidator(0, 1, 2)
         self.form.massGoalRatio.setValidator(self.form.validator)
+        self.form.massGoalRatio.textEdited.connect(self.validator)
 
-        self.form.selectMaterial_1.clear()
-        self.form.selectMaterial_1.addItem("None")
-        self.form.thicknessObject1.clear()
-        self.form.thicknessObject1.addItem("None")
-        self.form.domainList_1.clear()
-        self.form.domainList_1.addItem("All defined")
-        self.form.domainList_1.addItem("Domain 0")
-        self.form.domainList_1.setCurrentItem(self.form.domainList_1.item(0))
-
-        self.form.layout.addWidget(self.form.label1, stretch=1)
-        self.form.layout.addWidget(self.form.horizontal1, stretch=1)
-        self.form.layout.addWidget(self.form.label2, stretch=1)
-
-        self.form.layout.addWidget(self.form.newAddButton, stretch=1)
-        self.form.newAddButton.setVisible(False)
-        self.form.horizontal1.setVisible(False)
-        self.form.label1.setVisible(False)
-        self.form.label2.setVisible(False)
-        self.form.layout.addWidget(self.form.deleteDomainButton, stretch=1)
-        self.form.layout.addWidget(self.form.deleteDomainButton2, stretch=1)
-        self.form.deleteDomainButton.setVisible(False)
-        self.form.deleteDomainButton2.setVisible(False)
-        self.form.layout2.addWidget(self.form.selectMaterial_2, stretch=1)
-        self.form.layout2.addWidget(self.form.horizontal2, stretch=1)
-        self.form.layout2.addWidget(self.form.selectMaterial_3, stretch=1)
-        self.form.selectMaterial_2.setVisible(False)
-        self.form.selectMaterial_3.setVisible(False)
-        self.form.horizontal2.setVisible(False)
-        self.form.layout3.addWidget(self.form.thicknessObject2, stretch=1)
-        self.form.layout3.addWidget(self.form.horizontal3, stretch=1)
-        self.form.layout3.addWidget(self.form.thicknessObject3, stretch=1)
-        self.form.thicknessObject2.setVisible(False)
-        self.form.thicknessObject3.setVisible(False)
-        self.form.horizontal3.setVisible(False)
-        self.form.layout4.addWidget(self.form.asDesign_checkbox2, stretch=1)
-        self.form.layout4.addWidget(self.form.horizontal4, stretch=1)
-        self.form.layout4.addWidget(self.form.asDesign_checkbox3, stretch=1)
-        self.form.asDesign_checkbox2.setVisible(False)
-        self.form.asDesign_checkbox3.setVisible(False)
-        self.form.horizontal4.setVisible(False)
-        self.form.layout5.addWidget(self.form.stressLimit_2, stretch=1)
-        self.form.layout5.addWidget(self.form.horizontal5, stretch=1)
-        self.form.layout5.addWidget(self.form.stressLimit_3, stretch=1)
-        self.form.stressLimit_2.setVisible(False)
-        self.form.stressLimit_3.setVisible(False)
-        self.form.horizontal5.setVisible(False)
-        self.form.layout6.addWidget(self.form.label3, stretch=1)
-        self.form.layout6.addWidget(self.form.horizontal6, stretch=1)
-        self.form.layout6.addWidget(self.form.label4, stretch=1)
-        self.form.label3.setVisible(False)
-        self.form.label4.setVisible(False)
-        self.form.horizontal6.setVisible(False)
-        self.form.layout7.addWidget(self.form.selectFilter_2, stretch=1)
-        self.form.layout7.addWidget(self.form.horizontal7, stretch=1)
-        self.form.layout7.addWidget(self.form.selectFilter_3, stretch=1)
-        self.form.selectFilter_2.setVisible(False)
-        self.form.selectFilter_3.setVisible(False)
-        self.form.horizontal7.setVisible(False)
-        self.form.layout8.addWidget(self.form.filterRange_2, stretch=1)
-        self.form.layout8.addWidget(self.form.horizontal8, stretch=1)
-        self.form.layout8.addWidget(self.form.range_2, stretch=1)
-        self.form.filterRange_2.setVisible(False)
-        self.form.range_2.setVisible(False)
-        self.form.horizontal8.setVisible(False)
-        self.form.layout8.addWidget(self.form.horizontal9, stretch=1)
-        self.form.layout8.addWidget(self.form.filterRange_3, stretch=1)
-        self.form.layout8.addWidget(self.form.range_3, stretch=1)
-        self.form.filterRange_3.setVisible(False)
-        self.form.range_3.setVisible(False)
-        self.form.horizontal9.setVisible(False)
-        self.form.layout9.addWidget(self.form.directionVector_2, stretch=1)
-        self.form.layout9.addWidget(self.form.horizontal10, stretch=1)
-        self.form.layout9.addWidget(self.form.directionVector_3, stretch=1)
-        self.form.directionVector_2.setVisible(False)
-        self.form.directionVector_3.setVisible(False)
-        self.form.horizontal10.setVisible(False)
-        self.form.layout10.addWidget(self.form.horizontal12, stretch=1)
-        self.form.layout10.addLayout(self.form.verticalLayout2, stretch=1)
-        self.form.layout10.addWidget(self.form.horizontal11, stretch=1)
-        self.form.layout10.addLayout(self.form.verticalLayout3, stretch=1)
-        self.form.verticalLayout2.addWidget(self.form.domainList_2, stretch=1)
-        self.form.verticalLayout3.addWidget(self.form.domainList_3, stretch=1)
-        self.form.verticalLayout2.setEnabled(False)
-        self.form.verticalLayout3.setEnabled(False)
-        self.form.domainList_2.setVisible(False)
-        self.form.domainList_3.setVisible(False)
-        self.form.horizontal11.setVisible(False)
         self.form.selectFilter_2.currentIndexChanged.connect(self.filterType2)
         self.form.selectFilter_3.currentIndexChanged.connect(self.filterType3)
         self.form.filterRange_2.currentIndexChanged.connect(self.filterRange2)
         self.form.filterRange_3.currentIndexChanged.connect(self.filterRange2)
 
-        self.form.selectMaterial_2.clear()
-        self.form.selectMaterial_3.clear()
-        self.form.selectMaterial_2.addItem("None")
-        self.form.selectMaterial_3.addItem("None")
-        self.form.thicknessObject2.clear()
-        self.form.thicknessObject3.clear()
-        self.form.thicknessObject2.addItem("None")
-        self.form.thicknessObject3.addItem("None")
-        self.form.domainList_2.clear()
-        self.form.domainList_2.addItem("All defined")
-        self.form.domainList_2.addItem("Domain 0")
-        self.form.domainList_2.addItem("Domain 1")
-        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))
-
-        self.form.domainList_3.clear()
-        self.form.domainList_3.addItem("All defined")
-        self.form.domainList_3.addItem("Domain 0")
-        self.form.domainList_3.addItem("Domain 1")
-        self.form.domainList_3.addItem("Domain 2")
-        self.form.domainList_3.setCurrentItem(self.form.domainList_3.item(0))
-
-        for mat in self.materials:
-            self.form.selectMaterial_1.addItem(mat.Label)
-            self.form.selectMaterial_2.addItem(mat.Label)
-            self.form.selectMaterial_3.addItem(mat.Label)
-        if self.materials:
-            self.form.selectMaterial_1.setCurrentIndex(1)
-        for th in self.thicknesses:
-            self.form.thicknessObject1.addItem(th.Label)
-            self.form.thicknessObject2.addItem(th.Label)
-            self.form.thicknessObject3.addItem(th.Label)
-
-        self.form.newAddButton.clicked.connect(self.addNewDomain2)
-        self.form.deleteDomainButton.clicked.connect(self.deleteDomain)
-        self.form.deleteDomainButton2.clicked.connect(self.deleteDomain2)
-        self.form.addButton.clicked.connect(self.addNewDomain)  # adding new domains widgets to ui
-
-        self.form.selectGen.currentIndexChanged.connect(self.selectFile)  # Select generated analysis file
-
-        # self.form.updateButton.clicked.connect(self.Update) # Update domains button
+        # self.form.selectMaterial_2.clear()
+        self.form.domainList_2.setCurrentItem(self.form.domainList_2.item(0))  # select generated analysis file
+        self.form.selectLC.currentIndexChanged.connect(self.selectFile)
         self.form.selectMaterial_1.currentIndexChanged.connect(
             self.selectMaterial1)  # select domain by material object comboBox 1
         self.form.selectMaterial_2.currentIndexChanged.connect(
@@ -453,240 +307,273 @@ class TopologyPanel(QtGui.QWidget):
         self.form.confComments.clicked.connect(self.openConfComments)  # opens config comments on beso github
         self.form.openLog.clicked.connect(self.openLog)  # opens log file
 
-        # self.Update()  # first update
+    def validator(self):
+        text = self.form.massGoalRatio.text()
+        if text:
+            number = float(text)
+            if number > 1:
+                self.form.massGoalRatio.setText("1")
+            elif number < 0:
+                self.form.massGoalRatio.setText("0")
 
-    def addNewDomain2(self):
-        self.form.deleteDomainButton.setVisible(False)
-        self.form.horizontal1.setVisible(True)
-        self.form.horizontal2.setVisible(True)
-        self.form.horizontal3.setVisible(True)
-        self.form.horizontal4.setVisible(True)
-        self.form.horizontal5.setVisible(True)
-        self.form.horizontal6.setVisible(True)
-        self.form.horizontal7.setVisible(True)
-        self.form.horizontal8.setVisible(True)
-        self.form.horizontal9.setVisible(True)
-        self.form.horizontal10.setVisible(True)
-        self.form.horizontal11.setVisible(True)
+    def getAnalysisObjects(self, analysis):
+        materials = []
+        thicknesses = []
+        for obj in analysis.Group:
+            if obj.TypeId == "App::MaterialObjectPython":
+                materials.append(obj)
+            elif obj.Name[:17] == "ElementGeometry2D":
+                thicknesses.append(obj)
+        return materials, thicknesses
 
-        self.form.label2.setVisible(True)
-        self.form.newAddButton.setVisible(False)
-        self.form.label3.setVisible(True)
-        self.form.deleteDomainButton2.setVisible(True)
-        self.form.selectMaterial_3.setVisible(True)
-        self.form.selectMaterial_3.setEnabled(True)
-        self.form.thicknessObject3.setVisible(True)
-        self.form.asDesign_checkbox3.setVisible(True)
-        self.form.stressLimit_3.setVisible(True)
-        self.form.label4.setVisible(True)
-        self.form.selectFilter_3.setVisible(True)
-        self.form.selectFilter_3.setEnabled(True)
-        self.form.filterRange_3.setVisible(True)
-        self.form.range_3.setVisible(True)
-        self.form.directionVector_3.setVisible(True)
-        self.form.verticalLayout3.setEnabled(True)
-        self.form.domainList_3.setVisible(True)
-        self.form.domainList_1.addItem("Domain 2")
-        self.form.domainList_2.addItem("Domain 2")
+    def addDomain(self):
+        self.doc.Topology.Number_of_Domains
+        self.doc.Topology.Number_of_Domains += 1
+        if self.doc.Topology.Number_of_Domains == 1:
+            self.domains1()
+        elif self.doc.Topology.Number_of_Domains == 2:
+            self.domains2()
+        elif self.doc.Topology.Number_of_Domains == 3:
+            self.domains3()
 
-    def deleteDomain2(self):
+    def remDomain(self):
+        self.doc.Topology.Number_of_Domains
+        self.doc.Topology.Number_of_Domains -= 1
 
-        self.form.horizontal1.setVisible(False)
-        self.form.horizontal2.setVisible(False)
-        self.form.horizontal3.setVisible(False)
-        self.form.horizontal4.setVisible(False)
-        self.form.horizontal5.setVisible(False)
-        self.form.horizontal6.setVisible(False)
-        self.form.horizontal7.setVisible(False)
-        self.form.horizontal8.setVisible(False)
-        self.form.horizontal9.setVisible(False)
-        self.form.horizontal10.setVisible(False)
-        self.form.horizontal11.setVisible(False)
+        if self.doc.Topology.Number_of_Domains == 1:
+            self.domains1()
+        elif self.doc.Topology.Number_of_Domains == 2:
+            self.domains2()
+        elif self.doc.Topology.Number_of_Domains == 3:
+            self.domains3()
 
-        self.form.label2.setEnabled(False)
-        self.form.label2.setVisible(False)
-
-        self.form.deleteDomainButton2.setVisible(False)
-
-        self.form.selectMaterial_3.setEnabled(False)
-        self.form.selectMaterial_3.setVisible(False)
-
-        self.form.thicknessObject3.setEnabled(False)
-        self.form.thicknessObject3.setVisible(False)
-
-        self.form.asDesign_checkbox3.setEnabled(False)
-        self.form.asDesign_checkbox3.setVisible(False)
-
-        self.form.stressLimit_3.setEnabled(False)
-        self.form.stressLimit_3.setVisible(False)
-
-        self.form.label4.setEnabled(False)
-        self.form.label4.setVisible(False)
-
-        self.form.selectFilter_3.setEnabled(False)
-        self.form.selectFilter_3.setVisible(False)
-
-        self.form.filterRange_3.setEnabled(False)
-        self.form.filterRange_3.setVisible(False)
-
-        self.form.range_3.setEnabled(False)
-        self.form.range_3.setVisible(False)
-
-        self.form.directionVector_3.setEnabled(False)
-        self.form.directionVector_3.setVisible(False)
-
-        self.form.verticalLayout3.setEnabled(False)
-
-        self.form.domainList_3.setEnabled(False)
-        self.form.domainList_3.setVisible(False)
-
-        self.form.newAddButton.setVisible(True)
-        self.form.deleteDomainButton.setVisible(True)
-
-        self.form.selectMaterial_3.setCurrentIndex(0)
-        self.form.selectFilter_3.setCurrentIndex(0)
-        self.form.domainList_1.takeItem(3)
-        self.form.domainList_2.takeItem(3)
-
-    def deleteDomain(self):
-
-        self.form.horizontal12.setVisible(False)
-
-        self.form.label1.setEnabled(False)
-        self.form.label1.setVisible(False)
-
-        self.form.newAddButton.setVisible(False)
-
-        self.form.deleteDomainButton.setVisible(False)
-
-        self.form.selectMaterial_2.setEnabled(False)
+    def domains1(self):
+        if not self.doc.Topology.combobox[0][3]:
+            self.form.thicknessObject_1.setVisible(False)
+            self.form.labelThickness.setVisible(False)
+        self.form.domain_2.setVisible(False)
+        self.form.domain_3.setVisible(False)
         self.form.selectMaterial_2.setVisible(False)
-
-        self.form.thicknessObject2.setEnabled(False)
-        self.form.thicknessObject2.setVisible(False)
-
-        self.form.asDesign_checkbox2.setEnabled(False)
-        self.form.asDesign_checkbox2.setVisible(False)
-
-        self.form.stressLimit_2.setEnabled(False)
+        self.form.selectMaterial_3.setVisible(False)
+        self.form.thicknessObject_2.setVisible(False)
+        self.form.thicknessObject_3.setVisible(False)
+        self.form.asDesign_checkbox_2.setVisible(False)
+        self.form.asDesign_checkbox_3.setVisible(False)
         self.form.stressLimit_2.setVisible(False)
-
-        self.form.label3.setEnabled(False)
-        self.form.label3.setVisible(False)
-
-        self.form.selectFilter_2.setEnabled(False)
+        self.form.stressLimit_3.setVisible(False)
+        self.form.filter_2.setVisible(False)
+        self.form.filter_3.setVisible(False)
         self.form.selectFilter_2.setVisible(False)
-
-        self.form.filterRange_2.setEnabled(False)
+        self.form.selectFilter_3.setVisible(False)
         self.form.filterRange_2.setVisible(False)
-
-        self.form.range_2.setEnabled(False)
+        self.form.filterRange_3.setVisible(False)
         self.form.range_2.setVisible(False)
-
-        self.form.directionVector_2.setEnabled(False)
+        self.form.range_3.setVisible(False)
         self.form.directionVector_2.setVisible(False)
-
-        self.form.verticalLayout2.setEnabled(False)
-
-        self.form.domainList_2.setEnabled(False)
+        self.form.directionVector_3.setVisible(False)
         self.form.domainList_2.setVisible(False)
+        self.form.domainList_3.setVisible(False)
+        self.form.remButton_1.setVisible(False)
+        self.form.remButton_2.setVisible(False)
+        self.form.addButton_2.setVisible(False)
+        self.form.addButton_1.setVisible(True)
+        self.form.domainList_1.clear()
+        self.form.domainList_1.addItems(["All Defined", "Domain 1"])
 
-        self.form.addButton.setVisible(True)
-
-        self.form.selectMaterial_2.setCurrentIndex(0)
-        self.form.selectFilter_2.setCurrentIndex(0)
-        self.form.domainList_1.takeItem(2)
-
-    def addNewDomain(self):
-        self.form.addButton.setVisible(False)
-        self.form.horizontal12.setVisible(True)
-        self.form.label1.setVisible(True)
-        self.form.newAddButton.setVisible(True)
-        self.form.deleteDomainButton.setVisible(True)
+    def domains2(self):
+        if not self.doc.Topology.combobox[0][3]:
+            self.form.thicknessObject_1.setVisible(False)
+            self.form.thicknessObject_2.setVisible(False)
+            self.form.labelThickness.setVisible(False)
+        else:
+            self.form.thicknessObject_1.setVisible(True)
+            self.form.thicknessObject_2.setVisible(True)
+            self.form.labelThickness.setVisible(True)
+        self.form.domain_2.setVisible(True)
+        self.form.domain_3.setVisible(False)
         self.form.selectMaterial_2.setVisible(True)
-        self.form.selectMaterial_2.setEnabled(True)
-        self.form.thicknessObject2.setVisible(True)
-        self.form.asDesign_checkbox2.setVisible(True)
+        self.form.selectMaterial_3.setVisible(False)
+        self.form.thicknessObject_3.setVisible(False)
+        self.form.asDesign_checkbox_2.setVisible(True)
+        self.form.asDesign_checkbox_3.setVisible(False)
         self.form.stressLimit_2.setVisible(True)
-        self.form.label3.setVisible(True)
+        self.form.stressLimit_3.setVisible(False)
+        self.form.filter_2.setVisible(True)
+        self.form.filter_3.setVisible(False)
         self.form.selectFilter_2.setVisible(True)
-        self.form.selectFilter_2.setEnabled(True)
+        self.form.selectFilter_3.setVisible(False)
         self.form.filterRange_2.setVisible(True)
+        self.form.filterRange_3.setVisible(False)
         self.form.range_2.setVisible(True)
+        self.form.range_3.setVisible(False)
         self.form.directionVector_2.setVisible(True)
-        self.form.horizontal12.setVisible(True)
-        self.form.verticalLayout2.setEnabled(True)
+        self.form.directionVector_3.setVisible(False)
         self.form.domainList_2.setVisible(True)
-        self.form.domainList_1.addItem("Domain 1")
+        self.form.domainList_3.setVisible(False)
+        self.form.remButton_1.setVisible(True)
+        self.form.remButton_2.setVisible(False)
+        self.form.addButton_2.setVisible(True)
+        self.form.addButton_1.setVisible(False)
+        self.form.domainList_1.clear()
+        self.form.domainList_1.addItems(["All Defined", "Domain 1", "Domain 2"])
+        self.form.domainList_2.clear()
+        self.form.domainList_2.addItems(["All Defined", "Domain 1", "Domain 2"])
+
+    def domains3(self):
+        if not self.doc.Topology.combobox[0][3]:
+            self.form.thicknessObject_1.setVisible(False)
+            self.form.thicknessObject_2.setVisible(False)
+            self.form.thicknessObject_3.setVisible(False)
+            self.form.labelThickness.setVisible(False)
+        else:
+            self.form.thicknessObject_1.setVisible(True)
+            self.form.thicknessObject_2.setVisible(True)
+            self.form.thicknessObject_3.setVisible(True)
+            self.form.labelThickness.setVisible(True)
+        self.form.domain_2.setVisible(True)
+        self.form.domain_3.setVisible(True)
+        self.form.selectMaterial_2.setVisible(True)
+        self.form.selectMaterial_3.setVisible(True)
+        self.form.asDesign_checkbox_2.setVisible(True)
+        self.form.asDesign_checkbox_3.setVisible(True)
+        self.form.stressLimit_2.setVisible(True)
+        self.form.stressLimit_3.setVisible(True)
+        self.form.filter_2.setVisible(True)
+        self.form.filter_3.setVisible(True)
+        self.form.selectFilter_2.setVisible(True)
+        self.form.selectFilter_3.setVisible(True)
+        self.form.filterRange_2.setVisible(True)
+        self.form.filterRange_3.setVisible(True)
+        self.form.range_2.setVisible(True)
+        self.form.range_3.setVisible(True)
+        self.form.directionVector_2.setVisible(True)
+        self.form.directionVector_3.setVisible(True)
+        self.form.domainList_2.setVisible(True)
+        self.form.domainList_3.setVisible(True)
+        self.form.remButton_1.setVisible(False)
+        self.form.remButton_2.setVisible(True)
+        self.form.addButton_2.setVisible(False)
+        self.form.addButton_1.setVisible(False)
+        self.form.domainList_1.clear()
+        self.form.domainList_1.addItems(["All Defined", "Domain 1", "Domain 2", "Domain 3"])
+        self.form.domainList_2.clear()
+        self.form.domainList_2.addItems(["All Defined", "Domain 1", "Domain 2", "Domain 3"])
+        self.form.domainList_3.clear()
+        self.form.domainList_3.addItems(["All Defined", "Domain 1", "Domain 2", "Domain 3"])
 
     def selectFile(self):
-        try:
-            self.path = self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
-            file_names = os.listdir(self.path)
-            inp_file = [file for file in file_names if file.endswith("inp")][0]
-        except:
-            self.path = self.workingDir + f"/TopologyCase_{self.form.selectGen.currentIndex()+1}"
-            file_names = os.listdir(self.path)
-            inp_file = [file for file in file_names if file.endswith("inp")][0]
 
-        self.form.fileName.setText(self.path+inp_file)
-        self.inp_file = self.path+inp_file
+        case_number = self.form.selectLC.currentIndex()
+        path = self.doc.Topology.combobox[case_number][1]
+        self.form.fileName.setText(path)
 
-    def getGenerations(self, numGens):
+        #clear old definitions
+        for k in range(1, 4):
+                getattr(self.form, f"selectMaterial_{k}").clear()
+                getattr(self.form, f"thicknessObject_{k}").clear()
+
+        for i in self.doc.Topology.combobox[case_number][2]:
+            for j in range(1, 4):
+                getattr(self.form, f"selectMaterial_{j}").addItem(i.Name)
+
+        for i in self.doc.Topology.combobox[case_number][3]:
+            for j in range(1, 4):
+                getattr(self.form, f"thicknessObject_{j}").addItem(i.Name)
+
+    def getAnalysis(self):
         comboBoxItems = []
-        if numGens > 0:
-            self.form.selectGen.setEnabled(True)
 
-            self.path = self.workingDir + f"/Gen{self.form.selectGen.currentIndex()+1}/loadCase1/"
-            file_names = os.listdir(self.path)
-            inp_file = [file for file in file_names if file.endswith("inp")][0]
+        self.form.selectLC.clear()
 
-            for i in range(1, numGens+1):
-                comboBoxItems.append("Generation " + str(i))
-            self.form.selectGen.clear()
-            self.form.selectGen.addItems(comboBoxItems)
-            self.form.fileName.setText(self.path+inp_file)
-        else:
-            import FemGui
-            import glob
-            self.form.selectGen.setEnabled(True)
-            lc=0
-            for obj in self.doc.Objects:
-               # try:
-                    if obj.TypeId == "Fem::FemAnalysis":  # to choose analysis objects
-                        lc += 1
-                        FemGui.setActiveAnalysis(obj)
-                        analysisfolder = os.path.join(
-                            self.workingDir + f"/TopologyCase_{lc}")
+        if self.doc.Topology.combobox:
+            for i in self.doc.Topology.combobox:
+                self.form.selectLC.addItem(i[0])
+                self.selectFile()
+            return
+        lc = 0
+        print(self.doc.Name)
+        for obj in self.doc.Objects:
+            try:
+                if obj.TypeId == "Fem::FemAnalysis":  # to choose analysis objects
+                    lc += 1
+                    FemGui.setActiveAnalysis(obj)
+                    analysisfolder = os.path.join(
+                        self.workingDir + f"/TopologyCase_{lc}")
+                    try:
+                        os.mkdir(analysisfolder)
                         try:
-                            os.mkdir(analysisfolder)
+                            fea = ccxtools.FemToolsCcx(analysis=obj)
                         except:
-                            pass
-                        fea = ccxtools.FemToolsCcx(analysis=obj)
+
+                            import ObjectsFem
+                            obj.addObject(ObjectsFem.makeSolverCalculixCcxTools(self.doc))
+                            fea = ccxtools.FemToolsCcx(analysis=obj)
+
                         fea.setup_working_dir(analysisfolder)
                         fea.update_objects()
                         fea.setup_ccx()
-                        message = fea.check_prerequisites()
-                        if not message:
-                            fea.purge_results()
-                            fea.write_inp_file()
-                            comboBoxItems.append("Analysis " + str(lc))
-            self.form.selectGen.clear()
-            self.form.selectGen.addItems(comboBoxItems)
-            name = glob.glob(analysisfolder+"/*.inp")
-            self.form.fileName.setText(name[0])
 
-          
-               #except:
-                    # It counts for deleted objects and gives error.
-               #     pass
+                        fea.purge_results()
+                        fea.write_inp_file()
+                        material, thickness = self.getAnalysisObjects(obj)
+                        inppath = glob.glob(analysisfolder+"/*.inp")[0]
+                        comboBoxItems.append([obj.Name, inppath, material, thickness])
+                        self.form.selectLC.addItem(obj.Name)
+                    except:
+                        try:
+                            for i in self.doc.Topology.combobox:
+                                self.form.selectLC.addItem(i[0])
+                            self.selectFile()
+                            return
+                        except:
+                            FreeCAD.Console.PrintMessage("Target path has previous files. Old files are deleted.")
+                            folders = glob.glob(self.workingDir + "/TopologyCase*")
 
-    
+                            for i in folders:
+                                shutil.rmtree(i)
+
+                            self.getAnalysis()
+
+                            return
+            except:
+                # it counts deleted objects and gives error.
+                pass
+
+        self.doc.Topology.combobox = comboBoxItems
+        self.selectFile()
+
+    def setFilter(self):
+        self.doc.Topology.filter_list=[]
+        for i in range(1, self.doc.Topology.Number_of_Domains+1):
+            filter = getattr(self.form, f"selectFilter_{i}").currentText()
+            if getattr(self.form, f"filterRange_{i}").currentText() == "auto":
+                Range = "auto"
+            elif getattr(self.form, f"filterRange_{i}").currentText() == "manual":
+                Range = float(getattr(self.form, f"range_{i}").text())
+            direction = getattr(self.form, f"directionVector_{i}").text()
+            selection = [item.text() for item in getattr(self.form, f"domainList_{i}").selectedItems()]
+
+            filter_domains = []
+            if "All defined" not in selection:
+                if "Domain 0" in selection:
+                    filter_domains.append(elset)
+                if "Domain 1" in selection:
+                    filter_domains.append(elset1)
+                if "Domain 2" in selection:
+                    filter_domains.append(elset2)
+            if filter == "simple":
+                self.doc.Topology.filter_list.append(['simple', Range])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[-1].append(dn)
+            elif filter == "casting":
+                self.doc.Topology.filter_list.append(['casting', Range, f"({direction})"])
+                for dn in filter_domains:
+                    self.doc.Topology.filter_list[-1].append(dn)
 
     def setConfig(self):
         self.doc.Topology.file_name = os.path.split(self.form.fileName.text())[1]
         self.doc.Topology.path = os.path.split(self.form.fileName.text())[0]
-    
+
         global elset2
         global elset
         global elset1
@@ -698,230 +585,249 @@ class TopologyPanel(QtGui.QWidget):
         self.doc.Topology.path_calculix = fea.ccx_binary
 
         self.doc.Topology.optimization_base = self.form.optBase.currentText()  # stiffness,heat
+        for case in range(len(self.doc.Topology.combobox)):
+            for i in range(self.doc.Topology.Number_of_Domains):
+                analysis = self.doc.Topology.combobox[case][0]
 
-        elset_id = self.form.selectMaterial_1.currentIndex() - 1
-        thickness_id = self.form.thicknessObject1.currentIndex() - 1
-        if elset_id != -1:
-            if thickness_id != -1:
-                elset_name = self.materials[elset_id].Name + self.thicknesses[thickness_id].Name
-            else:  # 0 means None thickness selected
-                elset_name = self.materials[elset_id].Name + "Solid"
-            modulus = float(self.materials[elset_id].Material["YoungsModulus"].split()[0])  # MPa
-            if self.materials[elset_id].Material["YoungsModulus"].split()[1] != "MPa":
-                raise Exception(" units not recognised in " + self.materials[elset_id].Name)
-            poisson = float(self.materials[elset_id].Material["PoissonRatio"].split()[0])
-            try:
-                density = float(self.materials[elset_id].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                self.doc.Topology.domain_density[elset_name] = [density*1e-6,density]
-                if self.materials[elset_id].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
-                    raise Exception(" units not recognised in " + self.materials[elset_id].Name)
-            except KeyError:
-                self.doc.Topology.domain_density[elset_name] = [0,0]
-            try:
-                conductivity = float(self.materials[elset_id].Material["ThermalConductivity"].split()[0])  # W/m/K
-                if self.materials[elset_id].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                    raise Exception(" units not recognised in " + self.materials[elset_id].Name)
-            except KeyError:
-                conductivity = 0.
-            try:
-                if self.materials[elset_id].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                    expansion = float(self.materials[elset_id].Material["ThermalExpansionCoefficient"].split()[
-                        0]) * 1e-6  # um/m/K -> mm/mm/K
-                elif self.materials[elset_id].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                    expansion = float(self.materials[elset_id].Material["ThermalExpansionCoefficient"].split()[
-                        0])  # m/m/K -> mm/mm/K
-                else:
-                    raise Exception(" units not recognised in " + self.materials[elset_id].Name)
-            except KeyError:
-                expansion = 0.
-            try:
-                specific_heat = float(self.materials[elset_id].Material["SpecificHeat"].split()[
-                                      0]) * 1e6  # J/kg/K -> mm^2/s^2/K
-                if self.materials[elset_id].Material["SpecificHeat"].split()[1] != "J/kg/K":
-                    raise Exception(" units not recognised in " + self.materials[elset_id].Name)
-            except KeyError:
-                specific_heat = 0.
-            if thickness_id != -1:
-                thickness = float(str(self.thicknesses[thickness_id].Thickness).split()[0])  # mm
-                if str(self.thicknesses[thickness_id].Thickness).split()[1] != "mm":
-                    raise Exception(" units not recognised in " + self.thicknesses[thickness_id].Name)
-            else:
-                thickness = 0
-            optimized = self.form.asDesign_checkbox.isChecked()
-            if self.form.stressLimit_1.text():
-                von_mises = float(self.form.stressLimit_1.text())
-            else:
-                von_mises = 0.
-        if self.form.layout2.count() == 5:
-            elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
-            thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+                elset_id = getattr(self.form, f"selectMaterial_{i+1}").currentIndex()
+                thickness_id = getattr(self.form, f"thicknessObject_{i+1}").currentIndex()
 
-            if elset_id1 != -1:
-                if thickness_id1 != -1:
-                    elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
+                #except first domain there is a None option in combobox.So, index is one more
+                # if i>0:
+                #     elset_id -=1
+                #     thickness_id -=1
+                if thickness_id > -1:
+                    elset_name = self.doc.Topology.combobox[case][2][elset_id].Name + \
+                        self.doc.Topology.combobox[case][3][thickness_id].Name
                 else:  # 0 means None thickness selected
-                    elset1 = self.materials[elset_id1].Name + "Solid"
-                modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
-                if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
-                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
+                    elset_name = self.doc.Topology.combobox[case][2][elset_id].Name + "Solid"
+                modulus = float(self.doc.Topology.combobox[case][2]
+                                [elset_id].Material["YoungsModulus"].split()[0])  # MPa
+                if self.doc.Topology.combobox[case][2][elset_id].Material["YoungsModulus"].split()[1] != "MPa":
+                    raise Exception(" units not recognised in " + self.doc.Topology.combobox[elset_id][2])
+                poisson = float(self.doc.Topology.combobox[case][2][elset_id].Material["PoissonRatio"].split()[0])
                 try:
-                    density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                    if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                    density = float(self.doc.Topology.combobox[case][2][elset_id].Material["Density"].split()[
+                        0]) * 1e-12  # kg/m3 -> t/mm3
+                    self.doc.Topology.domain_density[analysis] = {elset_name: [density*1e-6, density]}
+                    if self.doc.Topology.combobox[case][2][elset_id].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+                        raise Exception(" units not recognised in " + self.doc.Topology.combobox[elset_id][2])
                 except KeyError:
-                    density1 = 0.
+                    self.doc.Topology.domain_density[analysis] = {elset_name: [0, 0]}
                 try:
-                    conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
-                    if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                    conductivity = float(
+                        self.doc.Topology.combobox[case][2][elset_id].Material["ThermalConductivity"].split()[0])  # W/m/K
+                    if self.doc.Topology.combobox[case][2][elset_id].Material["ThermalConductivity"].split()[1] != "W/m/K":
+                        raise Exception(" units not recognised in " +
+                                        self.doc.Topology.combobox[case][2][elset_id].Name)
                 except KeyError:
-                    conductivity1 = 0.
+                    conductivity = 0.
                 try:
-                    if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+                    if self.doc.Topology.combobox[case][2][elset_id].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+                        expansion = float(self.doc.Topology.combobox[case][2][elset_id].Material["ThermalExpansionCoefficient"].split()[
                             0]) * 1e-6  # um/m/K -> mm/mm/K
-                    elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+                    elif self.doc.Topology.combobox[case][2][elset_id].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+                        expansion = float(self.doc.Topology.combobox[case][2][elset_id].Material["ThermalExpansionCoefficient"].split()[
                             0])  # m/m/K -> mm/mm/K
                     else:
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                        raise Exception(" units not recognised in " +
+                                        self.doc.Topology.combobox[case][2][elset_id].Name)
                 except KeyError:
-                    expansion1 = 0.
+                    expansion = 0.
                 try:
-                    specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
+                    specific_heat = float(self.doc.Topology.combobox[case][2][elset_id].Material["SpecificHeat"].split()[
                         0]) * 1e6  # J/kg/K -> mm^2/s^2/K
-                    if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+                    if self.doc.Topology.combobox[case][2][elset_id].Material["SpecificHeat"].split()[1] != "J/kg/K":
+                        raise Exception(" units not recognised in " +
+                                        self.doc.Topology.combobox[case][2][elset_id].Name)
                 except KeyError:
-                    specific_heat1 = 0.
-                if thickness_id1 != -1:
-                    thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
-                    if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
-                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
+                    specific_heat = 0.
+                if thickness_id > -1:
+                    thickness = float(str(self.doc.Topology.combobox[case][3][thickness_id].Thickness).split()[0])  # mm
+                    if str(self.doc.Topology.combobox[case][3][thickness_id].Thickness).split()[1] != "mm":
+                        raise Exception(" units not recognised in " +
+                                        self.doc.Topology.combobox[case][3][thickness_id].Name)
                 else:
-                    thickness1 = 0.
-                optimized1 = self.form.asDesign_checkbox2.isChecked()
-                if self.form.stressLimit_2.text():
-                    von_mises1 = float(self.form.stressLimit_2.text())
+                    thickness = 0
+                optimized = self.form.asDesign_checkbox_1.isChecked()
+                if self.form.stressLimit_1.text():
+                    von_mises = float(self.form.stressLimit_1.text())
                 else:
-                    von_mises1 = 0.
-        if self.form.layout2.count() == 7:
-            elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
-            thickness_id1 = self.form.thicknessObject2.currentIndex() - 1
+                    von_mises = 0.
 
-            if elset_id1 != -1:
-                if thickness_id1 != -1:
-                    elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
-                else:  # 0 means None thickness selected
-                    elset1 = self.materials[elset_id1].Name + "Solid"
-                modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
-                if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
-                    raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
-                try:
-                    density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                    if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                except KeyError:
-                    density1 = 0.
-                try:
-                    conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
-                    if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                except KeyError:
-                    conductivity1 = 0.
-                try:
-                    if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
-                            0]) * 1e-6  # um/m/K -> mm/mm/K
-                    elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                        expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
-                            0])  # m/m/K -> mm/mm/K
-                    else:
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                except KeyError:
-                    expansion1 = 0.
-                try:
-                    specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
-                        0]) * 1e6  # J/kg/K -> mm^2/s^2/K
-                    if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
-                except KeyError:
-                    specific_heat1 = 0.
-                if thickness_id1 != -1:
-                    thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
-                    if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
-                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
-                else:
-                    thickness1 = 0.
-                optimized1 = self.form.asDesign_checkbox2.isChecked()
-                if self.form.stressLimit_2.text():
-                    von_mises1 = float(self.form.stressLimit_2.text())
-                else:
-                    von_mises1 = 0.
+        #         if self.doc.Topology.Number_of_Domains == 2:
+        #             elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
+        #             thickness_id1 = self.form.thicknessObject_2.currentIndex() - 1
 
-            elset_id2 = self.form.selectMaterial_3.currentIndex() - 1
-            thickness_id2 = self.form.thicknessObject3.currentIndex() - 1
-            if elset_id2 != -1:
-                if thickness_id2 != -1:
-                    elset2 = self.materials[elset_id2].Name + self.thicknesses[thickness_id2].Name
-                else:  # 0 means None thickness selected
-                    elset2 = self.materials[elset_id2].Name + "Solid"
-                modulus2 = float(self.materials[elset_id2].Material["YoungsModulus"].split()[0])  # MPa
-                if self.materials[elset_id2].Material["YoungsModulus"].split()[1] != "MPa":
-                    raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-                poisson2 = float(self.materials[elset_id2].Material["PoissonRatio"].split()[0])
-                try:
-                    density2 = float(self.materials[elset_id2].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
-                    if self.materials[elset_id2].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
-                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-                except KeyError:
-                    density2 = 0.
-                try:
-                    conductivity2 = float(self.materials[elset_id2].Material["ThermalConductivity"].split()[0])  # W/m/K
-                    if self.materials[elset_id2].Material["ThermalConductivity"].split()[1] != "W/m/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-                except KeyError:
-                    conductivity2 = 0.
-                try:
-                    if self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
-                        expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
-                            0]) * 1e-6  # um/m/K -> mm/mm/K
-                    elif self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
-                        expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
-                            0])  # m/m/K -> mm/mm/K
-                    else:
-                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-                except KeyError:
-                    expansion2 = 0.
-                try:
-                    specific_heat2 = float(self.materials[elset_id2].Material["SpecificHeat"].split()[
-                        0]) * 1e6  # J/kg/K -> mm^2/s^2/K
-                    if self.materials[elset_id2].Material["SpecificHeat"].split()[1] != "J/kg/K":
-                        raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
-                except KeyError:
-                    specific_heat2 = 0.
-                if thickness_id2 != -1:
-                    thickness2 = str(self.thicknesses[thickness_id2].Thickness).split()[0]  # mm
-                    if str(self.thicknesses[thickness_id2].Thickness).split()[1] != "mm":
-                        raise Exception(" units not recognised in " + self.thicknesses[thickness_id2].Name)
-                else:
-                    thickness2 = 0.
-                optimized2 = self.form.asDesign_checkbox3.isChecked()
-                if self.form.stressLimit_3.text():
-                    von_mises2 = float(self.form.stressLimit_3.text())
-                else:
-                    von_mises2 = 0.
-        self.doc.Topology.domain_material[elset_name] = [modulus, poisson, density, conductivity, expansion, specific_heat]
+        #             if elset_id1 != -1:
+        #                 if thickness_id1 > -1:
+        #                     elset1 = self.doc.Topology.combobox[case][elset_id1].Name + self.thicknesses[thickness_id1].Name
+        #                 else:  # 0 means None thickness selected
+        #                     elset1 = self.materials[elset_id1].Name + "Solid"
+        #                 modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
+        #                 if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
+        #                     raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #                 poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
+        #                 try:
+        #                     density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+        #                     if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+        #                         raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #                 except KeyError:
+        #                     density1 = 0.
+        #                 try:
+        #                     conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
+        #                     if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
+        #                         raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #                 except KeyError:
+        #                     conductivity1 = 0.
+        #                 try:
+        #                     if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+        #                         expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+        #                             0]) * 1e-6  # um/m/K -> mm/mm/K
+        #                     elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+        #                         expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+        #                             0])  # m/m/K -> mm/mm/K
+        #                     else:
+        #                         raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #                 except KeyError:
+        #                     expansion1 = 0.
+        #                 try:
+        #                     specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
+        #                         0]) * 1e6  # J/kg/K -> mm^2/s^2/K
+        #                     if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
+        #                         raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #                 except KeyError:
+        #                     specific_heat1 = 0.
+        #                 if thickness_id1 > -1:
+        #                     thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
+        #                     if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
+        #                         raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
+        #                 else:
+        #                     thickness1 = 0.
+        #                 optimized1 = self.form.asDesign_checkbox_2.isChecked()
+        #                 if self.form.stressLimit_2.text():
+        #                     von_mises1 = float(self.form.stressLimit_2.text())
+        #                 else:
+        #                     von_mises1 = 0.
+        # if self.doc.Topology.Number_of_Domains == 3:
+        #     elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
+        #     thickness_id1 = self.form.thicknessObject_2.currentIndex() - 1
+
+        #     if elset_id1 != -1:
+        #         if thickness_id1 > -1:
+        #             elset1 = self.materials[elset_id1].Name + self.thicknesses[thickness_id1].Name
+        #         else:  # 0 means None thickness selected
+        #             elset1 = self.materials[elset_id1].Name + "Solid"
+        #         modulus1 = float(self.materials[elset_id1].Material["YoungsModulus"].split()[0])  # MPa
+        #         if self.materials[elset_id1].Material["YoungsModulus"].split()[1] != "MPa":
+        #             raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #         poisson1 = float(self.materials[elset_id1].Material["PoissonRatio"].split()[0])
+        #         try:
+        #             density1 = float(self.materials[elset_id1].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+        #             if self.materials[elset_id1].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+        #                 raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #         except KeyError:
+        #             density1 = 0.
+        #         try:
+        #             conductivity1 = float(self.materials[elset_id1].Material["ThermalConductivity"].split()[0])  # W/m/K
+        #             if self.materials[elset_id1].Material["ThermalConductivity"].split()[1] != "W/m/K":
+        #                 raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #         except KeyError:
+        #             conductivity1 = 0.
+        #         try:
+        #             if self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+        #                 expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+        #                     0]) * 1e-6  # um/m/K -> mm/mm/K
+        #             elif self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+        #                 expansion1 = float(self.materials[elset_id1].Material["ThermalExpansionCoefficient"].split()[
+        #                     0])  # m/m/K -> mm/mm/K
+        #             else:
+        #                 raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #         except KeyError:
+        #             expansion1 = 0.
+        #         try:
+        #             specific_heat1 = float(self.materials[elset_id1].Material["SpecificHeat"].split()[
+        #                 0]) * 1e6  # J/kg/K -> mm^2/s^2/K
+        #             if self.materials[elset_id1].Material["SpecificHeat"].split()[1] != "J/kg/K":
+        #                 raise Exception(" units not recognised in " + self.materials[elset_id1].Name)
+        #         except KeyError:
+        #             specific_heat1 = 0.
+        #         if thickness_id1 > -1:
+        #             thickness1 = str(self.thicknesses[thickness_id1].Thickness).split()[0]  # mm
+        #             if str(self.thicknesses[thickness_id1].Thickness).split()[1] != "mm":
+        #                 raise Exception(" units not recognised in " + self.thicknesses[thickness_id1].Name)
+        #         else:
+        #             thickness1 = 0.
+        #         optimized1 = self.form.asDesign_checkbox_2.isChecked()
+        #         if self.form.stressLimit_2.text():
+        #             von_mises1 = float(self.form.stressLimit_2.text())
+        #         else:
+        #             von_mises1 = 0.
+
+            # elset_id2 = self.form.selectMaterial_3.currentIndex() - 1
+            # thickness_id2 = self.form.thicknessObject_3.currentIndex() - 1
+            # if elset_id2 != -1:
+            #     if thickness_id2 > -1:
+            #         elset2 = self.materials[elset_id2].Name + self.thicknesses[thickness_id2].Name
+            #     else:  # 0 means None thickness selected
+            #         elset2 = self.materials[elset_id2].Name + "Solid"
+            #     modulus2 = float(self.materials[elset_id2].Material["YoungsModulus"].split()[0])  # MPa
+            #     if self.materials[elset_id2].Material["YoungsModulus"].split()[1] != "MPa":
+            #         raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+            #     poisson2 = float(self.materials[elset_id2].Material["PoissonRatio"].split()[0])
+            #     try:
+            #         density2 = float(self.materials[elset_id2].Material["Density"].split()[0]) * 1e-12  # kg/m3 -> t/mm3
+            #         if self.materials[elset_id2].Material["Density"].split()[1] not in ["kg/m^3", "kg/m3"]:
+            #             raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+            #     except KeyError:
+            #         density2 = 0.
+            #     try:
+            #         conductivity2 = float(self.materials[elset_id2].Material["ThermalConductivity"].split()[0])  # W/m/K
+            #         if self.materials[elset_id2].Material["ThermalConductivity"].split()[1] != "W/m/K":
+            #             raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+            #     except KeyError:
+            #         conductivity2 = 0.
+            #     try:
+            #         if self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "um/m/K":
+            #             expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+            #                 0]) * 1e-6  # um/m/K -> mm/mm/K
+            #         elif self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[1] == "m/m/K":
+            #             expansion2 = float(self.materials[elset_id2].Material["ThermalExpansionCoefficient"].split()[
+            #                 0])  # m/m/K -> mm/mm/K
+            #         else:
+            #             raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+            #     except KeyError:
+            #         expansion2 = 0.
+            #     try:
+            #         specific_heat2 = float(self.materials[elset_id2].Material["SpecificHeat"].split()[
+            #             0]) * 1e6  # J/kg/K -> mm^2/s^2/K
+            #         if self.materials[elset_id2].Material["SpecificHeat"].split()[1] != "J/kg/K":
+            #             raise Exception(" units not recognised in " + self.materials[elset_id2].Name)
+            #     except KeyError:
+            #         specific_heat2 = 0.
+            #     if thickness_id2 > -1:
+            #         thickness2 = str(self.thicknesses[thickness_id2].Thickness).split()[0]  # mm
+            #         if str(self.thicknesses[thickness_id2].Thickness).split()[1] != "mm":
+            #             raise Exception(" units not recognised in " + self.thicknesses[thickness_id2].Name)
+            #     else:
+            #         thickness2 = 0.
+            #     optimized2 = self.form.asDesign_checkbox_3.isChecked()
+            #     if self.form.stressLimit_3.text():
+            #         von_mises2 = float(self.form.stressLimit_3.text())
+            #     else:
+            #         von_mises2 = 0.
+
+            self.doc.Topology.domain_material[analysis] = {elset_name: [
+                modulus, poisson, density, conductivity, expansion, specific_heat]}
+
+            self.doc.Topology.domain_optimized[analysis] = {elset_name: optimized}
+            if thickness:
+                self.doc.Topology.domain_thickness[analysis] = {elset_name: [thickness, thickness]}
+            if von_mises:
+                self.doc.Topology.domain_FI[analysis] = {elset_name: [[('stress_von_Mises', von_mises * 1e6)],
+                                                                      [('stress_von_Mises', von_mises)]]}
         self.doc.Topology.mass_goal_ratio = float(self.form.massGoalRatio.text())
-        self.doc.Topology.domain_optimized[elset_name]=optimized
-        if thickness:
-            self.doc.Topology.domain_thickness[elset_name]=[thickness, thickness]
-        if von_mises:
-            self.doc.Topology.domain_FI[elset_name]=[['stress_von_Mises', von_mises * 1e6],
-                                    ['stress_von_Mises', von_mises]]
-        App.Console.PrintMessage("Config file created\n")
+        FreeCAD.Console.PrintMessage("Config file created\n")
 
     def massratio(self, slider_position):
         if slider_position == 0:
@@ -934,29 +840,31 @@ class TopologyPanel(QtGui.QWidget):
             self.doc.Topology.mass_addition_ratio = 0.03
             self.doc.Topology.mass_removal_ratio = 0.06
 
- 
-
     def runOptimization(self):
         # Run optimization
         self.setConfig()
-        beso_main.main()
-        Gui.runCommand('Std_ActivatePrevWindow')
+        self.setFilter()
+        analysis = self.form.selectLC.currentText()
+        beso_main.main(analysis)
+        FreeCADGui.runCommand('Std_ActivatePrevWindow')
+        FreeCAD.setActiveDocument(self.doc.Name)
         self.get_case("last")
 
     def get_case(self, numberofcase):
         lastcase = self.doc.Topology.LastState
-        print(numberofcase)
         if not numberofcase:
-            App.Console.PrintError("The simulations are not completed\n")
+            FreeCAD.Console.PrintError("The simulations are not completed\n")
             return
         elif numberofcase == "last":
             numberofcase = lastcase
-        mw = Gui.getMainWindow()
+        mw = FreeCADGui.getMainWindow()
         evaluation_bar = QtGui.QToolBar()
         try:
-            mw.removeToolBar(mw.findChild(QtGui.QToolBar,"Evaluation"))
+            mw.removeToolBar(mw.findChild(QtGui.QToolBar, "Evaluation"))
         except:
             pass
+        from functools import partial
+        get_result = partial(Common.get_results_fc, self.doc)
         slider = QtGui.QSlider(QtCore.Qt.Horizontal)
         slider.setGeometry(10, mw.height()-50, mw.width()-50, 50)
         slider.setMinimum(1)
@@ -966,7 +874,7 @@ class TopologyPanel(QtGui.QWidget):
         slider.setTickInterval(1)
         slider.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         slider.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        slider.sliderMoved.connect(Common.get_results_fc)
+        slider.sliderMoved.connect(get_result)
         closebutton = QtGui.QPushButton("")
         pix = QtGui.QStyle.SP_TitleBarCloseButton
         icon = closebutton.style().standardIcon(pix)
@@ -976,7 +884,7 @@ class TopologyPanel(QtGui.QWidget):
         evaluation_bar.addWidget(closebutton)
         evaluation_bar.setObjectName("Evaluation")
         mw.addToolBar(QtCore.Qt.ToolBarArea.BottomToolBarArea, evaluation_bar)
-        Common.get_results_fc(numberofcase)
+        get_result(numberofcase)
 
     def openExample(self):
         webbrowser.open_new_tab("https://github.com/fandaL/beso/wiki/Example-4:-GUI-in-FreeCAD")
@@ -987,39 +895,39 @@ class TopologyPanel(QtGui.QWidget):
     def openLog(self):
         """Open log file"""
         if self.form.fileName.text() in ["None analysis file selected", ""]:
-            App.Console.PrintMessage("None analysis file selected")
+            FreeCAD.Console.PrintMessage("None analysis file selected")
         else:
-            log_file = os.path.normpath(self.form.fileName.text()[:-4] + ".log")
-            webbrowser.open(log_file)
+            log_file = os.path.normpath(self.form.fileName.text()[:-4] + ".log.fcmacro")
+            FreeCADGui.insert(log_file, "Log File")
 
     def selectMaterial1(self):
         if self.form.selectMaterial_1.currentText() == "None":
-            self.form.thicknessObject1.setEnabled(False)
-            self.form.asDesign_checkbox.setEnabled(False)
+            self.form.thicknessObject_1.setEnabled(False)
+            self.form.asDesign_checkbox_1.setEnabled(False)
             self.form.stressLimit_1.setEnabled(False)
         else:
-            self.form.thicknessObject1.setEnabled(True)
-            self.form.asDesign_checkbox.setEnabled(True)
+            self.form.thicknessObject_1.setEnabled(True)
+            self.form.asDesign_checkbox_1.setEnabled(True)
             self.form.stressLimit_1.setEnabled(True)
 
     def selectMaterial2(self):
         if self.form.selectMaterial_2.currentText() == "None":
-            self.form.thicknessObject2.setEnabled(False)
-            self.form.asDesign_checkbox2.setEnabled(False)
+            self.form.thicknessObject_2.setEnabled(False)
+            self.form.asDesign_checkbox_2.setEnabled(False)
             self.form.stressLimit_2.setEnabled(False)
         else:
-            self.form.thicknessObject2.setEnabled(True)
-            self.form.asDesign_checkbox2.setEnabled(True)
+            self.form.thicknessObject_2.setEnabled(True)
+            self.form.asDesign_checkbox_2.setEnabled(True)
             self.form.stressLimit_2.setEnabled(True)
 
     def selectMaterial3(self):
         if self.form.selectMaterial_3.currentText() == "None":
-            self.form.thicknessObject3.setEnabled(False)
-            self.form.asDesign_checkbox3.setEnabled(False)
+            self.form.thicknessObject_3.setEnabled(False)
+            self.form.asDesign_checkbox_3.setEnabled(False)
             self.form.stressLimit_3.setEnabled(False)
         else:
-            self.form.thicknessObject3.setEnabled(True)
-            self.form.asDesign_checkbox3.setEnabled(True)
+            self.form.thicknessObject_3.setEnabled(True)
+            self.form.asDesign_checkbox_3.setEnabled(True)
             self.form.stressLimit_3.setEnabled(True)
 
     def filterRange1(self):
@@ -1098,12 +1006,12 @@ class TopologyPanel(QtGui.QWidget):
             self.form.domainList_3.setEnabled(True)
 
     def accept(self):
-        doc = Gui.getDocument(self.obj.Document)
+        doc = FreeCADGui.getDocument(self.doc)
         doc.resetEdit()
         doc.Document.recompute()
 
     def reject(self):
-        doc = Gui.getDocument(self.obj.Document)
+        doc = FreeCADGui.getDocument(self.doc)
         doc.resetEdit()
 
 
@@ -1112,7 +1020,7 @@ class ViewProviderGen:
         vobj.Proxy = self
 
     def getIcon(self):
-        icon_path = os.path.join(App.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg')
+        icon_path = os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg')
         return icon_path
 
     def attach(self, vobj):
@@ -1126,21 +1034,21 @@ class ViewProviderGen:
         return
 
     def doubleClicked(self, vobj):
-        doc = Gui.getDocument(vobj.Object.Document)
+        doc = FreeCADGui.getDocument(vobj.Object.Document)
         if not doc.getInEdit():
             doc.setEdit(vobj.Object.Name)
         else:
-            App.Console.PrintError('Existing task dialog already open\n')
+            FreeCAD.Console.PrintError('Existing task dialog already open\n')
         return True
 
     def setEdit(self, vobj, mode):
-        taskd = TopologyPanel(vobj)
+        taskd = TopologyPanel(vobj.Object)
         taskd.obj = vobj.Object
-        Gui.Control.showDialog(taskd)
+        FreeCADGui.Control.showDialog(taskd)
         return True
 
     def unsetEdit(self, vobj, mode):
-        Gui.Control.closeDialog()
+        FreeCADGui.Control.closeDialog()
         return
 
     def __getstate__(self):
@@ -1150,4 +1058,48 @@ class ViewProviderGen:
         return None
 
 
-Gui.addCommand('Topology', TopologyCommand())
+class ViewProviderLink:
+    def __init__(self, vobj):
+        vobj.Proxy = self
+
+    def getIcon(self):
+        icon_path = os.path.join(FreeCAD.getUserAppDataDir() + 'Mod/FEMbyGEN/fembygen/icons/Topology.svg')
+        return icon_path
+
+    def attach(self, vobj):
+        self.ViewObject = vobj
+        self.Object = vobj.Object
+
+    def updateData(self, obj, prop):
+        return
+
+    def onChanged(self, vobj, prop):
+        return
+
+    def doubleClicked(self, vobj):
+        doc = FreeCAD.openDocument(vobj.Object.Path)
+        guiDoc = FreeCADGui.getDocument(doc)
+        if not guiDoc.getInEdit():
+            guiDoc.setEdit(doc.Topology)
+        else:
+            FreeCAD.Console.PrintError('Existing task dialog already open\n')
+        return True
+
+    def setEdit(self, vobj, mode):
+        taskd = TopologyMasterPanel(vobj.Object)
+        taskd.obj = vobj.Object
+        FreeCADGui.Control.showDialog(taskd)
+        return True
+
+    def unsetEdit(self, vobj, mode):
+        FreeCADGui.Control.closeDialog()
+        return
+
+    def __getstate__(self):
+        return None
+
+    def __setstate__(self, state):
+        return None
+
+
+FreeCADGui.addCommand('Topology', TopologyCommand())

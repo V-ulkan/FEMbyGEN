@@ -19,7 +19,7 @@ def makeFEA():
     except:
         try:
             obj = FreeCAD.ActiveDocument.addObject("Part::FeaturePython", "FEA")
-            FreeCAD.ActiveDocument.Generative_Design.addObject(obj)
+            FreeCAD.ActiveDocument.GenerativeDesign.addObject(obj)
         except:
             return None
     FEA(obj)
@@ -41,7 +41,7 @@ class FEA:
         try:
             obj.addProperty("App::PropertyPythonObject", "Status", "Base",
                             "Analysis Status")
-            obj.addProperty("App::PropertyInteger", "NumberofAnalysis", "Base",
+            obj.addProperty("App::PropertyInteger", "NumberOfAnalysis", "Base",
                             "Number of Analysis")
             obj.addProperty("App::PropertyInteger", "NumberOfLoadCase", "Base",
                             "Number of Load Cases")
@@ -120,7 +120,7 @@ class FEAPanel:
         except:
             pass
         self.doc.FEA.Status = []
-        self.doc.FEA.NumberofAnalysis = 0
+        self.doc.FEA.NumberOfAnalysis = 0
         self.doc.FEA.NumberOfLoadCase = 0
         self.updateAnalysisTable()
 
@@ -141,7 +141,7 @@ class FEAPanel:
                         lc += 1
                         FemGui.setActiveAnalysis(obj)
                         analysisfolder = os.path.join(
-                            self.workingDir + f"/Gen{i+1}/loadCase{lc}")
+                            self.workingDir + f"/Gen{i+1}/loadCase_{lc}")
                         os.mkdir(analysisfolder)
                     # Run FEA solver on generation
                         self.performFEA(Gen_Doc, obj, analysisfolder)
@@ -158,7 +158,7 @@ class FEAPanel:
 
         (statuses, numAnalysed, numLoadCase) = Common.searchAnalysed(self.doc)
         self.doc.FEA.Status = statuses
-        self.doc.FEA.NumberofAnalysis = numAnalysed
+        self.doc.FEA.NumberOfAnalysis = numAnalysed
         self.doc.FEA.NumberOfLoadCase = numLoadCase
         FreeCAD.setActiveDocument(self.doc.Name)
         self.doc.save()
@@ -232,8 +232,14 @@ class FEAPanel:
         # run the analysis step by step
 
         # , solver=doc.SolverCcxTools)
-        fea = ccxtools.FemToolsCcx(analysis=Analysis)
-        # analysisDir=self.workingDir+f"/Gen{GenerationNumber}"
+        try:
+            fea=ccxtools.FemToolsCcx(Analysis)
+        except:
+            print("adding")
+            import ObjectsFem
+            Analysis.addObject(ObjectsFem.makeSolverCalculixCcxTools(doc))
+            fea=ccxtools.FemToolsCcx(Analysis)
+
         fea.setup_working_dir(Directory)
         fea.update_objects()
         fea.setup_ccx()

@@ -26,10 +26,10 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
     global ax6
     global ax7
     ax1.cla()
-    l1 = ax1.plot(range(i+1), mass, label="Mass",color ="red")
+    l1 = ax1.plot(range(i+1), mass/mass[0]*100, label="Mass",color ="red")
     ax1.grid()
     ax1.set_xlabel("Iteration")
-    ax1.set_ylabel("Mass")
+    ax1.set_ylabel("Mass %")
     ax1.tick_params(axis='y', colors="red")
     ax1.yaxis.label.set_color("red")
     Plot.plt.pause(0.0001)
@@ -176,6 +176,7 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
             ax7.set_ylabel("FI_max_dn")
             ax7.tick_params(axis='y', colors="black")
             ax7.yaxis.label.set_color("black")
+            ax7.yaxis.set_label_position("right")
             l7 = ax7.plot(range(i_plot + 1), FI_max_dn, label="FI_max_dn",color ="black")
             
             if ax7 != 0:
