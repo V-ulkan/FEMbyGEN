@@ -1,6 +1,5 @@
 # optimization program using CalculiX solver
 # BESO (Bi-directional Evolutionary Structural Optimization Method)
-
 import FreeCADGui
 import FreeCAD
 import numpy as np
@@ -62,10 +61,12 @@ def main(analysis):
         domain_FI = doc.Topology.domain_FI[analysis]
         for dn in domain_FI:  # extracting each type of criteria
             if domain_FI[dn]:
+                print("girdi1")
                 domain_FI_filled = True
             for state in range(len(domain_FI[dn])):
                 for dn_crit in domain_FI[dn][state]:
                     if dn_crit not in criteria:
+                        print("girdi2")
                         criteria.append(dn_crit)
     except:
         domain_FI={}
@@ -156,8 +157,10 @@ def main(analysis):
     # initialize element states
     elm_states = {}
     if isinstance(continue_from, int):
+        print("girdi3")
         for dn in domains_from_config:
             if (len(domain_density[dn]) - 1) < continue_from:
+                print("girdi4")
                 sn = len(domain_density[dn]) - 1
                 msg = "\nINFO: elements from the domain " + dn + " were set to the highest state.\n"
                 beso_lib.write_to_log(file_name, msg)
@@ -167,10 +170,13 @@ def main(analysis):
             for en in domains[dn]:
                 elm_states[en] = sn
     elif continue_from[-4:] == ".frd":
+        print("girdi5")
         elm_states = beso_lib.import_frd_state(continue_from, elm_states, number_of_states, file_name)
     elif continue_from[-4:] == ".inp":
+        print("girdi6")
         elm_states = beso_lib.import_inp_state(continue_from, elm_states, number_of_states, file_name)
     elif continue_from[-4:] == ".csv":
+        print("girdi7")
         elm_states = beso_lib.import_csv_state(continue_from, elm_states, file_name)
     else:
         for dn in domains_from_config:
@@ -184,6 +190,7 @@ def main(analysis):
 
     for dn in domains_from_config:
         if domain_optimized[dn] is True:
+            print("girdi8")
             for en in domain_shells[dn]:
                 mass[0] += domain_density[dn][elm_states[en]] * area_elm[en] * domain_thickness[dn][elm_states[en]]
                 mass_full += domain_density[dn][len(domain_density[dn]) - 1] * area_elm[en] * domain_thickness[dn][
@@ -194,18 +201,24 @@ def main(analysis):
     print("initial optimization domains mass {}" .format(mass[0]))
 
     if iterations_limit == "auto":  # automatic setting
+        print("girdi9")
         m = mass[0] / mass_full
         if ratio_type == "absolute" and (mass_removal_ratio - mass_addition_ratio > 0):
+            print("girdi10")
             iterations_limit = int((m - mass_goal_ratio) / (mass_removal_ratio - mass_addition_ratio) + 25)
         elif ratio_type == "absolute" and (mass_removal_ratio - mass_addition_ratio < 0):
+            print("girdi11")
             iterations_limit = int((mass_goal_ratio - m) / (mass_addition_ratio - mass_removal_ratio) + 25)
         elif ratio_type == "relative":
+            print("girdi12")
             it = 0
             if mass_removal_ratio - mass_addition_ratio > 0:
+                print("girdi13")
                 while m > mass_goal_ratio:
                     m -= m * (mass_removal_ratio - mass_addition_ratio)
                     it += 1
             else:
+                print("girdi14")
                 while m < mass_goal_ratio:
                     m += m * (mass_addition_ratio - mass_removal_ratio)
                     it += 1
@@ -229,16 +242,22 @@ def main(analysis):
     filter_auto = False
     for ft in filter_list:  # find if automatic filter range is used
         if ft[0] and (ft[1] == "auto") and not filter_auto:
+            print("girdi15")
             size_elm = beso_filters.find_size_elm(Elements, nodes)
             filter_auto = True
     for ft in filter_list:
         if ft[0] and ft[1]:
+            print("girdi16")
             f_range = ft[1]
             if ft[0] == "casting":
+                print("girdi17")
                 if len(ft) == 3:
+                    print("girdi18")
                     domains_to_filter = list(opt_domains)
+                    filtered_dn = domains_from_config   
                     beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
                 else:
+                    print("girdi19")
                     domains_to_filter = []
                     filtered_dn = []
                     for dn in ft[3:]:
@@ -247,6 +266,7 @@ def main(analysis):
                     beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
                 casting_vector = ft[2]
                 if f_range == "auto":
+                    print("girdi20")
                     size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                     f_range = size_avg * 2
                     msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg,
@@ -257,10 +277,12 @@ def main(analysis):
                                                                         above_elm, below_elm, casting_vector)
                 continue  # to evaluate other filters
             if len(ft) == 2:
+                print("girdi21")
                 domains_to_filter = list(opt_domains)
                 filtered_dn = domains_from_config
                 beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
             else:
+                print("girdi22")
                 domains_to_filter = []
                 filtered_dn = []
                 for dn in ft[3:]:
@@ -268,6 +290,7 @@ def main(analysis):
                     filtered_dn.append(dn)
                 beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
             if f_range == "auto":
+                print("girdi23")
                 size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                 f_range = size_avg * 2
                 msg = "Filtered average element size is {}, filter range set automatically to {}".format(
@@ -275,12 +298,14 @@ def main(analysis):
                 print(msg)
                 beso_lib.write_to_log(file_name, msg)
             if ft[0] == "over points":
+                print("girdi24")
                 beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
                 [w_f3, n_e3, n_p] = beso_filters.prepare3_tetra_grid(file_name, cg, f_range, domains_to_filter)
                 weight_factor3.append(w_f3)
                 near_elm3.append(n_e3)
                 near_points.append(n_p)
             elif ft[0] == "over nodes":
+                print("girdi25")
                 beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
                 [w_f_n, M_, w_f_d, n_n] = beso_filters.prepare1s(nodes, Elements, cg, f_range, domains_to_filter)
                 weight_factor_node.append(w_f_n)
@@ -288,13 +313,16 @@ def main(analysis):
                 weight_factor_distance.append(w_f_d)
                 near_nodes.append(n_n)
             elif ft[0] == "simple":
+                print("girdi26")
                 [weight_factor2, near_elm] = beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
                                                                     weight_factor2, near_elm)
             elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
+                print("girdi27")
                 near_elm = beso_filters.prepare_morphology(cg, cg_min, cg_max, f_range, domains_to_filter, near_elm)
 
     # separating elements for reading nodal input
     if reference_points == "nodes":
+        print("girdi28")
         beso_separate.separating(file_name, nodes)
 
     # writing log table header
@@ -306,21 +334,27 @@ def main(analysis):
         dorder += 1
     msg += "\n   i              mass"
     if optimization_base == "stiffness":
+        print("girdi29")
         msg += "    ener_dens_mean"
     if optimization_base == "heat":
+        print("girdi30")
         msg += "    heat_flux_mean"
     if domain_FI_filled:
+        print("girdi31")
         msg += " FI_violated_0)"
         for dno in range(len(domains_from_config) - 1):
             msg += (" " + str(dno + 1)).rjust(4, " ") + ")"
         if len(domains_from_config) > 1:
+            print("girdi32")
             msg += " all)"
         msg += "          FI_mean    _without_state0         FI_max_0)"
         for dno in range(len(domains_from_config) - 1):
             msg += str(dno + 1).rjust(17, " ") + ")"
         if len(domains_from_config) > 1:
+            print("girdi33")
             msg += "all".rjust(17, " ") + ")"
     if displacement_graph:
+        print("girdi34")
         for (ns, component) in displacement_graph:
             if component == "total":  # total displacement
                 msg += (" " + ns + "(u_total)").rjust(18, " ")
@@ -362,6 +396,7 @@ def main(analysis):
 
     while True:
         if FreeCADGui.activeDocument() == None:
+            print("girdi35")
             doc.Topology.LastState = 0
             break
         # creating the new .inp file for CalculiX
@@ -711,11 +746,15 @@ def main(analysis):
         mass_not_filtered = mass[i]  # use variable to store the "right" mass
         for ft in filter_list:
             if ft[0] and ft[1]:
+                print("girdi36")
                 if ft[0] == "casting":
+                    print("girdi37")
                     continue  # to evaluate other filters
                 if len(ft) == 2:
+                    print("girdi38")
                     domains_to_filter = list(opt_domains)
                 else:
+                    print("girdi39")
                     domains_to_filter = []
                     for dn in ft[2:]:
                         domains_to_filter += domains[dn]
@@ -800,7 +839,7 @@ def main(analysis):
     total_time_s=int(round(total_time % 60))
     msg="\n"
     msg += ("Finished at  " + time.ctime() + "\n")
-    showMsg= ("Total time   " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s\n")
+    showMsg= ("Total time   " + str(total_time_h) + " h " + str(total_time_min) + " min " + str(total_time_s) + " s" + "vector: " +str(ft[2])+ " \n")
     msg += showMsg+ "\n"
     beso_lib.write_to_log(file_name, msg)
     print(showMsg)

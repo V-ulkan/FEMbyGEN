@@ -203,6 +203,7 @@ for ft in filter_list:
         if ft[0] == "casting":
             if len(ft) == 3:
                 domains_to_filter = list(opt_domains)
+                filtered_dn = domains_from_config
                 fembygen.beso_filters.check_same_state(domain_same_state, domains_from_config, file_name)
             else:
                 domains_to_filter = []
@@ -215,8 +216,7 @@ for ft in filter_list:
             if f_range == "auto":
                 size_avg = fembygen.beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                 f_range = size_avg * 2
-                msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg,
-                                                                                                         f_range)
+                msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg, f_range)
                 print(msg)
                 fembygen.beso_lib.write_to_log(file_name, msg)
             [above_elm, below_elm] = fembygen.beso_filters.prepare2s_casting(cg, f_range, domains_to_filter,
