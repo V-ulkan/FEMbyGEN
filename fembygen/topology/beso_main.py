@@ -186,6 +186,7 @@ def main(analysis):
     # computing volume or area, and centre of gravity of each element
     [cg, cg_min, cg_max, volume_elm, area_elm] = beso_lib.elm_volume_cg(file_name, nodes, Elements)
     mass = [0.0]
+    print(cg)
     mass_full = 0  # sum from initial states TODO make it independent on starting elm_states?
 
     for dn in domains_from_config:
@@ -265,6 +266,10 @@ def main(analysis):
                         filtered_dn.append(dn)
                     beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
                 casting_vector = ft[2]
+                casting_vector = casting_vector.strip('()')  # Parantezleri kaldırın
+                casting_vector = casting_vector.split(',')  # Virgüllere göre ayırın
+                casting_vector = [float(x) for x in casting_vector]  # Değerleri float'a çevirin
+                casting_vector = np.array(casting_vector)
                 if f_range == "auto":
                     print("girdi20")
                     size_avg = beso_filters.get_filter_range(size_elm, domains, filtered_dn)
@@ -279,6 +284,8 @@ def main(analysis):
             if len(ft) == 2:
                 print("girdi21")
                 domains_to_filter = list(opt_domains)
+                print("!!!!!! Domains to filter !!!!!!")
+                print(domains_to_filter)
                 filtered_dn = domains_from_config
                 beso_filters.check_same_state(domain_same_state, filtered_dn, file_name)
             else:
