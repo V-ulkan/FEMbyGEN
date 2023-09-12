@@ -1,1 +1,0 @@
-print("FEMbyGEN Workbench loaded")

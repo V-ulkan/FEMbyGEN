@@ -84,11 +84,29 @@ class createGeoPanel:
                 
         self.form.run.clicked.connect(self.createGeoGenerations)
         self.form.selectMaterial.clicked.connect(self.material)
+        self.form.selectDisplacment.clicked.connect(self.displacment)
+    def displacment(self):
+        App.activeDocument().addObject("Fem::ConstraintDisplacement","ConstraintDisplacement")
+        App.activeDocument().ConstraintDisplacement.Scale = 1
+        App.activeDocument().createGeo.addObject(App.activeDocument().ConstraintDisplacement)
+        for amesh in App.activeDocument().Objects:
+            if "ConstraintDisplacement" == amesh.Name:
+                amesh.ViewObject.Visibility = True
+            elif "Mesh" in amesh.TypeId:
+                aparttoshow = amesh.Name.replace("_Mesh","")
+                for apart in App.activeDocument().Objects:
+                    if aparttoshow == apart.Name:
+                        apart.ViewObject.Visibility = True
+                amesh.ViewObject.Visibility = False
+            
+        FreeCADGui.ActiveDocument.setEdit(FreeCAD.ActiveDocument.ActiveObject.Name)
+        App.ActiveDocument.recompute()
+    
     def material(self):
         obj=ObjectsFem.makeMaterialSolid(FreeCAD.ActiveDocument)
         FreeCAD.ActiveDocument.createGeo.addObject(obj)
         FreeCADGui.ActiveDocument.setEdit(FreeCAD.ActiveDocument.ActiveObject.Name)
-
+    
     def createGeoGenerations(self):
             percentage_text = self.form.offsetRatio.toPlainText()
             doc = App.ActiveDocument
