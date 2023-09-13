@@ -70,14 +70,15 @@ class createGeoCommand():
         return FreeCAD.ActiveDocument is not None
 
 class createGeoPanel:
-    def __init__(self, vobj):
-        self.vobj = vobj  # Store vobj as an instance variable
+    def __init__(self, object):
+        self.obj = object  # Store vobj as an instance variable
         # this will create a Qt widget from our ui file
         guiPath = FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/ui/createGeo.ui"
         self.form = FreeCADGui.PySideUic.loadUi(guiPath)
-        doc = FreeCAD.ActiveDocument
-        if doc:
-            part_bodies = [obj for obj in doc.Objects if obj.isDerivedFrom("Part::Feature")]
+        self.doc = FreeCAD.ActiveDocument
+        self.guiDoc= FreeCADGui.getDocument(self.doc)
+        if self.doc:
+            part_bodies = [obj for obj in self.doc.Objects if obj.isDerivedFrom("Part::Feature")]
             for body in part_bodies:
                 item = QListWidgetItem(body.Label)
                 self.form.adding_tree.addItem(item)  
@@ -86,30 +87,30 @@ class createGeoPanel:
         self.form.selectMaterial.clicked.connect(self.material)
         self.form.selectDisplacment.clicked.connect(self.displacment)
     def displacment(self):
-        App.activeDocument().addObject("Fem::ConstraintDisplacement","ConstraintDisplacement")
-        App.activeDocument().ConstraintDisplacement.Scale = 1
-        App.activeDocument().createGeo.addObject(App.activeDocument().ConstraintDisplacement)
-        for amesh in App.activeDocument().Objects:
+        self.doc.addObject("Fem::ConstraintDisplacement","ConstraintDisplacement")
+        self.doc.ConstraintDisplacement.Scale = 1
+        self.doc.createGeo.addObject(self.doc.ConstraintDisplacement)
+        for amesh in self.doc.Objects:
             if "ConstraintDisplacement" == amesh.Name:
                 amesh.ViewObject.Visibility = True
             elif "Mesh" in amesh.TypeId:
                 aparttoshow = amesh.Name.replace("_Mesh","")
-                for apart in App.activeDocument().Objects:
+                for apart in self.doc.Objects:
                     if aparttoshow == apart.Name:
                         apart.ViewObject.Visibility = True
                 amesh.ViewObject.Visibility = False
             
-        FreeCADGui.ActiveDocument.setEdit(FreeCAD.ActiveDocument.ActiveObject.Name)
-        App.ActiveDocument.recompute()
+        self.guiDoc.setEdit(self.doc.Name)
+        self.doc.recompute()
     
     def material(self):
-        obj=ObjectsFem.makeMaterialSolid(FreeCAD.ActiveDocument)
-        FreeCAD.ActiveDocument.createGeo.addObject(obj)
-        FreeCADGui.ActiveDocument.setEdit(FreeCAD.ActiveDocument.ActiveObject.Name)
+        obj=ObjectsFem.makeMaterialSolid(self.doc)
+        self.doc.createGeo.addObject(obj)
+        self.guiDoc.setEdit(obj.Name)
+   
     
     def createGeoGenerations(self):
             percentage_text = self.form.offsetRatio.toPlainText()
-            doc = App.ActiveDocument
             try:
                 percentage = float(percentage_text)
             except ValueError:
@@ -121,7 +122,7 @@ class createGeoPanel:
             selected_items = self.form.adding_tree.selectedItems()  # Get selected items from QListWidget
             selected_labels = [item.text() for item in selected_items]  # Get labels of selected items
     
-            part_bodies = [obj for obj in doc.Objects if obj.isDerivedFrom("Part::Feature") and obj.Label in selected_labels]
+            part_bodies = [obj for obj in self.doc.Objects if obj.isDerivedFrom("Part::Feature") and obj.Label in selected_labels]
     
             if not part_bodies:
                 App.Console.PrintError("No valid objects selected!\n")
@@ -146,7 +147,7 @@ class createGeoPanel:
                     cut.Tool = copy
                     cut.Label = "Cut " + str(i-1) + ", " + baseLabel
             
-                    FreeCAD.activeDocument().recompute()
+                    self.doc.recompute()
             
                     base = cut
                     cuts.append(cut)
@@ -161,7 +162,7 @@ class createGeoPanel:
             boundBoxXMin = boundBox_.XMin
             boundBoxYMin = boundBox_.YMin
             boundBoxZMin = boundBox_.ZMin
-            box = doc.addObject("Part::Box", "MyBox")
+            box = self.doc.addObject("Part::Box", "MyBox")
             box.Length = boundBoxLX + 2 * scale * boundBoxLX
             box.Width = boundBoxLY + 2 * scale * boundBoxLY
             box.Height = boundBoxLZ
