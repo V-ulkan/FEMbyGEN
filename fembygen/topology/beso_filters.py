@@ -234,42 +234,7 @@ def prepare1s(nodes, Elements, cg, r_min, opt_domains):
                     node_neighbours[nn] = [en]
                 elif en not in node_neighbours[nn]:
                     node_neighbours[nn].append(en)
-    """def fce():
-        if nn not in node_neighbours:
-            node_neighbours[nn] = [en]
-        elif en not in node_neighbours[nn]:
-            node_neighbours[nn].append(en)
 
-    for en in Elements.tria3:  # element cg computed also out of opt_domains due to neighbours counted also there
-        for nn in Elements.tria3[en]:
-            fce()
-    for en in Elements.tria6:
-        for nn in Elements.tria6[en]:
-            fce()
-    for en in Elements.quad4:
-        for nn in Elements.quad4[en]:
-            fce()
-    for en in Elements.quad8:
-        for nn in Elements.quad8[en]:
-            fce()
-    for en in Elements.tetra4:
-        for nn in Elements.tetra4[en]:
-            fce()
-    for en in Elements.tetra10:
-        for nn in Elements.tetra10[en]:
-            fce()
-    for en in Elements.hexa8:
-        for nn in Elements.hexa8[en]:
-            fce()
-    for en in Elements.hexa20:
-        for nn in Elements.hexa20[en]:
-            fce()
-    for en in Elements.penta6:
-        for nn in Elements.penta6[en]:
-            fce()
-    for en in Elements.penta15:
-        for nn in Elements.penta15[en]:
-            fce()"""
     # computing weight factors for sensitivity number of nodes according to distance to adjacent elements
     M = {}  # element numbers en adjacent to each node nn
     weight_factor_node = {}
