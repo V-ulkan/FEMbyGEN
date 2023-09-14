@@ -70,6 +70,7 @@ class createGeoCommand():
         return FreeCAD.ActiveDocument is not None
 
 class createGeoPanel:
+
     def __init__(self, object):
         self.obj = object  # Store vobj as an instance variable
         # this will create a Qt widget from our ui file
@@ -79,6 +80,7 @@ class createGeoPanel:
         self.guiDoc= FreeCADGui.getDocument(self.doc)
         if self.doc:
             part_bodies = [obj for obj in self.doc.Objects if obj.isDerivedFrom("Part::Feature")]
+
             for body in part_bodies:
                 item = QListWidgetItem(body.Label)
                 self.form.adding_tree.addItem(item)  
@@ -91,6 +93,7 @@ class createGeoPanel:
         self.doc.ConstraintDisplacement.Scale = 1
         self.doc.createGeo.addObject(self.doc.ConstraintDisplacement)
         for amesh in self.doc.Objects:
+
             if "ConstraintDisplacement" == amesh.Name:
                 amesh.ViewObject.Visibility = True
             elif "Mesh" in amesh.TypeId:
@@ -99,7 +102,6 @@ class createGeoPanel:
                     if aparttoshow == apart.Name:
                         apart.ViewObject.Visibility = True
                 amesh.ViewObject.Visibility = False
-            
         self.guiDoc.setEdit(self.doc.Name)
         self.doc.recompute()
     
@@ -123,7 +125,7 @@ class createGeoPanel:
             selected_labels = [item.text() for item in selected_items]  # Get labels of selected items
     
             part_bodies = [obj for obj in self.doc.Objects if obj.isDerivedFrom("Part::Feature") and obj.Label in selected_labels]
-    
+  
             if not part_bodies:
                 App.Console.PrintError("No valid objects selected!\n")
                 return
@@ -162,6 +164,7 @@ class createGeoPanel:
             boundBoxXMin = boundBox_.XMin
             boundBoxYMin = boundBox_.YMin
             boundBoxZMin = boundBox_.ZMin
+
             box = self.doc.addObject("Part::Box", "MyBox")
             box.Length = boundBoxLX + 2 * scale * boundBoxLX
             box.Width = boundBoxLY + 2 * scale * boundBoxLY

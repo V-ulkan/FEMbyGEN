@@ -11,6 +11,7 @@ class FEMbyGEN(Workbench):
 
         from fembygen import Initiate, Alias, Generate, FEA,createGeo, Results, Topology
         FreeCADGui.addIconPath(FreeCAD.getUserAppDataDir() + "Mod/FEMbyGEN/fembygen/icons/")
+
         self.list = ["Initiate", "Alias","Generate", "FEA","createGeo", "Results", "Topology"]  # A list of command names created in the line above
 
         self.appendToolbar("Commands", self.list)  # creates a new toolbar with your commands
