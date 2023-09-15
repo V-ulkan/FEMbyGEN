@@ -659,7 +659,7 @@ class TopologyPanel(QtGui.QWidget):
                     von_mises = float(self.form.stressLimit_1.text())
                 else:
                     von_mises = 0.
-#burası
+
         #         if self.doc.Topology.Number_of_Domains == 2:
         #             elset_id1 = self.form.selectMaterial_2.currentIndex() - 1
         #             thickness_id1 = self.form.thicknessObject_2.currentIndex() - 1
@@ -850,10 +850,11 @@ class TopologyPanel(QtGui.QWidget):
         self.setConfig()
         self.setFilter()
         analysis = self.form.selectLC.currentText()
-        beso_main.main(analysis)
+        topO = beso_main.BesoMain(analysis)
+        topO.main(analysis)
         FreeCADGui.runCommand('Std_ActivatePrevWindow')
         FreeCAD.setActiveDocument(self.doc.Name)
-        self.get_case("last")
+        #self.get_case("last")
 
     def get_case(self, numberofcase):
         lastcase = self.doc.Topology.LastState
