@@ -68,12 +68,10 @@ class BesoMain:
             self.domain_FI = self.doc.Topology.domain_FI[analysis]
             for dn in self.domain_FI:  # extracting each type of criteria
                 if self.domain_FI[dn]:
-                    print("girdi1")
                     self.domain_FI_filled = True
                 for state in range(len(self.domain_FI[dn])):
                     for dn_crit in self.domain_FI[dn][state]:
                         if dn_crit not in self.criteria:
-                            print("girdi2")
                             self.criteria.append(dn_crit)
         except:
             self.domain_FI={}
@@ -194,10 +192,8 @@ class BesoMain:
         # initialize element states
         elm_states = {}
         if isinstance(self.continue_from, int):
-            print("girdi3")
             for dn in self.domains_from_config:
                 if (len(self.domain_density[dn]) - 1) < self.continue_from:
-                    print("girdi4")
                     sn = len(self.domain_density[dn]) - 1
                     msg = "\nINFO: elements from the domain " + dn + " were set to the highest state.\n"
                     self.beso_lib.write_to_log(self.file_name, msg)
@@ -207,13 +203,10 @@ class BesoMain:
                 for en in domains[dn]:
                     elm_states[en] = sn
         elif self.continue_from[-4:] == ".frd":
-            print("girdi5")
             elm_states = self.beso_lib.import_frd_state(self.continue_from, elm_states, self.number_of_states, self.file_name)
         elif self.continue_from[-4:] == ".inp":
-            print("girdi6")
             elm_states = self.beso_lib.import_inp_state(self.continue_from, elm_states, self.number_of_states, self.file_name)
         elif self.continue_from[-4:] == ".csv":
-            print("girdi7")
             elm_states = self.beso_lib.import_csv_state(self.continue_from, elm_states, self.file_name)
         else:
             for dn in self.domains_from_config:
@@ -228,7 +221,6 @@ class BesoMain:
 
         for dn in self.domains_from_config:
             if self.domain_optimized[dn] is True:
-                print("girdi8")
                 for en in domain_shells[dn]:
                     mass[0] += self.domain_density[dn][elm_states[en]] * area_elm[en] * self.domain_thickness[dn][elm_states[en]]
                     mass_full += self.domain_density[dn][len(self.domain_density[dn]) - 1] * area_elm[en] * self.domain_thickness[dn][
@@ -239,24 +231,18 @@ class BesoMain:
         print("initial optimization domains mass {}" .format(mass[0]))
 
         if self.iterations_limit == "auto":  # automatic setting
-            print("girdi9")
             m = mass[0] / mass_full
             if self.ratio_type == "absolute" and (self.mass_removal_ratio - self.mass_addition_ratio > 0):
-                print("girdi10")
                 iterations_limit = int((m - self.mass_goal_ratio) / (self.mass_removal_ratio - self.mass_addition_ratio) + 25)
             elif self.ratio_type == "absolute" and (self.mass_removal_ratio - self.mass_addition_ratio < 0):
-                print("girdi11")
                 iterations_limit = int((self.mass_goal_ratio - m) / (self.mass_addition_ratio - self.mass_removal_ratio) + 25)
             elif self.ratio_type == "relative":
-                print("girdi12")
                 it = 0
                 if self.mass_removal_ratio - self.mass_addition_ratio > 0:
-                    print("girdi13")
                     while m > self.mass_goal_ratio:
                         m -= m * (self.mass_removal_ratio - self.mass_addition_ratio)
                         it += 1
                 else:
-                    print("girdi14")
                     while m < self.mass_goal_ratio:
                         m += m * (self.mass_addition_ratio - self.mass_removal_ratio)
                         it += 1
@@ -280,22 +266,17 @@ class BesoMain:
         filter_auto = False"""
         for ft in self.filter_list:  # find if automatic filter range is used
             if ft[0] and (ft[1] == "auto") and not self.filter_auto:
-                print("girdi15")
                 size_elm = self.beso_filters.find_size_elm(Elements, nodes)
                 self.filter_auto = True
         for ft in self.filter_list:
             if ft[0] and ft[1]:
-                print("girdi16")
                 f_range = ft[1]
                 if ft[0] == "casting":
-                    print("girdi17")
                     if len(ft) == 3:
-                        print("girdi18")
                         domains_to_filter = list(opt_domains)
                         filtered_dn = self.domains_from_config   
                         self.beso_filters.check_same_state(self.domain_same_state, self.domains_from_config, self.file_name)
                     else:
-                        print("girdi19")
                         domains_to_filter = []
                         filtered_dn = []
                         for dn in ft[3:]:
@@ -308,7 +289,6 @@ class BesoMain:
                     casting_vector = [float(x) for x in casting_vector]
                     casting_vector = self.np.array(casting_vector)
                     if f_range == "auto":
-                        print("girdi20")
                         size_avg = self.beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                         f_range = size_avg * 2
                         msg = "Filtered average element size is {}, filter range set automatically to {}".format(size_avg,
@@ -319,14 +299,12 @@ class BesoMain:
                                                                             above_elm, below_elm, casting_vector)
                     continue  # to evaluate other filters
                 if len(ft) == 2:
-                    print("girdi21")
                     domains_to_filter = list(opt_domains)
                     print("!!!!!! Domains to filter !!!!!!")
                     print(domains_to_filter)
                     filtered_dn = self.domains_from_config
                     self.beso_filters.check_same_state(self.domain_same_state, filtered_dn, self.file_name)
                 else:
-                    print("girdi22")
                     domains_to_filter = []
                     filtered_dn = []
                     for dn in ft[3:]:
@@ -334,7 +312,6 @@ class BesoMain:
                         filtered_dn.append(dn)
                     self.beso_filters.check_same_state(self.domain_same_state, filtered_dn, self.file_name)
                 if f_range == "auto":
-                    print("girdi23")
                     size_avg = self.beso_filters.get_filter_range(size_elm, domains, filtered_dn)
                     f_range = size_avg * 2
                     msg = "Filtered average element size is {}, filter range set automatically to {}".format(
@@ -342,14 +319,12 @@ class BesoMain:
                     print(msg)
                     self.beso_lib.write_to_log(self.file_name, msg)
                 if ft[0] == "over points":
-                    print("girdi24")
                     self.beso_filters.check_same_state(self.domain_same_state, self.domains_from_config, self.file_name)
                     [w_f3, n_e3, n_p] = self.beso_filters.prepare3_tetra_grid(self.file_name, cg, f_range, domains_to_filter)
                     self.weight_factor3.append(w_f3)
                     self.near_elm3.append(n_e3)
                     self.near_points.append(n_p)
                 elif ft[0] == "over nodes":
-                    print("girdi25")
                     self.beso_filters.check_same_state(self.domain_same_state, self.domains_from_config, self.file_name)
                     [w_f_n, M_, w_f_d, n_n] = self.beso_filters.prepare1s(nodes, Elements, cg, f_range, domains_to_filter)
                     self.weight_factor_node.append(w_f_n)
@@ -357,16 +332,13 @@ class BesoMain:
                     self.weight_factor_distance.append(w_f_d)
                     self.near_nodes.append(n_n)
                 elif ft[0] == "simple":
-                    print("girdi26")
                     [weight_factor2, near_elm] = self.beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
                                                                         self.weight_factor2, self.near_elm)
                 elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
-                    print("girdi27")
                     near_elm = self.beso_filters.prepare_morphology(cg, cg_min, cg_max, f_range, domains_to_filter, near_elm)
 
         # separating elements for reading nodal input
         if self.reference_points == "nodes":
-            print("girdi28")
             self.beso_separate.separating(self.file_name, nodes)
 
         # writing log table header
@@ -378,27 +350,21 @@ class BesoMain:
             dorder += 1
         msg += "\n   i              mass"
         if self.optimization_base == "stiffness":
-            print("girdi29")
             msg += "    ener_dens_mean"
         if self.optimization_base == "heat":
-            print("girdi30")
             msg += "    heat_flux_mean"
         if self.domain_FI_filled:
-            print("girdi31")
             msg += " FI_violated_0)"
             for dno in range(len(self.domains_from_config) - 1):
                 msg += (" " + str(dno + 1)).rjust(4, " ") + ")"
             if len(self.domains_from_config) > 1:
-                print("girdi32")
                 msg += " all)"
             msg += "          FI_mean    _without_state0         FI_max_0)"
             for dno in range(len(self.domains_from_config) - 1):
                 msg += str(dno + 1).rjust(17, " ") + ")"
             if len(self.domains_from_config) > 1:
-                print("girdi33")
                 msg += "all".rjust(17, " ") + ")"
         if self.displacement_graph:
-            print("girdi34")
             for (ns, component) in self.displacement_graph:
                 if component == "total":  # total displacement
                     msg += (" " + ns + "(u_total)").rjust(18, " ")
@@ -440,7 +406,6 @@ class BesoMain:
 
         while True:
             if self.FreeCADGui.activeDocument() == None:
-                print("girdi35")
                 self.doc.Topology.LastState = 0
                 break
             # creating the new .inp file for CalculiX
@@ -790,15 +755,11 @@ class BesoMain:
             mass_not_filtered = mass[i]  # use variable to store the "right" mass
             for ft in self.filter_list:
                 if ft[0] and ft[1]:
-                    print("girdi36")
                     if ft[0] == "casting":
-                        print("girdi37")
                         continue  # to evaluate other filters
                     if len(ft) == 2:
-                        print("girdi38")
                         domains_to_filter = list(opt_domains)
                     else:
-                        print("girdi39")
                         domains_to_filter = []
                         for dn in ft[2:]:
                             domains_to_filter += domains[dn]
