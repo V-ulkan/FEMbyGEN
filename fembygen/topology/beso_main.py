@@ -129,8 +129,9 @@ class BesoMain:
         if "12d" not in save_solver_files:
             self.os.remove(file_nameW + ".12d")
 
-    def main(self,analysis):
+    def main(self):
         from fembygen.topology import beso_plots
+
         self.os.putenv('OMP_NUM_THREADS', str(self.doc.Topology.cpu_cores))
         self.start_time = self.time.time()
         # writing log file with settings
