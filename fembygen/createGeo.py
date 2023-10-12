@@ -3,7 +3,7 @@ import FreeCADGui
 import os
 from fembygen import  ObjectsFem,Topology
 from femtools import ccxtools
-from PySide import QtGui ,QtCore
+from PySide import QtGui,QtCore
 
 def makecreateGeo():
     try:
