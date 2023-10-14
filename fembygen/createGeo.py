@@ -3,10 +3,7 @@ import FreeCADGui
 import os
 from fembygen import  ObjectsFem,Topology
 from femtools import ccxtools
-from PySide import QtGui,QtCore
-from fembygen import Common, ObjectsFem,Topology
-from PySide import QtCore
-
+from PySide import QtGui ,QtCore
 
 def makecreateGeo():
     try:
@@ -45,11 +42,10 @@ class CreateGeoCommand:
     def GetResources(self):
         return {
             'Pixmap': os.path.join(FreeCAD.getUserAppDataDir(), 'Mod/FEMbyGEN/fembygen/icons/createGeo.svg'),
-            'Accel': "Shift+G",
+            'Accel': "Shift+O",
             'MenuText': "Create Geo Generations",
             'ToolTip': "Perform createGeo operations on selected objects"
         }
-
     def Activated(self):
         makecreateGeo()
         self.createGeoPanel = CreateGeoPanel()
@@ -57,7 +53,6 @@ class CreateGeoCommand:
 
     def IsActive(self):
         return FreeCAD.ActiveDocument is not None
-
 
 class CreateGeoPanel:
     def __init__(self):
@@ -72,19 +67,6 @@ class CreateGeoPanel:
         self.doc = FreeCAD.ActiveDocument
         self.guiDoc = FreeCADGui.getDocument(self.doc)
         
-
-
-class CreateGeoPanel:
-    def __init__(self):
-        self.form = FreeCADGui.PySideUic.loadUi(guiPath)
-        self.selected_objects = []
-
-        self.form.setWindowFlags(self.form.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-
-        self.doc = FreeCAD.ActiveDocument
-        self.guiDoc = FreeCADGui.getDocument(self.doc)
-
-
         self.form.SelectMaterial.clicked.connect(self.material) #select material
         self.form.addItem.clicked.connect(self.add_selected_objects) #add item in listwidget
         self.form.RemoveObj.clicked.connect(self.remove_selected_object) #remove item in listwidget
@@ -92,7 +74,6 @@ class CreateGeoPanel:
         self.form.AssignLoad.clicked.connect(self.assign_load)
         self.form.AssignBC.clicked.connect(self.assign_bc)       
         self.form.topology_create.clicked.connect(self.Topology)
-
         self.form.run_analysis.clicked.connect(self.solve_cxxtools)
         self.form.OffsetRatio.textChanged.connect(self.updateOffsetRatioProperty)
         self.form.OffsetRatio.setPlainText(str(self.doc.createGeo.Offset_Ratio))
@@ -113,39 +94,22 @@ class CreateGeoPanel:
             self.force()
         elif self.form.SelectLoadtype.currentText() == "Pressure":
             self.doc.createGeo.Load_Type="Pressure"
-
-
-    #add load in combobox 
-    def assign_load(self):
-        if self.form.SelectLoadtype.currentText() == "Force":
-            self.force()
-        elif self.form.SelectLoadtype.currentText() == "Pressure":
-
             self.pressure()
     #add BC in combobox 
     def assign_bc(self):
         if self.form.SelectBCtype.currentText() == "Fixed Support":
-
             self.doc.createGeo.Bc_Type="Fixed Support"
             self.fixed_support()
         elif self.form.SelectBCtype.currentText() == "Displacement":
             self.doc.createGeo.Bc_Type="Displacement"
             self.displacement()
           
-
-            self.fixed_support()
-        elif self.form.SelectBCtype.currentText() == "Displacement":
-            self.displacement()
-          
-
-
     # add selections in Qlistwidget
     def add_selected_objects(self):
         selection = FreeCADGui.Selection.getSelection()
         for obj in selection:
             self.selected_objects.append(obj.Label)
             self.form.addingTree.addItem(obj.Label)
-
     # remove selection in Qlistwidget
     def remove_selected_object(self):
         selected_items = self.form.addingTree.selectedItems()
@@ -155,12 +119,7 @@ class CreateGeoPanel:
                 self.selected_objects.remove(label)
             self.form.addingTree.takeItem(self.form.addingTree.row(item))
     def Topology(self):
-
         Topology.TopologyCommand.Activated(self.doc)
-
-        topo_obj=Topology.TopologyCommand.Activated(self.doc)
-        self.doc.createGeo.addObject(topo_obj)
-
     def displacement(self):
         displacement_obj = self.doc.addObject("Fem::ConstraintDisplacement", "ConstraintDisplacement")
         displacement_obj.Scale = 1
@@ -197,19 +156,11 @@ class CreateGeoPanel:
 
     def force(self):
         force_obj = self.doc.addObject("Fem::ConstraintForce", "ConstraintForce")
-
         force_obj.Force = 1
         force_obj.Reversed = False
         force_obj.Scale = 1
 
         self.doc.Analysis.addObject(force_obj)
-
-        force_obj.Force = 1.0
-        force_obj.Reversed = False
-        force_obj.Scale = 1
-        self.doc.Analysis.addObject(force_obj)
-
-
         for amesh in self.doc.Objects:
             if "ConstraintForce" == amesh.Name:
                 amesh.ViewObject.Visibility = True
@@ -227,7 +178,6 @@ class CreateGeoPanel:
         preassure_obj.Reversed = False
         preassure_obj.Scale = 1
         self.doc.Analysis.addObject(preassure_obj)
-
         for amesh in self.doc.Objects:
             if "ConstraintPressure" == amesh.Name:
                 amesh.ViewObject.Visibility = True
@@ -244,11 +194,7 @@ class CreateGeoPanel:
         for index in range(self.form.addingTree.count()):
             item = self.form.addingTree.item(index)
             added_items.append(item.text())
-        return added_items 
-
-        self.guiDoc.setEdit(preassure_obj.Name)    
-
-
+        return added_items
     def createGeoGenerations(self):
             percentage_text = self.form.OffsetRatio.toPlainText()
             try:
@@ -259,14 +205,11 @@ class CreateGeoPanel:
     
             scale = percentage / 100
     
-
             selected_labels = self.get_added_items()
-
-            selected_items = self.form.addingTree.selectedItems()  # Get selected items from QListWidget
-            selected_labels = [item.text() for item in selected_items]  # Get labels of selected items
-
+            
             part_bodies = [obj for obj in self.doc.Objects if obj.isDerivedFrom("Part::Feature") and obj.Label in selected_labels]
-  
+            for hide_obj in part_bodies:
+                hide_obj.ViewObject.Visibility = False
             if not part_bodies:
                 FreeCAD.Console.PrintError("No valid objects selected!\n")
                 return
@@ -323,7 +266,6 @@ class CreateGeoPanel:
             import femmesh.gmshtools as gt
             mesh_obj = ObjectsFem.makeMeshGmsh(self.doc, 'FEMMeshGmsh')
             self.doc.Analysis.addObject(mesh_obj)
-
             mesh_obj.Part = obj_list[self.form.addingTree.count()-1] #number of cutted obj
             mesher = gt.GmshTools(mesh_obj)
             mesher.create_mesh()
@@ -334,16 +276,6 @@ class CreateGeoPanel:
     def show(self):
         self.myNewFreeCADWidget.setWidget(self.form)
         self.myNewFreeCADWidget.show()
-
-            mesh_obj.Part = obj_list[len(selected_items)-1] #number of cutted obj
-            mesher = gt.GmshTools(mesh_obj)
-            mesher.create_mesh()
-            self.doc.recompute()
-
-
-    def show(self):
-        self.form.show()
-
     def close(self):
         self.form.close()
 class ViewProvidercreateGeo:
@@ -371,13 +303,8 @@ class ViewProvidercreateGeo:
        return True
 
     def setEdit(self, vobj, mode):
-
        self.myNewFreeCADWidget.setWidget(self.form)
        self.myNewFreeCADWidget.show()
-
-       panel = CreateGeoPanel()
-       panel.show()
-
        return True
 
     def unsetEdit(self, vobj, mode):
