@@ -79,7 +79,7 @@ class CreateGeoPanel:
         self.form.run_analysis.clicked.connect(self.solve_cxxtools)
         self.form.OffsetRatio.textChanged.connect(self.updateOffsetRatioProperty)
         self.form.OffsetRatio.setPlainText(str(self.doc.createGeo.Offset_Ratio))
-        self.form.meshsmoothing.clicked.connect(self.meshSmoot)
+
 
 
 
@@ -313,23 +313,6 @@ class CreateGeoPanel:
     def solve_cxxtools(self):
         fea = ccxtools.FemToolsCcx()
         fea.run()
-    def meshSmoot(self): # mesh smoothing (topology)
-        file_number = self.doc.Topology.LastState
-        import femmesh.femmesh2mesh
-        import Mesh
-        femmesh_object = FreeCAD.ActiveDocument.getObject(f"file0{file_number}_state1")
-        
-        if femmesh_object:
-            out_mesh = femmesh.femmesh2mesh.femmesh_2_mesh(femmesh_object.FemMesh)
-            Mesh.show(Mesh.Mesh(out_mesh))
-            femmesh_object.ViewObject.hide()
-            doc=FreeCAD.activeDocument()
-            obj = doc.getObject("Mesh")
-            obj.Mesh.smooth("Laplace", 10, 0.6307, 0.0424)
-        else:
-            print(f"FemMesh object 'file{file_number}_state1' not found.")
-
-
     def show(self):
         self.myNewFreeCADWidget.setWidget(self.form)
         self.myNewFreeCADWidget.show()

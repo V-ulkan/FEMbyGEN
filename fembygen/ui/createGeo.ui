@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>567</width>
+    <width>578</width>
     <height>556</height>
    </rect>
   </property>
@@ -234,13 +234,6 @@
             </size>
            </property>
           </spacer>
-         </item>
-         <item row="9" column="1">
-          <widget class="QPushButton" name="meshsmoothing">
-           <property name="text">
-            <string>Mesh Smoothing</string>
-           </property>
-          </widget>
          </item>
          <item row="2" column="3" colspan="2">
           <widget class="QListWidget" name="obstacle_bodies"/>
