@@ -47,8 +47,9 @@ class BesoMain:
         self.domain_orientation = {}
         self.domain_same_state = {}
         self.domain_FI_filled = False
-        self.weight_factor2 = {}
-        self.near_elm = {}
+        self.weight_factor2 = []
+        self.near_elm = []
+        self.near_elm_morpho = []
         self.weight_factor3 = []
         self.near_elm3 = []
         self.near_points = []
@@ -316,7 +317,7 @@ class BesoMain:
                 else:
                     domains_to_filter = []
                     filtered_dn = []
-                    for dn in ft[3:]:
+                    for dn in ft[2:]:
                         domains_to_filter += domains[dn]
                         filtered_dn.append(dn)
                     self.beso_filters.check_same_state(self.domain_same_state, filtered_dn, self.file_name)
@@ -343,11 +344,14 @@ class BesoMain:
                     self.weight_factor_distance.append(w_f_d)
                     self.near_nodes.append(n_n)
                 elif ft[0] == "simple":
-                    [weight_factor2, near_elm] = self.beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
-                                                                             self.weight_factor2, self.near_elm)
+                    [w_f2, n_e2] = self.beso_filters.prepare2s(cg, cg_min, cg_max, f_range, domains_to_filter,
+                                                                {}, {})
+                    self.weight_factor2.append(w_f2)
+                    self.near_elm.append(n_e2)
                 elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
-                    near_elm = self.beso_filters.prepare_morphology(
-                        cg, cg_min, cg_max, f_range, domains_to_filter, near_elm)
+                    n_e_m = self.beso_filters.prepare_morphology(
+                        cg, cg_min, cg_max, f_range, domains_to_filter, {})
+                    self.near_elm_morpho.append(n_e_m)
 
         # separating elements for reading nodal input
         if self.reference_points == "nodes":
@@ -551,6 +555,8 @@ class BesoMain:
             # filtering sensitivity number
             kp = 0
             kn = 0
+            ks = 0
+            km = 0
             for ft in self.filter_list:
                 if ft[0] and ft[1]:
                     if ft[0] == "casting":
@@ -579,12 +585,15 @@ class BesoMain:
                                                                     domains_to_filter)
                         kn += 1
                     elif ft[0] == "simple":
-                        sensitivity_number = self.beso_filters.run2(self.file_name, sensitivity_number, weight_factor2, near_elm,
-                                                                    domains_to_filter)
+                        sensitivity_number = self.beso_filters.run2(self.file_name, sensitivity_number,
+                                                                     self.weight_factor2[ks], self.near_elm[ks],
+                                                                     domains_to_filter)
+                        ks += 1
                     elif ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
                         if ft[0].split()[1] == "sensitivity":
-                            sensitivity_number = self.beso_filters.run_morphology(sensitivity_number, near_elm, domains_to_filter,
-                                                                                  ft[0].split()[0])
+                            sensitivity_number = self.beso_filters.run_morphology(sensitivity_number, self.near_elm_morpho[km],
+                                                                                   domains_to_filter, ft[0].split()[0])
+                        km += 1
 
             if self.sensitivity_averaging:
                 for en in opt_domains:
@@ -778,7 +787,8 @@ class BesoMain:
                                                          FI_violated, i_violated, i, mass_goal_i, self.domain_same_state)
 
             # filtering state
-            mass_not_filtered = mass[i]  # use variable to store the "right" mass
+            mass_not_filtered = mass[i]# use variable to store the "right" mass
+            kms = 0
             for ft in self.filter_list:
                 if ft[0] and ft[1]:
                     if ft[0] == "casting":
@@ -793,7 +803,7 @@ class BesoMain:
                     if ft[0].split()[0] in ["erode", "dilate", "open", "close", "open-close", "close-open", "combine"]:
                         if ft[0].split()[1] == "state":
                             # the same filter as for sensitivity numbers
-                            elm_states_filtered = self.beso_filters.run_morphology(elm_states, near_elm, domains_to_filter,
+                            elm_states_filtered = self.beso_filters.run_morphology(elm_states, self.near_elm_morpho[kms], domains_to_filter,
                                                                                    ft[0].split()[0], FI_step_max)
                             # compute mass difference
                             for dn in self.domains_from_config:

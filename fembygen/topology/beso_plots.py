@@ -1,5 +1,6 @@
 # plotting graphs
 import os
+import numpy as np
 try:
     from FreeCAD.Plot import Plot
 except ImportError:
@@ -26,7 +27,9 @@ def replot(path, i, oscillations, mass, domain_FI_filled, domains_from_config, F
     global ax6
     global ax7
     ax1.cla()
-    l1 = ax1.plot(range(i+1), mass/mass[0]*100, label="Mass",color ="red")
+    mass_arr = np.array(list(mass[:i+1]), dtype=float)
+    l1 = ax1.plot(range(i+1), mass_arr/mass_arr[0]*100, label="Mass",color ="red")
+    l2 = []
     ax1.grid()
     ax1.set_xlabel("Iteration")
     ax1.set_ylabel("Mass %")

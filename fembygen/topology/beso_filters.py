@@ -260,10 +260,11 @@ def prepare1s(nodes, Elements, cg, r_min, opt_domains):
             en_relative += 1
     # print ("weight_factor_node have been computed")
     # computing weight factors for distance of each element and node nearer than r_min
+    from collections import defaultdict
     weight_factor_distance = {}
     near_nodes = {}
-    sector_nodes = {}
-    sector_elm = {}
+    sector_nodes = defaultdict(list)
+    sector_elm = defaultdict(list)
     nodes_min = nodes[list(nodes.keys())[0]]  # initial values
     nodes_max = nodes[list(nodes.keys())[0]]
     for nn in nodes:
@@ -297,6 +298,7 @@ def prepare1s(nodes, Elements, cg, r_min, opt_domains):
             sector_centre.append(sround(position, 6))
         sector_elm[tuple(sector_centre)].append(en)
         near_nodes[en] = []
+    
     # finding near nodes in neighbouring sectors (even inside) by comparing distance with neighbouring sector elements
     x = nodes_min[0] + 0.5 * r_min
     while x <= nodes_max[0] + 0.5 * r_min:
